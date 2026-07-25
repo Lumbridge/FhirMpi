@@ -1,0 +1,8 @@
+{
+  "benchmark": "ScoreFiveHundredNormalisedCandidates",
+  "baselineMeanNanoseconds": 422535.0,
+  "maximumMeanMilliseconds": 10.0,
+  "maximumRegressionPercent": 10.0,
+  "environment": ".NET 10.0.8, Intel Core i9-14900K, Windows 11",
+  "notes": "ShortRun baseline measured 2026-07-25; the full 100-iteration mean was 315957 ns. Re-baseline intentionally on representative CI hardware when the runner class changes."
+}

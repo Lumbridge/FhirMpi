@@ -1,0 +1,14 @@
+<span class="status-badge @CssClass">
+    <span class="status-indicator" aria-hidden="true"></span>
+    @Label
+</span>
+
+@code {
+    [Parameter, EditorRequired]
+    public string Label { get; set; } = string.Empty;
+
+    [Parameter]
+    public string Tone { get; set; } = "neutral";
+
+    private string CssClass => $"status-{Tone}";
+}

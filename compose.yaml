@@ -1,0 +1,67 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: src/FhirMpi.Api/Dockerfile
+    environment:
+      DOTNET_ENVIRONMENT: Development
+      Authentication__Enabled: "false"
+      RegistryProvider__Type: InMemory
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+    ports:
+      - "8080:8080"
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      - otel-collector
+
+  mllp:
+    build:
+      context: .
+      dockerfile: src/FhirMpi.Hl7v2.Host/Dockerfile
+    environment:
+      DOTNET_ENVIRONMENT: Development
+      RegistryProvider__Type: InMemory
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+    ports:
+      - "2575:2575"
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      - otel-collector
+
+  portal:
+    build:
+      context: .
+      dockerfile: src/FhirMpi.Portal/Dockerfile
+    environment:
+      DOTNET_ENVIRONMENT: Development
+      PortalAuthentication__Enabled: "false"
+      PortalAuthentication__DevelopmentTenant: demo
+      RegistryProvider__Type: InMemory
+      Portal__SeedSyntheticData: "true"
+      Portal__ManagedSourceSystem: portal
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+    ports:
+      - "8081:8080"
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      - otel-collector
+
+  otel-collector:
+    image: otel/opentelemetry-collector:0.130.1
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./deploy/otel-collector.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - "4317:4317"

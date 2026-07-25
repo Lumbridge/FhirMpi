@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <UserSecretsId>FhirMpi-Api-Development</UserSecretsId>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../FhirMpi.Application/FhirMpi.Application.csproj" />
+    <ProjectReference Include="../FhirMpi.Fhir.R4/FhirMpi.Fhir.R4.csproj" />
+    <ProjectReference Include="../FhirMpi.Storage.Gcp/FhirMpi.Storage.Gcp.csproj" />
+    <ProjectReference Include="../FhirMpi.Storage.InMemory/FhirMpi.Storage.InMemory.csproj" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" />
+  </ItemGroup>
+</Project>

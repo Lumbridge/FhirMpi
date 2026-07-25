@@ -1,0 +1,106 @@
+name: ci
+
+on:
+  push:
+    branches: ["master", "main", "codex/**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+  security-events: write
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - name: Restore locked dependencies
+        run: dotnet restore FhirMpi.slnx --locked-mode
+      - name: Verify formatting
+        run: dotnet format FhirMpi.slnx --no-restore --verify-no-changes
+      - name: Build
+        run: dotnet build FhirMpi.slnx -c Release --no-restore
+      - name: Test
+        run: dotnet test FhirMpi.slnx -c Release --no-build --logger trx --results-directory TestResults
+      - name: Audit NuGet packages
+        run: dotnet list FhirMpi.slnx package --vulnerable --include-transitive
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: TestResults
+
+  containers:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: api
+            dockerfile: src/FhirMpi.Api/Dockerfile
+          - name: mllp
+            dockerfile: src/FhirMpi.Hl7v2.Host/Dockerfile
+          - name: portal
+            dockerfile: src/FhirMpi.Portal/Dockerfile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          load: true
+          tags: fhir-mpi-${{ matrix.name }}:${{ github.sha }}
+      - uses: anchore/sbom-action@v0
+        with:
+          image: fhir-mpi-${{ matrix.name }}:${{ github.sha }}
+          artifact-name: fhir-mpi-${{ matrix.name }}.spdx.json
+      - uses: aquasecurity/trivy-action@0.32.0
+        with:
+          image-ref: fhir-mpi-${{ matrix.name }}:${{ github.sha }}
+          format: sarif
+          output: trivy-${{ matrix.name }}.sarif
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+      - uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-${{ matrix.name }}.sarif
+
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - run: dotnet restore benchmarks/FhirMpi.Benchmarks/FhirMpi.Benchmarks.csproj --locked-mode
+      - run: dotnet run --project benchmarks/FhirMpi.Benchmarks -c Release --no-restore -- --filter '*ScoreFiveHundred*' --job short --exporters json
+      - shell: pwsh
+        run: ./scripts/Test-BenchmarkRegression.ps1
+
+  live-gcp:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: isolated-gcp-test-store
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      GCP_FHIR_STORE: ${{ vars.GCP_FHIR_STORE }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      - run: dotnet restore tests/FhirMpi.Storage.Gcp.LiveTests/FhirMpi.Storage.Gcp.LiveTests.csproj --locked-mode
+      - run: dotnet test tests/FhirMpi.Storage.Gcp.LiveTests/FhirMpi.Storage.Gcp.LiveTests.csproj -c Release --no-restore

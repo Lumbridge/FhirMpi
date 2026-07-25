@@ -1,0 +1,230 @@
+<EditForm Model="Model"
+          OnValidSubmit="SubmitAsync"
+          OnInvalidSubmit="InvalidSubmitAsync"
+          FormName="@FormName"
+          class="patient-record-form">
+    <DataAnnotationsValidator />
+
+    <section class="panel form-section" aria-labelledby="@($"{FormName}-identity-heading")">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Core identity</p>
+                <h2 id="@($"{FormName}-identity-heading")">Patient identifiers</h2>
+            </div>
+            <span class="result-note">Required fields are marked *</span>
+        </div>
+        <div class="form-grid">
+            <div class="field">
+                <label for="@($"{FormName}-local-reference")">Local patient reference *</label>
+                <input id="@($"{FormName}-local-reference")"
+                       class="input"
+                       disabled="@(!AllowLocalReferenceEdit)"
+                       autocomplete="off"
+                       @bind="Model.LocalReference"
+                       @bind:event="oninput" />
+                <small>Unique within the managed @SourceSystem source.</small>
+                <ValidationMessage For="@(() => Model.LocalReference)" />
+            </div>
+            <div class="field">
+                <label for="@($"{FormName}-nhs-number")">NHS number</label>
+                <input id="@($"{FormName}-nhs-number")"
+                       class="input"
+                       inputmode="numeric"
+                       autocomplete="off"
+                       @bind="Model.NhsNumber"
+                       @bind:event="oninput" />
+                <small>Spaces are accepted; the check digit is validated.</small>
+                <ValidationMessage For="@(() => Model.NhsNumber)" />
+            </div>
+        </div>
+    </section>
+
+    <section class="panel form-section" aria-labelledby="@($"{FormName}-demographics-heading")">
+        <p class="eyebrow">Demographics</p>
+        <h2 id="@($"{FormName}-demographics-heading")">Name and birth details</h2>
+        <div class="form-grid">
+            <div class="field">
+                <label for="@($"{FormName}-given-names")">Given names *</label>
+                <input id="@($"{FormName}-given-names")"
+                       class="input"
+                       autocomplete="given-name"
+                       @bind="Model.GivenNames"
+                       @bind:event="oninput" />
+                <ValidationMessage For="@(() => Model.GivenNames)" />
+            </div>
+            <div class="field">
+                <label for="@($"{FormName}-family-name")">Family name *</label>
+                <input id="@($"{FormName}-family-name")"
+                       class="input"
+                       autocomplete="family-name"
+                       @bind="Model.FamilyName"
+                       @bind:event="oninput" />
+                <ValidationMessage For="@(() => Model.FamilyName)" />
+            </div>
+            <div class="field">
+                <label for="@($"{FormName}-birth-date")">Date of birth *</label>
+                <input id="@($"{FormName}-birth-date")"
+                       class="input"
+                       type="date"
+                       @bind="Model.BirthDate" />
+                <ValidationMessage For="@(() => Model.BirthDate)" />
+            </div>
+            <div class="field">
+                <label for="@($"{FormName}-gender")">Administrative gender</label>
+                <select id="@($"{FormName}-gender")"
+                        class="input"
+                        @bind="Model.Gender">
+                    <option value="@AdministrativeGender.Unknown">Not recorded</option>
+                    <option value="@AdministrativeGender.Female">Female</option>
+                    <option value="@AdministrativeGender.Male">Male</option>
+                    <option value="@AdministrativeGender.Other">Other</option>
+                </select>
+            </div>
+        </div>
+        <label class="check-label deceased-field">
+            <input type="checkbox" @bind="Model.IsDeceased" />
+            Record the patient as deceased
+        </label>
+    </section>
+
+    <section class="panel form-section" aria-labelledby="@($"{FormName}-contact-heading")">
+        <p class="eyebrow">Contact details</p>
+        <h2 id="@($"{FormName}-contact-heading")">Address and communication</h2>
+        <div class="form-grid">
+            <div class="field field-span-two">
+                <label for="@($"{FormName}-address-line")">Address line</label>
+                <input id="@($"{FormName}-address-line")"
+                       class="input"
+                       autocomplete="address-line1"
+                       @bind="Model.AddressLine"
+                       @bind:event="oninput" />
+                <ValidationMessage For="@(() => Model.AddressLine)" />
+            </div>
+            <div class="field">
+                <label for="@($"{FormName}-city")">Town or city</label>
+                <input id="@($"{FormName}-city")"
+                       class="input"
+                       autocomplete="address-level2"
+                       @bind="Model.City"
+                       @bind:event="oninput" />
+                <ValidationMessage For="@(() => Model.City)" />
+            </div>
+            <div class="field">
+                <label for="@($"{FormName}-postcode")">Postcode</label>
+                <input id="@($"{FormName}-postcode")"
+                       class="input"
+                       autocomplete="postal-code"
+                       @bind="Model.Postcode"
+                       @bind:event="oninput" />
+                <ValidationMessage For="@(() => Model.Postcode)" />
+            </div>
+            <div class="field">
+                <label for="@($"{FormName}-phone")">Telephone</label>
+                <input id="@($"{FormName}-phone")"
+                       class="input"
+                       type="tel"
+                       autocomplete="tel"
+                       @bind="Model.Phone"
+                       @bind:event="oninput" />
+                <ValidationMessage For="@(() => Model.Phone)" />
+            </div>
+            <div class="field">
+                <label for="@($"{FormName}-email")">Email address</label>
+                <input id="@($"{FormName}-email")"
+                       class="input"
+                       type="email"
+                       autocomplete="email"
+                       @bind="Model.Email"
+                       @bind:event="oninput" />
+                <ValidationMessage For="@(() => Model.Email)" />
+            </div>
+        </div>
+    </section>
+
+    @if (ShowSubmitValidationSummary)
+    {
+        <div class="submission-feedback submission-validation"
+             role="alert"
+             tabindex="-1"
+             @ref="ValidationSummaryElement">
+            <strong>Check the patient details before saving</strong>
+            <ValidationSummary class="validation-summary" />
+        </div>
+    }
+    else if (!string.IsNullOrWhiteSpace(SubmissionError))
+    {
+        <SubmissionFeedback
+            Title="@SubmissionErrorTitle"
+            Message="@SubmissionError" />
+    }
+
+    <div class="form-actions">
+        <a class="button button-secondary" href="@CancelHref">Cancel</a>
+        <button class="button button-primary" type="submit" disabled="@IsSaving">
+            @(IsSaving ? "Saving patient…" : SubmitLabel)
+        </button>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter, EditorRequired]
+    public PatientRecordFormModel Model { get; set; } = null!;
+
+    [Parameter, EditorRequired]
+    public string FormName { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public string SourceSystem { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public string SubmitLabel { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public string CancelHref { get; set; } = string.Empty;
+
+    [Parameter]
+    public bool AllowLocalReferenceEdit { get; set; }
+
+    [Parameter]
+    public bool IsSaving { get; set; }
+
+    [Parameter]
+    public string SubmissionErrorTitle { get; set; } = "The patient could not be saved";
+
+    [Parameter]
+    public string? SubmissionError { get; set; }
+
+    [Parameter]
+    public EventCallback OnValidSubmit { get; set; }
+
+    private bool ShowSubmitValidationSummary { get; set; }
+
+    private bool FocusValidationSummary { get; set; }
+
+    private ElementReference ValidationSummaryElement { get; set; }
+
+    private async Task SubmitAsync()
+    {
+        ShowSubmitValidationSummary = false;
+        await OnValidSubmit.InvokeAsync();
+    }
+
+    private Task InvalidSubmitAsync(EditContext editContext)
+    {
+        _ = editContext;
+        ShowSubmitValidationSummary = true;
+        FocusValidationSummary = true;
+        return Task.CompletedTask;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!FocusValidationSummary)
+        {
+            return;
+        }
+
+        FocusValidationSummary = false;
+        await ValidationSummaryElement.FocusAsync();
+    }
+}

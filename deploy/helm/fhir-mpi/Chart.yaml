@@ -1,0 +1,6 @@
+apiVersion: v2
+name: fhir-mpi
+description: Multi-tenant FHIR R4 and HL7v2 master patient index
+type: application
+version: 0.2.0
+appVersion: "1.0.0"

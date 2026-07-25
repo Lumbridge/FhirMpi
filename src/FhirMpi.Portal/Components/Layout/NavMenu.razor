@@ -1,0 +1,36 @@
+<nav class="nav-list" aria-label="Portal sections">
+    <AuthorizeView Policy="OperationsAccess">
+        <NavLink href="/" Match="NavLinkMatch.All">
+            <span class="nav-symbol" aria-hidden="true">01</span>
+            <span>Overview</span>
+        </NavLink>
+    </AuthorizeView>
+    <AuthorizeView Policy="ReviewAccess">
+        <NavLink href="/patients">
+            <span class="nav-symbol" aria-hidden="true">02</span>
+            <span>Patient registry</span>
+        </NavLink>
+        <NavLink href="/reviews">
+            <span class="nav-symbol" aria-hidden="true">03</span>
+            <span>Review queue</span>
+        </NavLink>
+    </AuthorizeView>
+    <AuthorizeView Policy="ConfigurationReadAccess">
+        <NavLink href="/sources">
+            <span class="nav-symbol" aria-hidden="true">04</span>
+            <span>Source systems</span>
+        </NavLink>
+    </AuthorizeView>
+    <AuthorizeView Policy="AuditAccess">
+        <NavLink href="/audit">
+            <span class="nav-symbol" aria-hidden="true">05</span>
+            <span>Audit trail</span>
+        </NavLink>
+    </AuthorizeView>
+    <AuthorizeView Policy="ConfigurationWriteAccess">
+        <NavLink href="/settings">
+            <span class="nav-symbol" aria-hidden="true">06</span>
+            <span>Matching policy</span>
+        </NavLink>
+    </AuthorizeView>
+</nav>

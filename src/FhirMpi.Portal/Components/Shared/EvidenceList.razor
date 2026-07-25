@@ -1,0 +1,56 @@
+<section class="evidence-card" aria-labelledby="@HeadingId">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">Explainable matching</p>
+            <h2 id="@HeadingId">Evidence behind this score</h2>
+        </div>
+        <div class="score-orbit">
+            <strong>@Score.ToString("P0", CultureInfo.InvariantCulture)</strong>
+            <span>@PortalDisplay.Grade(Grade)</span>
+        </div>
+    </div>
+    <div class="evidence-list">
+        @foreach (var item in Evidence.OrderByDescending(static evidence => evidence.Weight))
+        {
+            <div class="evidence-row">
+                <div class="evidence-label">
+                    <strong>@FieldLabel(item.Field)</strong>
+                    <span>@item.Comparator</span>
+                </div>
+                <progress max="1" value="@item.Similarity">
+                    @item.Similarity.ToString("P0", CultureInfo.InvariantCulture)
+                </progress>
+                <span class="evidence-value">
+                    @item.Similarity.ToString("P0", CultureInfo.InvariantCulture)
+                    <small>× @item.Weight.ToString("0.00", CultureInfo.InvariantCulture)</small>
+                </span>
+            </div>
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter]
+    public double Score { get; set; }
+
+    [Parameter]
+    public MatchGrade Grade { get; set; }
+
+    [Parameter, EditorRequired]
+    public IReadOnlyList<FieldEvidence> Evidence { get; set; } = [];
+
+    private string HeadingId { get; } = $"evidence-{Guid.NewGuid():N}";
+
+    private static string FieldLabel(string field) =>
+        field switch
+        {
+            "family" => "Family name",
+            "given" => "Given names",
+            "birthDate" => "Date of birth",
+            "address" => "Address and postcode",
+            "telecom" => "Telephone or email",
+            "gender" => "Administrative gender",
+            "manual-split" => "Selected source records",
+            _ => field
+        };
+}

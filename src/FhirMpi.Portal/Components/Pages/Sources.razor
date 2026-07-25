@@ -1,0 +1,100 @@
+@page "/sources"
+@attribute [Authorize(Policy = "ConfigurationReadAccess")]
+@inject RegistryService Registry
+@inject PortalActorContextFactory Actors
+
+<PageTitle>Source systems · FhirMpi</PageTitle>
+
+<PageHeader
+    Eyebrow="Registry provenance"
+    Title="Source systems"
+    Description="Understand which tenant-bound systems contribute patient identities and how survivorship treats each source." />
+
+@if (Error is not null)
+{
+    <AlertMessage Tone="danger" Title="Source systems could not be loaded" Message="@Error" />
+}
+else if (Settings is null)
+{
+    <div class="loading-panel" role="status">
+        <span class="loading-spinner" aria-hidden="true"></span>
+        <span>Loading source systems…</span>
+    </div>
+}
+else
+{
+    <section class="source-overview">
+        <div class="metric-card metric-primary">
+            <span class="metric-label">Configured sources</span>
+            <strong>@Settings.Sources.Count</strong>
+            <span>For this tenant</span>
+        </div>
+        <div class="metric-card">
+            <span class="metric-label">Authoritative</span>
+            <strong>@Settings.Sources.Count(static source => source.IsAuthoritative)</strong>
+            <span>Can establish certain identifier evidence</span>
+        </div>
+        <div class="metric-card">
+            <span class="metric-label">Configuration version</span>
+            <strong>@Settings.Version</strong>
+            <span>Optimistic concurrency token</span>
+        </div>
+    </section>
+
+    <section class="source-cards" aria-label="Configured source systems">
+        @foreach (var source in Settings.Sources.OrderByDescending(static source => source.Trust))
+        {
+            <article class="source-card">
+                <header>
+                    <span class="source-glyph" aria-hidden="true">@PortalDisplay.Initials(source.SourceSystem.Value)</span>
+                    <div>
+                        <h2>@source.SourceSystem</h2>
+                        <StatusBadge
+                            Label="@(source.IsAuthoritative ? "Authoritative" : "Contributing")"
+                            Tone="@(source.IsAuthoritative ? "success" : "neutral")" />
+                    </div>
+                </header>
+                <div class="trust-meter">
+                    <div>
+                        <span>Survivorship trust</span>
+                        <strong>@source.Trust / 100</strong>
+                    </div>
+                    <progress max="100" value="@source.Trust">@source.Trust%</progress>
+                </div>
+                <p>
+                    @(source.IsAuthoritative
+                        ? "Verified exact identifiers from this source can support certain matches when no authoritative conflict exists."
+                        : "Values contribute to matching and survivorship but do not independently establish a certain match.")
+                </p>
+            </article>
+        }
+    </section>
+
+    <section class="safety-callout">
+        <span class="safety-mark" aria-hidden="true">i</span>
+        <div>
+            <strong>Connection secrets are deployment-managed</strong>
+            <p>This portal can change non-secret tenant policy only. Credentials, endpoints and HMAC key material remain in Kubernetes secrets or workload identity.</p>
+        </div>
+    </section>
+}
+
+@code {
+    private TenantSettings? Settings { get; set; }
+
+    private string? Error { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Settings = await Registry.GetTenantSettingsAsync(
+                await Actors.CreateAsync(),
+                CancellationToken.None);
+        }
+        catch (RegistryException exception)
+        {
+            Error = exception.Message;
+        }
+    }
+}

@@ -1,0 +1,38 @@
+<div class="alert alert-@Tone submission-feedback"
+     role="@(Tone == "danger" ? "alert" : "status")"
+     tabindex="-1"
+     @ref="FeedbackElement">
+    <strong>@Title</strong>
+    @if (!string.IsNullOrWhiteSpace(Message))
+    {
+        <span>@Message</span>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string Tone { get; set; } = "danger";
+
+    [Parameter, EditorRequired]
+    public string Title { get; set; } = string.Empty;
+
+    [Parameter]
+    public string? Message { get; set; }
+
+    private ElementReference FeedbackElement { get; set; }
+
+    private string? FocusedFeedback { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        var feedback = $"{Tone}\n{Title}\n{Message}";
+
+        if (string.Equals(FocusedFeedback, feedback, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        FocusedFeedback = feedback;
+        await FeedbackElement.FocusAsync();
+    }
+}

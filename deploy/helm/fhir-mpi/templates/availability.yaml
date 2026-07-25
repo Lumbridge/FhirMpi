@@ -1,0 +1,62 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata: { name: fhir-mpi-api }
+spec:
+  minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
+  selector:
+    matchLabels: { app.kubernetes.io/name: fhir-mpi, app.kubernetes.io/component: api }
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata: { name: fhir-mpi-mllp }
+spec:
+  minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
+  selector:
+    matchLabels: { app.kubernetes.io/name: fhir-mpi, app.kubernetes.io/component: mllp }
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata: { name: fhir-mpi-api }
+spec:
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: fhir-mpi-api }
+  minReplicas: {{ .Values.autoscaling.api.minReplicas }}
+  maxReplicas: {{ .Values.autoscaling.api.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: { type: Utilization, averageUtilization: {{ .Values.autoscaling.api.targetCPUUtilizationPercentage }} }
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata: { name: fhir-mpi-mllp }
+spec:
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: fhir-mpi-mllp }
+  minReplicas: {{ .Values.autoscaling.mllp.minReplicas }}
+  maxReplicas: {{ .Values.autoscaling.mllp.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: { type: Utilization, averageUtilization: {{ .Values.autoscaling.mllp.targetCPUUtilizationPercentage }} }
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata: { name: fhir-mpi-portal }
+spec:
+  minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
+  selector:
+    matchLabels: { app.kubernetes.io/name: fhir-mpi, app.kubernetes.io/component: portal }
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata: { name: fhir-mpi-portal }
+spec:
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: fhir-mpi-portal }
+  minReplicas: {{ .Values.autoscaling.portal.minReplicas }}
+  maxReplicas: {{ .Values.autoscaling.portal.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: { type: Utilization, averageUtilization: {{ .Values.autoscaling.portal.targetCPUUtilizationPercentage }} }

@@ -1,0 +1,104 @@
+<section class="profile-panel" aria-labelledby="@HeadingId">
+    <div class="profile-panel-header">
+        <div>
+            <p class="eyebrow">@Kicker</p>
+            <h2 id="@HeadingId">@PortalDisplay.PatientName(Profile)</h2>
+        </div>
+        @if (Badge is not null)
+        {
+            @Badge
+        }
+    </div>
+
+    <dl class="identity-facts">
+        <div>
+            <dt>NHS number</dt>
+            <dd class="tabular">@PortalDisplay.NhsNumber(Profile)</dd>
+        </div>
+        <div>
+            <dt>Date of birth</dt>
+            <dd>@PortalDisplay.BirthDate(Profile.BirthDate)</dd>
+        </div>
+        <div>
+            <dt>Administrative gender</dt>
+            <dd>@PortalDisplay.Gender(Profile.Gender)</dd>
+        </div>
+        <div>
+            <dt>Deceased status</dt>
+            <dd>@(Profile.IsDeceased ? "Recorded as deceased" : "No death indicator")</dd>
+        </div>
+    </dl>
+
+    <div class="profile-section">
+        <h3>Names</h3>
+        @if (Profile.Names.Count == 0)
+        {
+            <p class="muted">No names recorded.</p>
+        }
+        else
+        {
+            <ul class="plain-list">
+                @foreach (var name in Profile.Names)
+                {
+                    <li>
+                        <span>@string.Join(' ', name.Given.Append(name.Family))</span>
+                        <small>@name.Use</small>
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+
+    <div class="profile-section">
+        <h3>Addresses</h3>
+        @if (Profile.Addresses.Count == 0)
+        {
+            <p class="muted">No address recorded.</p>
+        }
+        else
+        {
+            <ul class="plain-list">
+                @foreach (var address in Profile.Addresses)
+                {
+                    <li>
+                        <span>@PortalDisplay.Address(address)</span>
+                        <small>@address.Use</small>
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+
+    <div class="profile-section">
+        <h3>Contact details</h3>
+        @if (Profile.Telecoms.Count == 0)
+        {
+            <p class="muted">No contact details recorded.</p>
+        }
+        else
+        {
+            <ul class="plain-list">
+                @foreach (var contact in Profile.Telecoms)
+                {
+                    <li>
+                        <span>@contact.Value</span>
+                        <small>@contact.System</small>
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter, EditorRequired]
+    public IdentityProfile Profile { get; set; } = IdentityProfile.Empty;
+
+    [Parameter]
+    public string Kicker { get; set; } = "Enterprise identity";
+
+    [Parameter]
+    public RenderFragment? Badge { get; set; }
+
+    private string HeadingId { get; } = $"profile-{Guid.NewGuid():N}";
+}

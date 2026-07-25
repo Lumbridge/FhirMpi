@@ -1,0 +1,294 @@
+@page "/reviews"
+@attribute [Authorize(Policy = "ReviewAccess")]
+@inject RegistryService Registry
+@inject PortalActorContextFactory Actors
+
+<PageTitle>Identity review queue · FhirMpi</PageTitle>
+
+<PageHeader
+    Eyebrow="Governed decisions"
+    Title="Identity review queue"
+    Description="Assess possible duplicates and corrective splits within the active tenant. Every decision is version-checked and audited." />
+
+<section class="filter-bar" aria-label="Review filters">
+    <div class="field">
+        <label for="review-status">Status</label>
+        <select id="review-status" class="input" @bind="StatusFilter">
+            <option value="open">Open work</option>
+            <option value="pending">Needs first review</option>
+            <option value="second">Needs second approval</option>
+            <option value="linked">Linked</option>
+            <option value="rejected">Rejected</option>
+            <option value="split">Split completed</option>
+            <option value="superseded">Superseded</option>
+            <option value="all">All statuses</option>
+        </select>
+    </div>
+    <div class="field">
+        <label for="review-kind">Review type</label>
+        <select id="review-kind" class="input" @bind="KindFilter">
+            <option value="all">All types</option>
+            <option value="automatic">Automatic duplicate</option>
+            <option value="manual">Manual duplicate</option>
+            <option value="split">Identity split</option>
+        </select>
+    </div>
+    <button class="button button-secondary filter-action"
+            type="button"
+            disabled="@IsLoading"
+            @onclick="LoadAsync">
+        Apply filters
+    </button>
+</section>
+
+@if (Error is not null)
+{
+    <SubmissionFeedback Title="The review queue could not be loaded" Message="@Error" />
+}
+else if (IsLoading)
+{
+    <div class="loading-panel" role="status">
+        <span class="loading-spinner" aria-hidden="true"></span>
+        <span>Loading identity reviews…</span>
+    </div>
+}
+else if (ReviewItems.Count == 0)
+{
+    <section class="empty-state compact">
+        <p class="eyebrow">Queue clear</p>
+        <h2>No reviews match these filters</h2>
+        <p>New probable matches and requested corrective splits will appear here.</p>
+    </section>
+}
+else
+{
+    <section class="table-panel" aria-labelledby="review-table-heading">
+        <div class="section-heading table-heading">
+            <div>
+                <p class="eyebrow">Current queue</p>
+                <h2 id="review-table-heading">@ReviewCountLabel</h2>
+            </div>
+            <span class="result-note">Newest activity first</span>
+        </div>
+        <div class="responsive-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th scope="col">Type</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Match</th>
+                        <th scope="col">Approvals</th>
+                        <th scope="col">Updated</th>
+                        <th scope="col"><span class="visually-hidden">Open</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var review in ReviewItems)
+                    {
+                        <tr>
+                            <td>
+                                <strong>@PortalDisplay.ReviewKind(review.Kind)</strong>
+                                <small class="table-subtext">@ShortId(review.SubjectEnterpriseId)</small>
+                            </td>
+                            <td>
+                                <StatusBadge
+                                    Label="@PortalDisplay.ReviewStatus(EffectiveStatus(review))"
+                                    Tone="@StatusTone(EffectiveStatus(review))" />
+                            </td>
+                            <td>
+                                @if (review.Kind == ReviewCaseKind.Split)
+                                {
+                                    <span>@(review.SourcesToMove?.Count ?? 0) records</span>
+                                }
+                                else
+                                {
+                                    <span class="tabular">@review.Score.ToString("P0", CultureInfo.InvariantCulture)</span>
+                                    <small class="table-subtext">@PortalDisplay.Grade(review.Grade)</small>
+                                }
+                            </td>
+                            <td class="tabular">
+                                @if (OutdatedReviewIds.Contains(review.Id))
+                                {
+                                    <span class="table-subtext">Closure required</span>
+                                }
+                                else
+                                {
+                                    <span>@(review.Approvals?.Count ?? 0) / @review.RequiredApprovals</span>
+                                }
+                            </td>
+                            <td>@PortalDisplay.Instant(review.UpdatedAt)</td>
+                            <td><a class="text-link" href="/reviews/@review.Id">Review <span aria-hidden="true">→</span></a></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+}
+
+@code {
+    private List<ReviewCase> ReviewItems { get; } = [];
+
+    private HashSet<Guid> OutdatedReviewIds { get; } = [];
+
+    private string StatusFilter { get; set; } = "open";
+
+    private string KindFilter { get; set; } = "all";
+
+    private bool IsLoading { get; set; }
+
+    private string? Error { get; set; }
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        IsLoading = true;
+        Error = null;
+        ReviewItems.Clear();
+        OutdatedReviewIds.Clear();
+        try
+        {
+            var actor = await Actors.CreateAsync();
+            var kind = KindFilter switch
+            {
+                "automatic" => ReviewCaseKind.PotentialDuplicate,
+                "manual" => ReviewCaseKind.ManualDuplicate,
+                "split" => ReviewCaseKind.Split,
+                _ => (ReviewCaseKind?)null
+            };
+            if (StatusFilter is "open" or "superseded")
+            {
+                var pending = await Registry.SearchReviewCasesAsync(
+                    actor,
+                    new ReviewCaseSearch(ReviewCaseStatus.Pending, kind, 50),
+                    CancellationToken.None);
+                var second = await Registry.SearchReviewCasesAsync(
+                    actor,
+                    new ReviewCaseSearch(ReviewCaseStatus.AwaitingSecondApproval, kind, 50),
+                    CancellationToken.None);
+                ReviewItems.AddRange(pending.Items.Concat(second.Items));
+
+                if (StatusFilter == "superseded")
+                {
+                    var persisted = await Registry.SearchReviewCasesAsync(
+                        actor,
+                        new ReviewCaseSearch(ReviewCaseStatus.Superseded, kind, 100),
+                        CancellationToken.None);
+                    ReviewItems.AddRange(persisted.Items);
+                }
+            }
+            else
+            {
+                var status = StatusFilter switch
+                {
+                    "pending" => ReviewCaseStatus.Pending,
+                    "second" => ReviewCaseStatus.AwaitingSecondApproval,
+                    "linked" => ReviewCaseStatus.Linked,
+                    "rejected" => ReviewCaseStatus.Rejected,
+                    "split" => ReviewCaseStatus.Split,
+                    "superseded" => ReviewCaseStatus.Superseded,
+                    _ => (ReviewCaseStatus?)null
+                };
+                var page = await Registry.SearchReviewCasesAsync(
+                    actor,
+                    new ReviewCaseSearch(status, kind, 100),
+                    CancellationToken.None);
+                ReviewItems.AddRange(page.Items);
+            }
+
+            await IdentifyOutdatedReviewsAsync(actor);
+            if (StatusFilter == "superseded")
+            {
+                ReviewItems.RemoveAll(review =>
+                    review.Status != ReviewCaseStatus.Superseded
+                    && !OutdatedReviewIds.Contains(review.Id));
+            }
+
+            ReviewItems.Sort(static (left, right) => right.UpdatedAt.CompareTo(left.UpdatedAt));
+        }
+        catch (RegistryException exception)
+        {
+            Error = exception.Message;
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task IdentifyOutdatedReviewsAsync(ActorContext actor)
+    {
+        var openReviews = ReviewItems
+            .Where(review => review.Status is
+                ReviewCaseStatus.Pending or ReviewCaseStatus.AwaitingSecondApproval)
+            .ToArray();
+        var identityIds = openReviews
+            .SelectMany(review => review.Kind == ReviewCaseKind.Split
+                ? [review.SubjectEnterpriseId]
+                : new[] { review.SubjectEnterpriseId, review.CandidateEnterpriseId })
+            .Distinct()
+            .ToArray();
+        var identities = new Dictionary<EnterpriseId, CanonicalPatient?>();
+
+        foreach (var batch in identityIds.Chunk(8))
+        {
+            var patients = await Task.WhenAll(batch.Select(async id => (
+                Id: id,
+                Patient: await Registry.GetCanonicalPatientAsync(
+                    actor,
+                    id,
+                    CancellationToken.None))));
+            foreach (var result in patients)
+            {
+                identities[result.Id] = result.Patient;
+            }
+        }
+
+        foreach (var review in openReviews)
+        {
+            identities.TryGetValue(review.SubjectEnterpriseId, out var subject);
+            identities.TryGetValue(review.CandidateEnterpriseId, out var candidate);
+            var subjectChanged =
+                subject is null ||
+                !subject.IsActive ||
+                (review.SubjectVersion > 0 &&
+                 subject.Version != review.SubjectVersion);
+            var candidateChanged =
+                review.Kind != ReviewCaseKind.Split &&
+                (candidate is null ||
+                 !candidate.IsActive ||
+                 (review.CandidateVersion.HasValue &&
+                  candidate.Version != review.CandidateVersion.Value));
+            if (subjectChanged || candidateChanged)
+            {
+                OutdatedReviewIds.Add(review.Id);
+            }
+        }
+    }
+
+    private ReviewCaseStatus EffectiveStatus(ReviewCase review) =>
+        OutdatedReviewIds.Contains(review.Id)
+            ? ReviewCaseStatus.Superseded
+            : review.Status;
+
+    private string ReviewCountLabel =>
+        ReviewItems.Count == 1
+            ? "1 review"
+            : $"{ReviewItems.Count} reviews";
+
+    private static string ShortId(EnterpriseId id)
+    {
+        var value = id.ToString();
+        return $"{value[..8]}…{value[^4..]}";
+    }
+
+    private static string StatusTone(ReviewCaseStatus status) =>
+        status switch
+        {
+            ReviewCaseStatus.Linked or ReviewCaseStatus.Split => "success",
+            ReviewCaseStatus.AwaitingSecondApproval => "warning",
+            ReviewCaseStatus.Rejected or ReviewCaseStatus.Superseded => "neutral",
+            _ => "info"
+        };
+}

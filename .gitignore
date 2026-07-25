@@ -44,6 +44,11 @@ dlldata.c
 project.lock.json
 project.fragment.lock.json
 artifacts/
+BenchmarkDotNet.Artifacts/
+
+# Terraform working directories (keep provider lock files)
+**/.terraform/*
+!**/.terraform.lock.hcl
 
 *_i.c
 *_p.c

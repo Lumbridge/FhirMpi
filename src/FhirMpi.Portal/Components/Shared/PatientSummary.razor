@@ -1,0 +1,31 @@
+<article class="patient-summary">
+    <div class="patient-avatar" aria-hidden="true">
+        @PortalDisplay.Initials(PortalDisplay.PatientName(Patient.Profile))
+    </div>
+    <div class="patient-summary-main">
+        <h3>
+            <a href="/patients/@Patient.EnterpriseId">@PortalDisplay.PatientName(Patient.Profile)</a>
+        </h3>
+        <div class="patient-meta">
+            <span><strong>NHS</strong> @PortalDisplay.NhsNumber(Patient.Profile)</span>
+            <span><strong>DOB</strong> @PortalDisplay.BirthDate(Patient.Profile.BirthDate)</span>
+            <span><strong>Sources</strong> @Patient.Sources.Count</span>
+        </div>
+    </div>
+    <div class="patient-summary-state">
+        @if (Patient.IsActive)
+        {
+            <StatusBadge Label="Active identity" Tone="success" />
+        }
+        else
+        {
+            <StatusBadge Label="Replaced identity" Tone="warning" />
+        }
+        <small>@Patient.EnterpriseId</small>
+    </div>
+</article>
+
+@code {
+    [Parameter, EditorRequired]
+    public CanonicalPatient Patient { get; set; } = default!;
+}

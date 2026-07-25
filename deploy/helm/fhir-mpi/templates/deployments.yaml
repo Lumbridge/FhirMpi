@@ -1,0 +1,141 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "fhir-mpi.name" . }}-api
+  labels:
+    {{- include "fhir-mpi.labels" . | nindent 4 }}
+    app.kubernetes.io/component: api
+spec:
+  replicas: {{ .Values.replicaCount.api }}
+  selector:
+    matchLabels: { app.kubernetes.io/name: fhir-mpi, app.kubernetes.io/component: api }
+  template:
+    metadata:
+      labels: { app.kubernetes.io/name: fhir-mpi, app.kubernetes.io/component: api }
+    spec:
+      serviceAccountName: {{ include "fhir-mpi.name" . }}
+      securityContext: { runAsNonRoot: true, seccompProfile: { type: RuntimeDefault } }
+      containers:
+        - name: api
+          image: "{{ .Values.image.api.repository }}:{{ .Values.image.api.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+          env:
+            - { name: RegistryProvider__Type, value: {{ .Values.provider.type | quote }} }
+            - { name: GcpHealthcare__StoreName, value: {{ .Values.provider.gcpStoreName | quote }} }
+            - { name: Authentication__Authority, value: {{ .Values.authentication.authority | quote }} }
+            - { name: Authentication__Audience, value: {{ .Values.authentication.audience | quote }} }
+            - { name: FhirValidation__UkCorePackageDirectory, value: {{ .Values.validation.packagePath | quote }} }
+            - { name: FhirValidation__PoolSize, value: {{ .Values.validation.poolSize | quote }} }
+          envFrom:
+            - secretRef: { name: {{ .Values.secrets.configurationSecretName }} }
+          ports: [{ name: http, containerPort: 8080 }]
+          readinessProbe: { httpGet: { path: /health/ready, port: http }, periodSeconds: 10 }
+          livenessProbe: { httpGet: { path: /health/live, port: http }, periodSeconds: 20 }
+          resources: {{- toYaml .Values.resources.api | nindent 12 }}
+          volumeMounts:
+            - { name: profiles, mountPath: {{ .Values.validation.packagePath | quote }}, readOnly: true }
+            - { name: tmp, mountPath: /tmp }
+      volumes:
+        - name: profiles
+          persistentVolumeClaim: { claimName: {{ .Values.validation.packagePvc }} }
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "fhir-mpi.name" . }}-mllp
+  labels:
+    {{- include "fhir-mpi.labels" . | nindent 4 }}
+    app.kubernetes.io/component: mllp
+spec:
+  replicas: {{ .Values.replicaCount.mllp }}
+  selector:
+    matchLabels: { app.kubernetes.io/name: fhir-mpi, app.kubernetes.io/component: mllp }
+  template:
+    metadata:
+      labels: { app.kubernetes.io/name: fhir-mpi, app.kubernetes.io/component: mllp }
+    spec:
+      serviceAccountName: {{ include "fhir-mpi.name" . }}
+      securityContext: { runAsNonRoot: true, seccompProfile: { type: RuntimeDefault } }
+      containers:
+        - name: mllp
+          image: "{{ .Values.image.mllp.repository }}:{{ .Values.image.mllp.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+          env:
+            - { name: RegistryProvider__Type, value: {{ .Values.provider.type | quote }} }
+            - { name: GcpHealthcare__StoreName, value: {{ .Values.provider.gcpStoreName | quote }} }
+          envFrom:
+            - secretRef: { name: {{ .Values.secrets.configurationSecretName }} }
+          ports: [{ name: mllp, containerPort: 2575 }]
+          readinessProbe: { tcpSocket: { port: mllp }, periodSeconds: 10 }
+          livenessProbe: { tcpSocket: { port: mllp }, periodSeconds: 20 }
+          resources: {{- toYaml .Values.resources.mllp | nindent 12 }}
+          volumeMounts:
+            - { name: tls, mountPath: /tls, readOnly: true }
+            - { name: tmp, mountPath: /tmp }
+      volumes:
+        - name: tls
+          secret: { secretName: {{ .Values.secrets.mllpTlsSecretName }} }
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "fhir-mpi.name" . }}-portal
+  labels:
+    {{- include "fhir-mpi.labels" . | nindent 4 }}
+    app.kubernetes.io/component: portal
+spec:
+  replicas: {{ .Values.replicaCount.portal }}
+  selector:
+    matchLabels: { app.kubernetes.io/name: fhir-mpi, app.kubernetes.io/component: portal }
+  template:
+    metadata:
+      labels: { app.kubernetes.io/name: fhir-mpi, app.kubernetes.io/component: portal }
+    spec:
+      serviceAccountName: {{ include "fhir-mpi.name" . }}
+      securityContext: { runAsNonRoot: true, seccompProfile: { type: RuntimeDefault } }
+      containers:
+        - name: portal
+          image: "{{ .Values.image.portal.repository }}:{{ .Values.image.portal.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+          env:
+            - { name: ASPNETCORE_FORWARDEDHEADERS_ENABLED, value: "true" }
+            - { name: RegistryProvider__Type, value: {{ .Values.provider.type | quote }} }
+            - { name: GcpHealthcare__StoreName, value: {{ .Values.provider.gcpStoreName | quote }} }
+            - { name: PortalAuthentication__Enabled, value: "true" }
+            - { name: PortalAuthentication__Authority, value: {{ .Values.portalAuthentication.authority | quote }} }
+            - { name: PortalAuthentication__ClientId, value: {{ .Values.portalAuthentication.clientId | quote }} }
+            - { name: PortalAuthentication__TenantClaimType, value: {{ .Values.portalAuthentication.tenantClaimType | quote }} }
+            - { name: PortalAuthentication__RequireHttpsMetadata, value: {{ .Values.portalAuthentication.requireHttpsMetadata | quote }} }
+            - { name: Portal__DataProtectionKeyPath, value: {{ .Values.portal.dataProtectionKeyPath | quote }} }
+            - { name: Portal__CircuitRetentionMinutes, value: {{ .Values.portal.circuitRetentionMinutes | quote }} }
+            - { name: Portal__ManagedSourceSystem, value: {{ .Values.portal.managedSourceSystem | quote }} }
+          envFrom:
+            - secretRef: { name: {{ .Values.secrets.configurationSecretName }} }
+          ports: [{ name: http, containerPort: 8080 }]
+          readinessProbe: { httpGet: { path: /health/ready, port: http }, periodSeconds: 10 }
+          livenessProbe: { httpGet: { path: /health/live, port: http }, periodSeconds: 20 }
+          resources: {{- toYaml .Values.resources.portal | nindent 12 }}
+          volumeMounts:
+            - { name: data-protection, mountPath: {{ .Values.portal.dataProtectionKeyPath | quote }} }
+            - { name: tmp, mountPath: /tmp }
+      volumes:
+        - name: data-protection
+          persistentVolumeClaim: { claimName: {{ .Values.portal.dataProtectionPvc }} }
+        - name: tmp
+          emptyDir: {}

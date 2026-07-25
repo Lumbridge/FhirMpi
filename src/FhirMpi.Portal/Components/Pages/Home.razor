@@ -1,0 +1,165 @@
+@page "/"
+@attribute [Authorize(Policy = "OperationsAccess")]
+@inject RegistryService Registry
+@inject PortalActorContextFactory Actors
+
+<PageTitle>Operations overview · FhirMpi</PageTitle>
+
+<PageHeader
+    Eyebrow="Identity operations"
+    Title="A clear view of your patient identity service"
+    Description="Prioritise decisions, understand registry health and keep every action inside the active tenant boundary.">
+    <Actions>
+        <a class="button button-primary" href="/patients">Find a patient</a>
+        <a class="button button-secondary" href="/reviews">Open review queue</a>
+    </Actions>
+</PageHeader>
+
+@if (Error is not null)
+{
+    <AlertMessage Tone="danger" Title="The overview could not be loaded" Message="@Error" />
+}
+else if (Summary is null)
+{
+    <div class="loading-panel" role="status">
+        <span class="loading-spinner" aria-hidden="true"></span>
+        <span>Loading the tenant overview…</span>
+    </div>
+}
+else
+{
+    <section class="metric-grid" aria-label="Registry overview">
+        <article class="metric-card metric-primary">
+            <span class="metric-label">Needs first review</span>
+            <strong>@Summary.PendingReviews</strong>
+            <span>Potential duplicates awaiting assessment</span>
+        </article>
+        <article class="metric-card metric-warning">
+            <span class="metric-label">Second approval</span>
+            <strong>@Summary.AwaitingSecondApproval</strong>
+            <span>Governed actions ready for another reviewer</span>
+        </article>
+        <article class="metric-card">
+            <span class="metric-label">24-hour activity</span>
+            <strong>@Summary.RecentDecisions</strong>
+            <span>Recent audited registry events</span>
+        </article>
+        <article class="metric-card">
+            <span class="metric-label">Registry provider</span>
+            <strong class="metric-word">@(Summary.Store.IsHealthy ? "Ready" : "Attention")</strong>
+            <span>@Summary.Store.Provider</span>
+        </article>
+    </section>
+
+    <div class="dashboard-grid">
+        <section class="panel review-panel" aria-labelledby="priority-heading">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Priority work</p>
+                    <h2 id="priority-heading">Identity reviews</h2>
+                </div>
+                <a class="text-link" href="/reviews">View all reviews</a>
+            </div>
+
+            @if (PriorityReviews.Count == 0)
+            {
+                <div class="compact-empty">
+                    <span class="empty-check" aria-hidden="true">✓</span>
+                    <div>
+                        <strong>The queue is clear</strong>
+                        <p>No identity reviews currently require attention.</p>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="review-list">
+                    @foreach (var review in PriorityReviews)
+                    {
+                        <a class="review-row" href="/reviews/@review.Id">
+                            <span class="review-kind">@PortalDisplay.ReviewKind(review.Kind)</span>
+                            <span class="review-score">@review.Score.ToString("P0", CultureInfo.InvariantCulture)</span>
+                            <span class="review-state">
+                                @PortalDisplay.ReviewStatus(review.Status)
+                                <small>@PortalDisplay.Instant(review.UpdatedAt)</small>
+                            </span>
+                            <span class="row-arrow" aria-hidden="true">→</span>
+                        </a>
+                    }
+                </div>
+            }
+        </section>
+
+        <aside class="panel policy-panel" aria-labelledby="policy-heading">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Current controls</p>
+                    <h2 id="policy-heading">Matching policy</h2>
+                </div>
+                <a class="text-link" href="/settings">Manage</a>
+            </div>
+            <dl class="policy-facts">
+                <div>
+                    <dt>Profile</dt>
+                    <dd>@Summary.Settings.MatchingProfileVersion</dd>
+                </div>
+                <div>
+                    <dt>Possible threshold</dt>
+                    <dd>@Summary.Settings.PossibleThreshold.ToString("P0", CultureInfo.InvariantCulture)</dd>
+                </div>
+                <div>
+                    <dt>Probable threshold</dt>
+                    <dd>@Summary.Settings.ProbableThreshold.ToString("P0", CultureInfo.InvariantCulture)</dd>
+                </div>
+                <div>
+                    <dt>Link approvals</dt>
+                    <dd>@Summary.Settings.RequiredLinkApprovals</dd>
+                </div>
+            </dl>
+            <div class="source-strip">
+                <span>@Summary.Settings.Sources.Count configured sources</span>
+                <span>@Summary.Settings.Sources.Count(static source => source.IsAuthoritative) authoritative</span>
+            </div>
+        </aside>
+    </div>
+
+    <section class="safety-callout">
+        <span class="safety-mark" aria-hidden="true">i</span>
+        <div>
+            <strong>Identity decisions have clinical consequences</strong>
+            <p>Compare source records, resolve conflicting identifiers and record a meaningful reason before approving a link or split.</p>
+        </div>
+    </section>
+}
+
+@code {
+    private RegistryOperationalSummary? Summary { get; set; }
+
+    private IReadOnlyList<ReviewCase> PriorityReviews { get; set; } = [];
+
+    private string? Error { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var actor = await Actors.CreateAsync();
+            Summary = await Registry.GetOperationalSummaryAsync(actor, CancellationToken.None);
+            var awaiting = await Registry.SearchReviewCasesAsync(
+                actor,
+                new ReviewCaseSearch(
+                    Status: ReviewCaseStatus.AwaitingSecondApproval,
+                    Count: 4),
+                CancellationToken.None);
+            var pending = await Registry.SearchReviewCasesAsync(
+                actor,
+                new ReviewCaseSearch(Status: ReviewCaseStatus.Pending, Count: 4),
+                CancellationToken.None);
+            PriorityReviews = awaiting.Items.Concat(pending.Items).Take(6).ToArray();
+        }
+        catch (RegistryException exception)
+        {
+            Error = exception.Message;
+        }
+    }
+}

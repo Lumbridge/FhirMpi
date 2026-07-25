@@ -1,0 +1,12 @@
+.git
+.github
+**/bin
+**/obj
+**/TestResults
+artifacts
+benchmark-results
+FhirMpi.ConsoleServer
+FhirMpi.Library
+FhirMpi.Library.Tests
+FhirMpi.Web
+FhirMpi.Web.Tests

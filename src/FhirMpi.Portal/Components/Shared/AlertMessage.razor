@@ -1,0 +1,18 @@
+<div class="alert alert-@Tone" role="@(Tone == "danger" ? "alert" : "status")">
+    <strong>@Title</strong>
+    @if (!string.IsNullOrWhiteSpace(Message))
+    {
+        <span>@Message</span>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string Tone { get; set; } = "info";
+
+    [Parameter, EditorRequired]
+    public string Title { get; set; } = string.Empty;
+
+    [Parameter]
+    public string? Message { get; set; }
+}
