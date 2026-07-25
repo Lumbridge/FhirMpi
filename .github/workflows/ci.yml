@@ -60,14 +60,24 @@ jobs:
         with:
           image: fhir-mpi-${{ matrix.name }}:${{ github.sha }}
           artifact-name: fhir-mpi-${{ matrix.name }}.spdx.json
-      - uses: aquasecurity/trivy-action@0.35.0
+      - name: Gate high and critical container vulnerabilities
+        uses: aquasecurity/trivy-action@0.35.0
+        with:
+          image-ref: fhir-mpi-${{ matrix.name }}:${{ github.sha }}
+          format: table
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+      - name: Generate container vulnerability report
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           image-ref: fhir-mpi-${{ matrix.name }}:${{ github.sha }}
           format: sarif
           output: trivy-${{ matrix.name }}.sarif
+          scanners: vuln
           severity: HIGH,CRITICAL
-          exit-code: "1"
-      - uses: github/codeql-action/upload-sarif@v3
+          exit-code: "0"
+      - uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: trivy-${{ matrix.name }}.sarif
