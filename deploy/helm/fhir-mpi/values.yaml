@@ -46,6 +46,7 @@ portal:
   dataProtectionKeyPath: /var/fhir-mpi/data-protection
   dataProtectionPvc: fhir-mpi-portal-data-protection
   circuitRetentionMinutes: 3
+  overviewLoadTimeoutSeconds: 20
   managedSourceSystem: portal
 
 secrets:

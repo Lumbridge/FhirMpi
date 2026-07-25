@@ -986,24 +986,31 @@ public sealed class RegistryService(
         CancellationToken cancellationToken)
     {
         EnsureOperationsReader(context);
-        var healthTask = store.CheckHealthAsync(cancellationToken);
+        var healthTask = store.CheckHealthAsync(cancellationToken).AsTask();
         var pendingTask = store.SearchReviewCasesAsync(
             context,
             new ReviewCaseSearch(Status: ReviewCaseStatus.Pending, Count: 100),
-            cancellationToken);
+            cancellationToken).AsTask();
         var awaitingTask = store.SearchReviewCasesAsync(
             context,
             new ReviewCaseSearch(
                 Status: ReviewCaseStatus.AwaitingSecondApproval,
                 Count: 100),
-            cancellationToken);
+            cancellationToken).AsTask();
         var auditTask = store.SearchAuditRecordsAsync(
             context,
             new AuditRecordSearch(
                 From: timeProvider.GetUtcNow().AddHours(-24),
                 Count: 100),
-            cancellationToken);
-        var settingsTask = GetTenantSettingsAsync(context, cancellationToken);
+            cancellationToken).AsTask();
+        var settingsTask = GetTenantSettingsAsync(context, cancellationToken).AsTask();
+        await Task.WhenAll(
+            healthTask,
+            pendingTask,
+            awaitingTask,
+            auditTask,
+            settingsTask);
+
         var health = await healthTask;
         var pending = await pendingTask;
         var awaiting = await awaitingTask;

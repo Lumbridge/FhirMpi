@@ -80,6 +80,8 @@ public sealed class PortalOptions
 {
     public const string SectionName = "Portal";
 
+    public int OverviewLoadTimeoutSeconds { get; init; } = 20;
+
     public bool SeedSyntheticData { get; init; }
 
     public bool PublicDemo { get; init; }

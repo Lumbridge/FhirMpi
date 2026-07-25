@@ -1287,6 +1287,12 @@ dd {
     margin-bottom: 0;
 }
 
+.load-failure {
+    display: grid;
+    gap: 0.75rem;
+    justify-items: start;
+}
+
 .loading-panel {
     display: flex;
     min-height: 12rem;

@@ -74,6 +74,7 @@ The portal uses a generic OpenID Connect authorisation-code flow with PKCE and a
     ]
   },
   "Portal": {
+    "OverviewLoadTimeoutSeconds": 20,
     "SeedSyntheticData": false,
     "PublicDemo": false,
     "CircuitRetentionMinutes": 3,
@@ -84,6 +85,8 @@ The portal uses a generic OpenID Connect authorisation-code flow with PKCE and a
 ```
 
 Supply the same `RegistryProvider`, `GcpHealthcare` and `Tenants` sections used by the API. HMAC material and the OIDC client secret must come from a secret store. `DataProtectionKeyPath` is mandatory outside development when OIDC is enabled and must point to encrypted, durable storage shared by all portal replicas.
+
+`OverviewLoadTimeoutSeconds` bounds the dashboard's provider calls between 5 and 120 seconds. A timeout preserves the interactive circuit, shows a retry action beside the failure, and prevents a transient provider delay from leaving the dashboard in a permanent loading state.
 
 `ManagedSourceSystem` is the only source the interactive portal may create or update. It must be present in every tenant's `SourceTrust` configuration and should normally be non-authoritative. The value comes from trusted server configuration and cannot be overridden through a route, form, header or patient resource. Records owned by PAS, maternity, emergency or other external sources remain read-only in the portal.
 

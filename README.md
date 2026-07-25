@@ -112,6 +112,45 @@ writes and reviewer reads without assembling requests, use the
 [Postman collection and guide](docs/postman/README.md). Public requests target the
 synthetic API by default; mutating requests deliberately target localhost.
 
+## Performance and benchmarking
+
+FhirMpi protects performance at three different levels; each test answers a different
+question and the results should not be mixed:
+
+| Level | What it measures | Current gate or target |
+| --- | --- | --- |
+| Core scoring benchmark | One in-process comparison against 500 already-normalised candidates, without network or storage time | CI baseline mean: **0.629 ms** on the hosted Ubuntu runner; hard ceiling: **10 ms**; fail on a regression greater than **10%** |
+| End-to-end `$match` load test | HTTP, authentication, candidate lookup, scoring, serialisation and the configured provider | Acceptance target: **250 requests/second for 30 minutes**, **p95 below 250 ms**, and **under 0.1%** failed requests |
+| Registry scale test | Candidate blocking and matching against a realistically populated durable registry | Acceptance target: **10 million canonical identities** using synthetic data in an isolated test store |
+
+The core benchmark runs on every default CI build. Its checked-in number is a
+BenchmarkDotNet `ShortRun` mean for regression detection, not a p95/p99 result and not
+an end-to-end throughput claim. The k6 and 10-million-identity figures are release
+acceptance targets that require a representative, same-region GCP environment; they
+have not been demonstrated merely by running the public demo.
+
+Run the scoring benchmark and its regression gate with:
+
+```powershell
+dotnet run --project benchmarks/FhirMpi.Benchmarks -c Release -- `
+  --filter "*ScoreFiveHundred*" --job short --exporters json
+./scripts/Test-BenchmarkRegression.ps1
+```
+
+Run the end-to-end scenario only against an isolated synthetic store:
+
+```powershell
+$env:BASE_URL = "https://fhir-mpi.example"
+$env:ACCESS_TOKEN = "<short-lived system token>"
+k6 run benchmarks/k6/match.js
+```
+
+Performance comes primarily from bounded work: ingestion precomputes HMAC blocking
+keys, candidate lookup never scans the patient population, at most 500 normalised
+candidates reach the scoring engine, and API, MLLP and portal hosts scale independently.
+See [the benchmark guide](benchmarks/README.md) and
+[core-path diagrams](docs/core-paths.md) for methodology and data flow.
+
 ## Documentation map
 
 - [Concepts and frequently asked questions](docs/concepts-and-faq.md): tenants,

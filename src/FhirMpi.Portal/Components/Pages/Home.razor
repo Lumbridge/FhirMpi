@@ -1,7 +1,10 @@
 @page "/"
 @attribute [Authorize(Policy = "OperationsAccess")]
+@implements IDisposable
 @inject RegistryService Registry
 @inject PortalActorContextFactory Actors
+@inject Microsoft.Extensions.Options.IOptions<PortalOptions> PortalConfiguration
+@inject ILogger<Home> Logger
 
 <PageTitle>Operations overview · FhirMpi</PageTitle>
 
@@ -17,9 +20,17 @@
 
 @if (Error is not null)
 {
-    <AlertMessage Tone="danger" Title="The overview could not be loaded" Message="@Error" />
+    <div class="load-failure">
+        <SubmissionFeedback Title="The overview could not be loaded" Message="@Error" />
+        <button class="button button-secondary"
+                type="button"
+                disabled="@IsLoading"
+                @onclick="LoadAsync">
+            Try again
+        </button>
+    </div>
 }
-else if (Summary is null)
+else if (IsLoading || Summary is null)
 {
     <div class="loading-panel" role="status">
         <span class="loading-spinner" aria-hidden="true"></span>
@@ -139,27 +150,88 @@ else
 
     private string? Error { get; set; }
 
-    protected override async Task OnInitializedAsync()
+    private bool IsLoading { get; set; } = true;
+
+    private CancellationTokenSource ComponentLifetime { get; } = new();
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
     {
+        IsLoading = true;
+        Error = null;
+        Summary = null;
+        PriorityReviews = [];
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(
+            ComponentLifetime.Token);
+        timeout.CancelAfter(
+            TimeSpan.FromSeconds(PortalConfiguration.Value.OverviewLoadTimeoutSeconds));
+
         try
         {
             var actor = await Actors.CreateAsync();
-            Summary = await Registry.GetOperationalSummaryAsync(actor, CancellationToken.None);
-            var awaiting = await Registry.SearchReviewCasesAsync(
+            var summaryTask = Registry.GetOperationalSummaryAsync(
+                actor,
+                timeout.Token).AsTask();
+            var awaitingTask = Registry.SearchReviewCasesAsync(
                 actor,
                 new ReviewCaseSearch(
                     Status: ReviewCaseStatus.AwaitingSecondApproval,
                     Count: 4),
-                CancellationToken.None);
-            var pending = await Registry.SearchReviewCasesAsync(
+                timeout.Token).AsTask();
+            var pendingTask = Registry.SearchReviewCasesAsync(
                 actor,
                 new ReviewCaseSearch(Status: ReviewCaseStatus.Pending, Count: 4),
-                CancellationToken.None);
+                timeout.Token).AsTask();
+            await Task.WhenAll(summaryTask, awaitingTask, pendingTask);
+
+            Summary = await summaryTask;
+            var awaiting = await awaitingTask;
+            var pending = await pendingTask;
             PriorityReviews = awaiting.Items.Concat(pending.Items).Take(6).ToArray();
+        }
+        catch (OperationCanceledException) when (ComponentLifetime.IsCancellationRequested)
+        {
+            // The user navigated away while the provider request was in flight.
+        }
+        catch (OperationCanceledException exception)
+        {
+            Logger.LogWarning(
+                "Tenant overview loading timed out with {ExceptionType}.",
+                exception.GetType().Name);
+            Error =
+                "The registry took too long to respond. Check service health and try again.";
         }
         catch (RegistryException exception)
         {
             Error = exception.Message;
         }
+        catch (HttpRequestException exception)
+        {
+            Logger.LogWarning(
+                "Tenant overview provider request failed with {ExceptionType}.",
+                exception.GetType().Name);
+            Error =
+                "The registry provider could not be reached. Try again in a moment.";
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(
+                "Tenant overview loading failed with {ExceptionType}.",
+                exception.GetType().Name);
+            Error =
+                "An unexpected error prevented the overview from loading. Try again. " +
+                "If it continues, contact support with the time of the failure.";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    public void Dispose()
+    {
+        ComponentLifetime.Cancel();
+        ComponentLifetime.Dispose();
     }
 }

@@ -230,7 +230,8 @@ $portalEnvironment = @(
     "Portal__SeedSyntheticData=true",
     "Portal__PublicDemo=true",
     "Portal__ManagedSourceSystem=portal",
-    "Portal__CircuitRetentionMinutes=3"
+    "Portal__CircuitRetentionMinutes=3",
+    "Portal__OverviewLoadTimeoutSeconds=20"
 ) + $tenantSettings
 $apiEnvironmentSpec = $apiEnvironment -join ","
 $portalEnvironmentSpec = $portalEnvironment -join ","

@@ -31,6 +31,12 @@ var authentication = builder.Configuration
 var portalOptions = builder.Configuration
     .GetSection(PortalOptions.SectionName)
     .Get<PortalOptions>() ?? new PortalOptions();
+if (portalOptions.OverviewLoadTimeoutSeconds is < 5 or > 120)
+{
+    throw new InvalidOperationException(
+        "Portal:OverviewLoadTimeoutSeconds must be between 5 and 120.");
+}
+
 if (portalOptions.PublicDemo && authentication.Enabled)
 {
     throw new InvalidOperationException(

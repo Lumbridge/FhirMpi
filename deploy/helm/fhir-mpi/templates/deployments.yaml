@@ -124,6 +124,7 @@ spec:
             - { name: PortalAuthentication__RequireHttpsMetadata, value: {{ .Values.portalAuthentication.requireHttpsMetadata | quote }} }
             - { name: Portal__DataProtectionKeyPath, value: {{ .Values.portal.dataProtectionKeyPath | quote }} }
             - { name: Portal__CircuitRetentionMinutes, value: {{ .Values.portal.circuitRetentionMinutes | quote }} }
+            - { name: Portal__OverviewLoadTimeoutSeconds, value: {{ .Values.portal.overviewLoadTimeoutSeconds | quote }} }
             - { name: Portal__ManagedSourceSystem, value: {{ .Values.portal.managedSourceSystem | quote }} }
           envFrom:
             - secretRef: { name: {{ .Values.secrets.configurationSecretName }} }
