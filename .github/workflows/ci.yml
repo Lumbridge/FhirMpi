@@ -33,27 +33,6 @@ jobs:
       - name: Audit documentation dependencies
         working-directory: docs-site
         run: pnpm audit --audit-level high
-      - name: Upload initial GitHub Pages artifact
-        if: github.event_name == 'push' && github.ref == 'refs/heads/codex/openmpi-rebrand'
-        uses: actions/upload-pages-artifact@v4
-        with:
-          path: docs-site/dist
-
-  docs-bootstrap-deploy:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/codex/openmpi-rebrand'
-    needs: docs
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy initial documentation site
-        id: deployment
-        uses: actions/deploy-pages@v5
 
   build-test:
     runs-on: ubuntu-latest
