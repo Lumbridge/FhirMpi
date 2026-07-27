@@ -1,7 +1,10 @@
-# Postman collection
+---
+title: Postman collection
+description: Run an importable FHIR discovery, canonical search and Patient matching tour against synthetic data.
+---
 
 Import
-[`UnifyEMPI-Match-Demo.postman_collection.json`](UnifyEMPI-Match-Demo.postman_collection.json)
+[`UnifyEMPI-Match-Demo.postman_collection.json`](/UnifyEMPI/downloads/UnifyEMPI-Match-Demo.postman_collection.json)
 into Postman to explore the implemented API without assembling FHIR payloads manually.
 
 The collection contains:

@@ -1,6 +1,9 @@
-# ADR 0001: Modular monolith and provider contract
+---
+title: "ADR 0001: Modular monolith and provider contract"
+description: Why UnifyEMPI keeps identity decisions transactional behind one replaceable storage contract.
+---
 
-Status: accepted
+**Status:** Accepted
 
 UnifyEMPI uses a modular monolith with separate API and MLLP processes. Domain and application modules remain version- and provider-neutral. `IIdentityRegistryStore` is the only persistence boundary.
 

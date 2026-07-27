@@ -1,4 +1,7 @@
-# Live GCP provider tests
+---
+title: Live GCP provider tests
+description: Run destructive provider-contract tests safely against an isolated synthetic Healthcare API store.
+---
 
 This project is deliberately excluded from `UnifyEMPI.slnx`. It writes synthetic
 resources and must run only against a short-lived, isolated Healthcare API R4

@@ -1,4 +1,7 @@
-# GCP demonstration deployment
+---
+title: GCP demonstration deployment
+description: Deploy, verify, operate and safely remove the shared synthetic UnifyEMPI environment.
+---
 
 The deployment script creates a branded synthetic UnifyEMPI demonstration in a chosen
 Google Cloud project. The current shared synthetic deployment is available at:
@@ -33,7 +36,7 @@ evaluated; use invented data only.
 
 ## Postman `$match` demonstration
 
-Import [`UnifyEMPI-Match-Demo.postman_collection.json`](postman/UnifyEMPI-Match-Demo.postman_collection.json)
+Import [`UnifyEMPI-Match-Demo.postman_collection.json`](/UnifyEMPI/downloads/UnifyEMPI-Match-Demo.postman_collection.json)
 into Postman and send **Match a synthetic patient**. Its default `baseUrl` points to
 the shared synthetic API above. The collection contains a synthetic partial Patient,
 FHIR media-type headers, the R4 `Parameters` wrapper, `onlyCertainMatches`, `count`,

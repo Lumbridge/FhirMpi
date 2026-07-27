@@ -1,9 +1,12 @@
-# Architecture
+---
+title: Architecture overview
+description: UnifyEMPI hosts, dependency boundaries, storage contract and deployment shape.
+---
 
 For the implemented request, message and governance sequences, see
-[core paths and processing model](core-paths.md).
+[core paths and processing model](/UnifyEMPI/architecture/core-paths/).
 For operational terminology, national tenancy choices and common questions, see
-[concepts and frequently asked questions](concepts-and-faq.md).
+[identity model and frequently asked questions](/UnifyEMPI/concepts/identity-model/).
 
 ```mermaid
 flowchart LR

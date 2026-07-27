@@ -1,8 +1,12 @@
-# Concepts and frequently asked questions
+---
+title: Identity model and frequently asked questions
+description: Operational definitions for tenants, source Patients, canonical Patients, Person links, blocking and review.
+---
 
 This guide explains the registry model in operational terms. It complements the
-[architecture](architecture.md), [annotated core paths](core-paths.md) and
-[configuration reference](configuration.md).
+[architecture](/UnifyEMPI/architecture/overview/),
+[annotated core paths](/UnifyEMPI/architecture/core-paths/) and
+[configuration reference](/UnifyEMPI/reference/configuration/).
 
 ## Glossary
 
@@ -351,7 +355,7 @@ to be rebuilt.
 
 ### How can `$match` be demonstrated?
 
-Use the [Postman collection and guide](postman/README.md). It includes discovery,
+Use the [Postman collection and guide](/UnifyEMPI/guides/postman/). It includes discovery,
 canonical search, JSON/XML matching, safe error examples, local synthetic source writes
 and read-only reviewer operations. It targets localhost by default and includes
 assertions for the FHIR searchset, score and `match-grade`. Never use real patient
@@ -389,10 +393,10 @@ Test assemblies must never be deployed in production images.
 
 ## Where to go next
 
-- [Core paths and processing model](core-paths.md): annotated request, match, merge,
+- [Core paths and processing model](/UnifyEMPI/architecture/core-paths/): annotated request, match, merge,
   split, survivorship and isolation diagrams.
-- [Architecture](architecture.md): dependency boundaries and provider model.
-- [Configuration](configuration.md): API, portal, tenant, HMAC and MLLP settings.
-- [GCP demonstration deployment](public-demo.md): synthetic topology and safe operation.
-- [Provider ADR](adr/0001-modular-monolith-and-provider-contract.md): the storage
+- [Architecture](/UnifyEMPI/architecture/overview/): dependency boundaries and provider model.
+- [Configuration](/UnifyEMPI/reference/configuration/): API, portal, tenant, HMAC and MLLP settings.
+- [GCP demonstration deployment](/UnifyEMPI/deployment/public-demo/): synthetic topology and safe operation.
+- [Provider ADR](/UnifyEMPI/architecture/decisions/0001-modular-monolith-and-provider-contract/): the storage
   abstraction decision.

@@ -1,4 +1,7 @@
-# Matching and blocking rules
+---
+title: Matching and blocking rules
+description: Normative candidate discovery, normalisation, scoring, certainty, conflicts and workflow routing.
+---
 
 This document is the normative description of UnifyEMPI's current patient-candidate
 discovery and pairwise matching behaviour. It describes `uk-default-v1` as implemented;

@@ -1,4 +1,7 @@
-# Performance gates
+---
+title: Performance gates
+description: Scoring benchmark, load-test and registry-scale acceptance targets.
+---
 
 `UnifyEmpi.Benchmarks` measures the pure scoring path over 500 pre-normalised
 candidates. The checked-in baseline and `scripts/Test-BenchmarkRegression.ps1`

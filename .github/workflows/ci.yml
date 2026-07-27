@@ -12,6 +12,28 @@ permissions:
   security-events: write
 
 jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: docs-site/pnpm-lock.yaml
+      - name: Install documentation dependencies
+        working-directory: docs-site
+        run: pnpm install --frozen-lockfile
+      - name: Build documentation and validate links
+        working-directory: docs-site
+        run: pnpm build
+      - name: Audit documentation dependencies
+        working-directory: docs-site
+        run: pnpm audit --audit-level high
+
   build-test:
     runs-on: ubuntu-latest
     steps:

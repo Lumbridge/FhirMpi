@@ -1,4 +1,7 @@
-# Configuration
+---
+title: Configuration reference
+description: Configure identity, tenants, matching profiles, source trust, storage, portal access and HL7v2 ingress.
+---
 
 Environment variables use .NET double-underscore notation, for example `Authentication__Authority`.
 
@@ -6,7 +9,7 @@ Choose the tenant boundary before assigning source systems or generating secrets
 UnifyEMPI never matches across tenants. For the Welsh national registry, each health
 board, WDS, Velindre and any additional participating national organisation has a
 distinct source-system ID inside one national tenant.
-See [concepts and frequently asked questions](concepts-and-faq.md#tenants-and-national-deployment)
+See [identity model and frequently asked questions](/UnifyEMPI/concepts/identity-model/#tenants-and-national-deployment)
 for the security and access implications.
 
 ## API
@@ -90,7 +93,7 @@ governance rather than copying them unchanged.
 
 During key rotation, retain the previous key until all canonical records have been re-indexed. Candidate lookup queries all configured versions; only one version may be active for new stable IDs and tags.
 
-See [matching and blocking rules](matching-and-blocking.md) for the normative rule
+See [matching and blocking rules](/UnifyEMPI/matching/rules/) for the normative rule
 definitions, score formula, configuration constraints, workflow outcomes, examples and
 the re-index requirement when blocking inputs change. Deploy the same tenant rule
 profile to the API, portal and MLLP hosts.

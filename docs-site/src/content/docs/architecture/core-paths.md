@@ -1,4 +1,7 @@
-# Core paths and processing model
+---
+title: Core paths and processing model
+description: Annotated FHIR, HL7v2, matching, merge, split, survivorship and tenant-isolation flows.
+---
 
 This document shows how the principal UnifyEMPI paths work as implemented. The diagrams
 distinguish synchronous automation, message-driven processing, human-governed actions,
@@ -6,9 +9,9 @@ and work that is deliberately not performed in the background.
 
 For definitions of source Patients, canonical Patients, enterprise `Person` links,
 tenants, HMAC and blocking tags, see
-[concepts and frequently asked questions](concepts-and-faq.md).
+[identity model and frequently asked questions](/UnifyEMPI/concepts/identity-model/).
 For the exact normalisation, blocking, scoring, certainty and routing rules, see the
-normative [matching and blocking rules](matching-and-blocking.md).
+normative [matching and blocking rules](/UnifyEMPI/matching/rules/).
 
 ## Processing model at a glance
 
@@ -117,7 +120,7 @@ tenant-authoritative exact identifier and no hard conflict.
 The diagram shows the default `uk-default-v1` profile. Named blocking rounds, field
 weights, authoritative identifier systems and bounded limits are configurable per
 tenant at deployment; their exact semantics and change-control requirements are defined
-in [matching and blocking rules](matching-and-blocking.md).
+in [matching and blocking rules](/UnifyEMPI/matching/rules/).
 
 The current trigger-specific outcomes are:
 

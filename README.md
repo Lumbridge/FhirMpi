@@ -4,6 +4,7 @@
 [![.NET 10](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
 [![FHIR R4](https://img.shields.io/badge/FHIR-R4-E34A6F)](https://hl7.org/fhir/R4/)
 [![Licence: CC0 1.0](https://img.shields.io/badge/licence-CC0--1.0-lightgrey.svg)](LICENSE)
+[![Documentation](https://img.shields.io/badge/docs-Starlight-0F766E)](https://lumbridge.github.io/UnifyEMPI/)
 [![Live synthetic demo](https://img.shields.io/badge/demo-live-148A08)](https://unifyempi-demo-mjpwolhr6q-nw.a.run.app)
 
 UnifyEMPI is a high-performance, multi-tenant master patient index (MPI) foundation for FHIR R4 and HL7v2. It is a modular monolith with three independently scalable hosts:
@@ -19,10 +20,10 @@ The registry is hybrid. Source systems remain authoritative for their Patient sn
 > deployments must contain synthetic data only. Production NHS use requires the independent
 > safety, privacy, security, operational and contractual work described below.
 
-See [core paths and processing model](docs/core-paths.md) for annotated diagrams of real-time duplicate detection, FHIR and HL7 ingestion, `$match`, merge, split, survivorship, tenant isolation, and provider boundaries.
+See [core paths and processing model](https://lumbridge.github.io/UnifyEMPI/architecture/core-paths/) for annotated diagrams of real-time duplicate detection, FHIR and HL7 ingestion, `$match`, merge, split, survivorship, tenant isolation, and provider boundaries.
 For the operational meaning of tenants, source Patients, canonical Patients, `Person`,
 HMAC blocking tags and review errors, start with
-[concepts and frequently asked questions](docs/concepts-and-faq.md).
+[identity concepts and frequently asked questions](https://lumbridge.github.io/UnifyEMPI/concepts/identity-model/).
 
 ## Capabilities out of the box
 
@@ -56,7 +57,7 @@ Never enter real patient or confidential information into a demonstration enviro
 Public MLLP is deliberately excluded because production HL7v2 ingress must use a
 private endpoint and mutual TLS.
 
-See [public-demo.md](docs/public-demo.md) for the GCP topology, verified scenarios,
+See the [public-demo guide](https://lumbridge.github.io/UnifyEMPI/deployment/public-demo/) for the GCP topology, verified scenarios,
 cost controls, reproducible deployment and safe teardown.
 
 ## Quick start
@@ -121,7 +122,7 @@ Stop the local containers with `docker compose down`.
 
 To explore discovery, canonical search, JSON/XML `$match`, safe error cases, local source
 writes and reviewer reads without assembling requests, use the
-[Postman collection and guide](docs/postman/README.md). Public requests target the
+[Postman collection and guide](https://lumbridge.github.io/UnifyEMPI/guides/postman/). Public requests target the
 synthetic API by default; mutating requests deliberately target localhost.
 
 ## Performance and benchmarking
@@ -160,30 +161,32 @@ k6 run benchmarks/k6/match.js
 Performance comes primarily from bounded work: ingestion precomputes HMAC blocking
 keys, candidate lookup never scans the patient population, at most 500 normalised
 candidates reach the scoring engine, and API, MLLP and portal hosts scale independently.
-See [the benchmark guide](benchmarks/README.md) and
-[core-path diagrams](docs/core-paths.md) for methodology and data flow.
+See [the benchmark guide](https://lumbridge.github.io/UnifyEMPI/development/performance/) and
+[core-path diagrams](https://lumbridge.github.io/UnifyEMPI/architecture/core-paths/) for methodology and data flow.
 
 ## Documentation map
 
-- [Concepts and frequently asked questions](docs/concepts-and-faq.md): tenants,
+- [Identity model and frequently asked questions](https://lumbridge.github.io/UnifyEMPI/concepts/identity-model/): tenants,
   national deployment, source/canonical records, blocking, reviews, existing-store
   onboarding and troubleshooting.
-- [Matching and blocking rules](docs/matching-and-blocking.md): normative
+- [NHS Wales source model](https://lumbridge.github.io/UnifyEMPI/concepts/nhs-wales-sources/):
+  organisation-level sources for all seven health boards, WDS and Velindre.
+- [Matching and blocking rules](https://lumbridge.github.io/UnifyEMPI/matching/rules/): normative
   normalisation, configurable blocking rounds, score formula, certainty/conflict
   rules, routing, examples and feature-alignment gaps.
-- [Core paths and processing model](docs/core-paths.md): annotated diagrams for
+- [Core paths and processing model](https://lumbridge.github.io/UnifyEMPI/architecture/core-paths/): annotated diagrams for
   ingestion, matching, merge, split, survivorship and tenant isolation.
-- [Architecture](docs/architecture.md): dependency boundaries, materialisation and the
+- [Architecture](https://lumbridge.github.io/UnifyEMPI/architecture/overview/): dependency boundaries, materialisation and the
   replaceable provider contract.
-- [Configuration](docs/configuration.md): API, portal, OIDC, tenant, HMAC and MLLP
+- [Configuration](https://lumbridge.github.io/UnifyEMPI/reference/configuration/): API, portal, OIDC, tenant, HMAC and MLLP
   settings.
-- [GCP demonstration deployment](docs/public-demo.md): deployable topology, synthetic scenarios,
+- [GCP demonstration deployment](https://lumbridge.github.io/UnifyEMPI/deployment/public-demo/): deployable topology, synthetic scenarios,
   cost controls and safe teardown.
-- [Postman collection](docs/postman/README.md): importable discovery, matching, source
+- [Postman collection](https://lumbridge.github.io/UnifyEMPI/guides/postman/): importable discovery, matching, source
   write and reviewer-operation examples.
 - [Contributing](CONTRIBUTING.md) and [security policy](SECURITY.md): development
   expectations and private vulnerability reporting.
-- [Storage-provider ADR](docs/adr/0001-modular-monolith-and-provider-contract.md): why
+- [Storage-provider ADR](https://lumbridge.github.io/UnifyEMPI/architecture/decisions/0001-modular-monolith-and-provider-contract/): why
   the modular monolith and provider contract were selected.
 
 ## Moving to production
@@ -226,8 +229,8 @@ Do not promote the Compose development settings directly. A production deploymen
 
 Production NHS use additionally requires an approved DPIA, clinical-safety case, penetration test, data-retention and disaster-recovery policies, operational ownership, and contractual/compliance review. UnifyEMPI supplies technical controls but does not itself provide production approval or certification.
 
-Detailed settings are documented in [configuration.md](docs/configuration.md). Use
-[concepts and frequently asked questions](docs/concepts-and-faq.md) when selecting a
+Detailed settings are documented in the [configuration reference](https://lumbridge.github.io/UnifyEMPI/reference/configuration/). Use
+[identity concepts and frequently asked questions](https://lumbridge.github.io/UnifyEMPI/concepts/identity-model/) when selecting a
 tenant boundary or planning an existing-store onboarding. The portable chart is under
 [deploy/helm/unifyempi](deploy/helm/unifyempi), and the optional GCP reference
 infrastructure is under [deploy/terraform](deploy/terraform).
@@ -282,7 +285,11 @@ Production requires:
 - an unpacked `hl7.fhir.r4.core#4.0.1` and `fhir.r4.ukcore.stu2#2.0.2` package directory for the bounded Firely validator pool;
 - TLS and client-certificate allow-lists for MLLP.
 
-See [configuration.md](docs/configuration.md), [matching and blocking rules](docs/matching-and-blocking.md), [architecture.md](docs/architecture.md), [core paths and processing model](docs/core-paths.md), and the [Helm values](deploy/helm/unifyempi/values.yaml).
+See [configuration](https://lumbridge.github.io/UnifyEMPI/reference/configuration/),
+[matching and blocking rules](https://lumbridge.github.io/UnifyEMPI/matching/rules/),
+[architecture](https://lumbridge.github.io/UnifyEMPI/architecture/overview/),
+[core paths and processing model](https://lumbridge.github.io/UnifyEMPI/architecture/core-paths/),
+and the [Helm values](deploy/helm/unifyempi/values.yaml).
 
 ## Safety and scope
 
