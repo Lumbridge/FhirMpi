@@ -27,6 +27,29 @@ function Test-GcloudResource {
     return $LASTEXITCODE -eq 0
 }
 
+function Invoke-NativeCommandWithRetry {
+    param(
+        [scriptblock] $Command,
+        [string] $Action,
+        [int] $MaxAttempts = 10,
+        [int] $DelaySeconds = 3
+    )
+
+    for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
+        & $Command
+        if ($LASTEXITCODE -eq 0) {
+            return
+        }
+
+        if ($attempt -lt $MaxAttempts) {
+            Write-Warning "$Action attempt $attempt failed; retrying in $DelaySeconds seconds."
+            Start-Sleep -Seconds $DelaySeconds
+        }
+    }
+
+    throw "$Action failed after $MaxAttempts attempts."
+}
+
 foreach ($command in @("gcloud", "docker")) {
     if (-not (Get-Command $command -ErrorAction SilentlyContinue)) {
         throw "'$command' is required but was not found."
@@ -126,11 +149,14 @@ if (-not (Test-GcloudResource {
     Assert-LastExitCode "Creating service account '$serviceAccountName'"
 }
 
-gcloud projects add-iam-policy-binding $ProjectId `
-    --member="serviceAccount:$serviceAccountName" `
-    --role="roles/healthcare.fhirResourceEditor" `
-    --quiet | Out-Null
-Assert-LastExitCode "Granting FHIR resource access"
+Invoke-NativeCommandWithRetry `
+    -Action "Granting FHIR resource access" `
+    -Command {
+        gcloud projects add-iam-policy-binding $ProjectId `
+            --member="serviceAccount:$serviceAccountName" `
+            --role="roles/healthcare.fhirResourceEditor" `
+            --quiet | Out-Null
+    }
 
 $secretName = "$ServiceName-hmac"
 if (-not (Test-GcloudResource {
@@ -174,12 +200,15 @@ if ([string]::IsNullOrWhiteSpace(($enabledSecretVersions -join ""))) {
     $secretPayload = $null
 }
 
-gcloud secrets add-iam-policy-binding $secretName `
-    --project=$ProjectId `
-    --member="serviceAccount:$serviceAccountName" `
-    --role="roles/secretmanager.secretAccessor" `
-    --quiet | Out-Null
-Assert-LastExitCode "Granting secret access"
+Invoke-NativeCommandWithRetry `
+    -Action "Granting secret access" `
+    -Command {
+        gcloud secrets add-iam-policy-binding $secretName `
+            --project=$ProjectId `
+            --member="serviceAccount:$serviceAccountName" `
+            --role="roles/secretmanager.secretAccessor" `
+            --quiet | Out-Null
+    }
 
 gcloud auth configure-docker "$Region-docker.pkg.dev" --quiet
 Assert-LastExitCode "Configuring Docker authentication"
