@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <UserSecretsId>OpenMPI-Api-Development</UserSecretsId>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../OpenMpi.Application/OpenMpi.Application.csproj" />
+    <ProjectReference Include="../OpenMpi.Fhir.R4/OpenMpi.Fhir.R4.csproj" />
+    <ProjectReference Include="../OpenMpi.Storage.Gcp/OpenMpi.Storage.Gcp.csproj" />
+    <ProjectReference Include="../OpenMpi.Storage.InMemory/OpenMpi.Storage.InMemory.csproj" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" />
+  </ItemGroup>
+</Project>

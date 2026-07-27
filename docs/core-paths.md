@@ -1,6 +1,6 @@
 # Core paths and processing model
 
-This document shows how the principal FhirMpi paths work as implemented. The diagrams
+This document shows how the principal OpenMPI paths work as implemented. The diagrams
 distinguish synchronous automation, message-driven processing, human-governed actions,
 and work that is deliberately not performed in the background.
 
@@ -20,7 +20,7 @@ tenants, HMAC and blocking tags, see
 | Merge or split decision | Real-time, started by an authorised reviewer | Evidence and concurrency checks are automatic; the decision is human | Yes, atomically after the approval threshold is met |
 | Overnight or periodic population scan | Not present | No | No |
 
-FhirMpi has no internal event bus or overnight matching job in this milestone. FHIR is
+OpenMPI has no internal event bus or overnight matching job in this milestone. FHIR is
 request-driven; MLLP is message-driven but the message is processed synchronously before
 the sender receives an acknowledgement. Candidate blocking makes those real-time paths
 bounded, so they never scan the whole patient population.
@@ -36,9 +36,9 @@ flowchart LR
     end
 
     subgraph hosts["Independently scalable hosts"]
-        API["FhirMpi.Api<br/>FHIR, SMART and review APIs"]
-        MLLP["FhirMpi.Hl7v2.Host<br/>framing, TLS, parsing and ACKs"]
-        PORTAL["FhirMpi.Portal<br/>Blazor Interactive Server"]
+        API["OpenMpi.Api<br/>FHIR, SMART and review APIs"]
+        MLLP["OpenMpi.Hl7v2.Host<br/>framing, TLS, parsing and ACKs"]
+        PORTAL["OpenMpi.Portal<br/>Blazor Interactive Server"]
     end
 
     subgraph core["Shared modular-monolith core"]
@@ -131,7 +131,7 @@ partitions rather than a population-wide nested comparison.
 sequenceDiagram
     autonumber
     actor Source as Source system
-    participant API as FhirMpi.Api
+    participant API as OpenMpi.Api
     participant Validator as Bounded R4/UK Core validator pool
     participant Registry as RegistryService
     participant Store as IIdentityRegistryStore
@@ -181,7 +181,7 @@ server-managed and read-only to consumers.
 sequenceDiagram
     autonumber
     actor Consumer as FHIR consumer
-    participant API as FhirMpi.Api
+    participant API as OpenMpi.Api
     participant Registry as RegistryService
     participant Store as IIdentityRegistryStore
     participant Matcher as Weighted evidence engine

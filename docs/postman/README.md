@@ -1,7 +1,7 @@
 # Postman collection
 
 Import
-[`FhirMpi-Match-Demo.postman_collection.json`](FhirMpi-Match-Demo.postman_collection.json)
+[`OpenMPI-Match-Demo.postman_collection.json`](OpenMPI-Match-Demo.postman_collection.json)
 into Postman to explore the implemented API without assembling FHIR payloads manually.
 
 The collection contains:

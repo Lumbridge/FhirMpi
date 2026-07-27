@@ -1,5 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <Description>FHIR-version-neutral identity domain for FhirMpi.</Description>
-  </PropertyGroup>
-</Project>

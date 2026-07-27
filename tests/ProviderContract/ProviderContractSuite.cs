@@ -1,8 +1,8 @@
-using FhirMpi.Domain;
-using FhirMpi.Storage.Abstractions;
+using OpenMpi.Domain;
+using OpenMpi.Storage.Abstractions;
 using Xunit;
 
-namespace FhirMpi.Storage.Testing;
+namespace OpenMpi.Storage.Testing;
 
 #pragma warning disable xUnit1031 // Contract providers used here complete their ValueTasks synchronously.
 public abstract class ProviderContractSuite

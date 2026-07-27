@@ -1,0 +1,145 @@
+@page "/audit"
+@attribute [Authorize(Policy = "AuditAccess")]
+@inject RegistryService Registry
+@inject PortalActorContextFactory Actors
+
+<PageTitle>Audit trail · OpenMPI</PageTitle>
+
+<PageHeader
+    Eyebrow="Accountability"
+    Title="Tenant audit trail"
+    Description="Inspect immutable identity, review and configuration events without exposing raw inbound clinical payloads." />
+
+<section class="filter-bar" aria-label="Audit filters">
+    <div class="field">
+        <label for="audit-action">Action contains</label>
+        <input id="audit-action" class="input" @bind="ActionFilter" />
+    </div>
+    <div class="field">
+        <label for="audit-outcome">Outcome</label>
+        <input id="audit-outcome" class="input" @bind="OutcomeFilter" />
+    </div>
+    <div class="field">
+        <label for="audit-from">From</label>
+        <InputDate id="audit-from" class="input" @bind-Value="From" />
+    </div>
+    <button class="button button-secondary filter-action"
+            type="button"
+            disabled="@IsLoading"
+            @onclick="LoadAsync">
+        Apply filters
+    </button>
+</section>
+
+@if (Error is not null)
+{
+    <SubmissionFeedback Title="The audit trail could not be loaded" Message="@Error" />
+}
+else if (IsLoading)
+{
+    <div class="loading-panel" role="status">
+        <span class="loading-spinner" aria-hidden="true"></span>
+        <span>Loading audited events…</span>
+    </div>
+}
+else
+{
+    <section class="table-panel" aria-labelledby="audit-table-heading">
+        <div class="section-heading table-heading">
+            <div>
+                <p class="eyebrow">Recorded events</p>
+                <h2 id="audit-table-heading">@Events.Count audit records</h2>
+            </div>
+            <span class="result-note">Tenant-scoped</span>
+        </div>
+        @if (Events.Count == 0)
+        {
+            <div class="compact-empty"><p>No events match these filters.</p></div>
+        }
+        else
+        {
+            <div class="responsive-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">Time</th>
+                            <th scope="col">Action</th>
+                            <th scope="col">Actor</th>
+                            <th scope="col">Outcome</th>
+                            <th scope="col">Reason</th>
+                            <th scope="col">Correlation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var record in Events)
+                        {
+                            <tr>
+                                <td>@PortalDisplay.Instant(record.RecordedAt)</td>
+                                <td><strong>@record.Action</strong></td>
+                                <td>@record.Actor</td>
+                                <td><StatusBadge Label="@record.Outcome" Tone="@OutcomeTone(record.Outcome)" /></td>
+                                <td class="audit-reason">@record.Reason</td>
+                                <td><code>@Short(record.CorrelationId)</code></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+}
+
+@code {
+    private List<AuditRecord> Events { get; } = [];
+
+    private string? ActionFilter { get; set; }
+
+    private string? OutcomeFilter { get; set; }
+
+    private DateOnly? From { get; set; } = DateOnly.FromDateTime(DateTime.Today.AddDays(-7));
+
+    private string? Error { get; set; }
+
+    private bool IsLoading { get; set; }
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        IsLoading = true;
+        Error = null;
+        Events.Clear();
+        try
+        {
+            var page = await Registry.SearchAuditRecordsAsync(
+                await Actors.CreateAsync(),
+                new AuditRecordSearch(
+                    Action: NullIfBlank(ActionFilter),
+                    Outcome: NullIfBlank(OutcomeFilter),
+                    From: From is null
+                        ? null
+                        : new DateTimeOffset(From.Value.ToDateTime(TimeOnly.MinValue), TimeZoneInfo.Local.GetUtcOffset(DateTime.Now)),
+                    Count: 100),
+                CancellationToken.None);
+            Events.AddRange(page.Items.OrderByDescending(static item => item.RecordedAt));
+        }
+        catch (RegistryException exception)
+        {
+            Error = exception.Message;
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private static string? NullIfBlank(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private static string Short(string value) =>
+        value.Length <= 12 ? value : value[..12];
+
+    private static string OutcomeTone(string outcome) =>
+        outcome is "success" or "linked" or "split" ? "success" :
+        outcome is "pending" ? "warning" : "neutral";
+}

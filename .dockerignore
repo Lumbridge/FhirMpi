@@ -5,8 +5,8 @@
 **/TestResults
 artifacts
 benchmark-results
-FhirMpi.ConsoleServer
-FhirMpi.Library
-FhirMpi.Library.Tests
-FhirMpi.Web
-FhirMpi.Web.Tests
+OpenMpi.ConsoleServer
+OpenMpi.Library
+OpenMpi.Library.Tests
+OpenMpi.Web
+OpenMpi.Web.Tests

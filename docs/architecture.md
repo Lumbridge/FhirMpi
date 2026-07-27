@@ -7,9 +7,9 @@ For operational terminology, national tenancy choices and common questions, see
 
 ```mermaid
 flowchart LR
-    FHIR["FHIR R4 clients"] --> API["FhirMpi.Api"]
+    FHIR["FHIR R4 clients"] --> API["OpenMpi.Api"]
     REVIEW["Review API clients"] --> API
-    HL7["HL7v2 senders"] --> MLLP["FhirMpi.Hl7v2.Host"]
+    HL7["HL7v2 senders"] --> MLLP["OpenMpi.Hl7v2.Host"]
     API --> APP["Application workflows"]
     MLLP --> APP
     APP --> DOMAIN["Version-neutral domain"]
@@ -25,7 +25,7 @@ The domain contains tenant IDs, source records, enterprise clusters, normalised 
 
 The application implements ingestion, blocking, matching, survivorship, linking, review, and merge workflows. Protocol adapters translate into application commands. Persistence adapters translate `IIdentityRegistryStore` mutations into provider-native atomic operations.
 
-FHIR R4 is isolated in `FhirMpi.Fhir.R4`; an R5 adapter can be added beside it without changing domain or persistence contracts.
+FHIR R4 is isolated in `OpenMpi.Fhir.R4`; an R5 adapter can be added beside it without changing domain or persistence contracts.
 
 ## Registry materialisation
 

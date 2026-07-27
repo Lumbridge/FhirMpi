@@ -28,7 +28,7 @@ disclosure plan. This public project provides no contractual response-time guara
 
 ## Production responsibility
 
-FhirMpi provides technical security controls but is not a certified clinical product.
+OpenMPI provides technical security controls but is not a certified clinical product.
 Deploying organisations remain responsible for threat modelling, penetration testing,
 dependency and container scanning, key rotation, access reviews, incident response,
 clinical safety, data protection and regulatory approval.

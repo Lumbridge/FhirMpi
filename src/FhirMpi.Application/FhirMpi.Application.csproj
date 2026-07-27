@@ -1,6 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <ItemGroup>
-    <ProjectReference Include="../FhirMpi.Domain/FhirMpi.Domain.csproj" />
-    <ProjectReference Include="../FhirMpi.Storage.Abstractions/FhirMpi.Storage.Abstractions.csproj" />
-  </ItemGroup>
-</Project>

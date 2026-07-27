@@ -1,0 +1,12 @@
+# Live GCP provider tests
+
+This project is deliberately excluded from `OpenMPI.slnx`. It writes synthetic
+resources and must run only against a short-lived, isolated Healthcare API R4
+store supplied through `GCP_FHIR_STORE`, using Application Default Credentials.
+
+```powershell
+dotnet test tests/OpenMpi.Storage.Gcp.LiveTests -c Release
+```
+
+Destroy the test store after the run. Never point this suite at a production or
+shared clinical store.

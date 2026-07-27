@@ -6,16 +6,16 @@ This guide explains the registry model in operational terms. It complements the
 
 ## Glossary
 
-| Term | Meaning in FhirMpi |
+| Term | Meaning in OpenMPI |
 | --- | --- |
 | MPI | Master patient index: a service that links records believed to describe the same person without replacing the originating systems |
 | Tenant | The hard data, security and matching-policy boundary |
 | Source system | A configured record-owning system, such as a PAS, maternity system or the portal-managed source |
 | Source Patient | The latest authoritative snapshot of one patient record in one source system |
-| Enterprise identity | FhirMpi's UUIDv7 identity for one believed person within a tenant |
+| Enterprise identity | OpenMPI's UUIDv7 identity for one believed person within a tenant |
 | Enterprise cluster | An enterprise identity and all source records currently linked to it |
 | `Person` | The FHIR linkage resource that records the source Patient links and assurance levels for an enterprise identity |
-| Canonical Patient | FhirMpi's read-optimised, survivorship-based Patient view for an enterprise identity |
+| Canonical Patient | OpenMPI's read-optimised, survivorship-based Patient view for an enterprise identity |
 | Survivorship | The deterministic policy that chooses displayed canonical values while retaining useful alternatives |
 | Blocking key | A non-revealing HMAC index used to find a bounded candidate set before detailed matching |
 | Match grade | `certain`, `probable`, `possible` or no match, based on verified identifiers, conflicts and weighted evidence |
@@ -25,7 +25,7 @@ This guide explains the registry model in operational terms. It complements the
 
 ## How source, Person and canonical records fit together
 
-Source systems remain authoritative. FhirMpi adds an enterprise linkage layer and a
+Source systems remain authoritative. OpenMPI adds an enterprise linkage layer and a
 convenient consolidated view:
 
 ```mermaid
@@ -54,19 +54,19 @@ regard them as active.
 
 ### What is a canonical Patient?
 
-A canonical Patient is FhirMpi's materialised view of one enterprise identity. It is
+A canonical Patient is OpenMPI's materialised view of one enterprise identity. It is
 rebuilt from the linked source records using source trust, verification, recency and
 stable tie-breakers. Useful historic or alternative names, identifiers, addresses and
 telecoms can remain available as aliases.
 
-Canonical does not mean infallible clinical truth. It means FhirMpi's current,
+Canonical does not mean infallible clinical truth. It means OpenMPI's current,
 deterministic consolidated view. It is server-managed and read-only to FHIR clients.
 Source-system or portal-managed source updates cause it to be recalculated.
 
 | Property | Source Patient | Canonical Patient |
 | --- | --- | --- |
 | Scope | One record in one source | One enterprise identity |
-| Owner | The configured source system | FhirMpi |
+| Owner | The configured source system | OpenMPI |
 | Expected count | Many may link to one enterprise identity | One per enterprise identity; retired identities remain as inactive redirects |
 | FHIR ID | Stable, non-revealing source-resource ID | UUIDv7 enterprise ID |
 | Writes | Accepted only for the owning source context | Server-managed and read-only |
@@ -101,7 +101,7 @@ governed merge establishes that they belong together.
 
 A tenant is the hard data, security, indexing and policy partition. Every registry read,
 write, match, review, receipt and audit event is bound to a trusted tenant context.
-FhirMpi does not search, match or link across tenants.
+OpenMPI does not search, match or link across tenants.
 
 For HTTP traffic, `tenant_id` comes only from a validated identity-provider claim. For
 HL7v2, it comes from the configured listener and client-certificate binding. A header,
@@ -118,7 +118,7 @@ Tenant-specific configuration includes:
 ### Should Wales use one tenant per health board?
 
 Not if the primary requirement is a national MPI. Separate tenants for Cardiff and Vale,
-Aneurin Bevan, Betsi Cadwaladr and other organisations would prevent FhirMpi from finding
+Aneurin Bevan, Betsi Cadwaladr and other organisations would prevent OpenMPI from finding
 or linking the same person across those boundaries.
 
 A national pattern is:
@@ -150,7 +150,7 @@ federation; a separate national linking layer would be required in that model.
 
 ### What is HMAC?
 
-HMAC means Hash-based Message Authentication Code. FhirMpi combines a normalised lookup
+HMAC means Hash-based Message Authentication Code. OpenMPI combines a normalised lookup
 value with a tenant secret and SHA-256 to produce a deterministic, one-way digest. The
 same input under the same key version produces the same tag, so it can be indexed, but
 the raw NHS number, name, postcode, telephone number or email address is not stored in
@@ -174,7 +174,7 @@ Available normalised inputs produce HMAC tags for:
 They are stored in this shape:
 
 ```text
-system: https://fhir-mpi.dev/CodeSystem/blocking/v1
+system: https://openmpi.dev/CodeSystem/blocking/v1
 code:   <64-character HMAC-SHA256 digest>
 ```
 
@@ -241,7 +241,7 @@ review and completes atomically after the required distinct approvals.
 ### What does “Only active enterprise identities can be linked” mean?
 
 At least one identity in the review has already been retired, usually by another merge.
-Applying the old review could create a link to an obsolete identity, so FhirMpi stops
+Applying the old review could create a link to an obsolete identity, so OpenMPI stops
 without making a partial change.
 
 Follow the inactive Patient's `replaced-by` link, close the old case as superseded, and
@@ -279,10 +279,10 @@ identity and both canonical views are rebuilt.
 
 ## Using an existing GCP FHIR store
 
-### Can FhirMpi use a store that already contains millions of Patients?
+### Can OpenMPI use a store that already contains millions of Patients?
 
 The records can be onboarded, but changing `GcpHealthcare:StoreName` is not sufficient.
-An arbitrary existing store does not contain FhirMpi's tenant security labels,
+An arbitrary existing store does not contain OpenMPI's tenant security labels,
 source/canonical role tags, enterprise links, logical versions, blocking tags, review
 resources or idempotency receipts. The GCP adapter deliberately ignores unrecognised
 Patients during canonical candidate lookup.
@@ -295,11 +295,11 @@ programme.
 
 1. Define the national tenant, every source namespace, authoritative identifiers,
    source trust and governance policy.
-2. Prefer a dedicated FhirMpi FHIR store so registry resources and operational policies
+2. Prefer a dedicated OpenMPI FHIR store so registry resources and operational policies
    do not change the semantics of an existing clinical store.
 3. Build a resumable importer that reads Patients without changing them, preserves each
    original ID as the source-local ID, and submits source records through the same
-   application ingestion path as live traffic, where FhirMpi validates and normalises
+   application ingestion path as live traffic, where OpenMPI validates and normalises
    them.
 4. Use stable idempotency keys, checkpoints and reconciliation totals so a replay cannot
    create a second source record.
@@ -313,7 +313,7 @@ programme.
    consumers rely on canonical identities.
 
 Using the existing store itself is possible only after a migration design accounts for
-resource IDs, mandatory tenant labels, write ownership, FhirMpi's private resource
+resource IDs, mandatory tenant labels, write ownership, OpenMPI's private resource
 types, transaction boundaries and rollback. Do not relabel or convert production
 Patient resources in place without a separately tested migration and clinical-safety
 assessment.
@@ -328,7 +328,7 @@ assessment.
 - FHIR `$match`, HL7v2 identity ingestion and idempotent processing; and
 - review workload, immutable audit evidence and operational metrics.
 
-The source store remains authoritative. FhirMpi adds identity resolution and governance;
+The source store remains authoritative. OpenMPI adds identity resolution and governance;
 it is not a replacement clinical record.
 
 ## Portal and API questions
@@ -361,12 +361,12 @@ name, file hash, detection time and affected package versions.
 A safe first investigation is:
 
 ```powershell
-Get-FileHash .\tests\FhirMpi.Storage.ContractTests\bin\Release\net10.0\FhirMpi.Storage.ContractTests.dll -Algorithm SHA256
-dotnet clean FhirMpi.slnx -c Release
+Get-FileHash .\tests\OpenMpi.Storage.ContractTests\bin\Release\net10.0\OpenMpi.Storage.ContractTests.dll -Algorithm SHA256
+dotnet clean OpenMPI.slnx -c Release
 dotnet nuget locals all --clear
-dotnet restore FhirMpi.slnx --locked-mode
-dotnet build FhirMpi.slnx -c Release --no-restore
-dotnet test FhirMpi.slnx -c Release --no-build
+dotnet restore OpenMPI.slnx --locked-mode
+dotnet build OpenMPI.slnx -c Release --no-restore
+dotnet test OpenMPI.slnx -c Release --no-build
 ```
 
 Compare a clean rebuild on a patched machine or CI runner, inspect the locked dependency

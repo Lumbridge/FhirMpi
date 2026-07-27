@@ -1,0 +1,42 @@
+<CascadingAuthenticationState>
+    <Router AppAssembly="typeof(Program).Assembly">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(MainLayout)">
+                <NotAuthorized Context="authContext">
+                    <LayoutView Layout="typeof(MainLayout)">
+                        <section class="empty-state" aria-labelledby="access-required-title">
+                            <p class="eyebrow">Secure service</p>
+                            @if (authContext.User.Identity?.IsAuthenticated == true)
+                            {
+                                <h1 id="access-required-title">You do not have permission to open this area</h1>
+                                <p>Your session is tenant-bound, but it does not contain the required MPI permission.</p>
+                                <form action="/auth/logout" method="post">
+                                    <AntiforgeryToken />
+                                    <button class="button button-primary" type="submit">Return to sign in</button>
+                                </form>
+                            }
+                            else
+                            {
+                                <h1 id="access-required-title">Sign in is required</h1>
+                                <p>Your identity provider must issue a tenant-bound portal session.</p>
+                                <a class="button button-primary" href="/auth/login">Sign in</a>
+                            }
+                        </section>
+                    </LayoutView>
+                </NotAuthorized>
+            </AuthorizeRouteView>
+            <FocusOnNavigate RouteData="routeData" Selector="h1" />
+        </Found>
+        <NotFound>
+            <PageTitle>Page not found · OpenMPI</PageTitle>
+            <LayoutView Layout="typeof(MainLayout)">
+                <section class="empty-state">
+                    <p class="eyebrow">404</p>
+                    <h1>We could not find that page</h1>
+                    <p>The address may be out of date, or you may not have access to it.</p>
+                    <a class="button button-primary" href="/">Return to dashboard</a>
+                </section>
+            </LayoutView>
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>

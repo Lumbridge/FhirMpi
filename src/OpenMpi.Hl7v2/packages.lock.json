@@ -1,0 +1,166 @@
+{
+  "version": 2,
+  "dependencies": {
+    "net10.0": {
+      "nhapi": {
+        "type": "Direct",
+        "requested": "[3.2.4, )",
+        "resolved": "3.2.4",
+        "contentHash": "O6rmoztwyH4zvCxYspEA4B8VZWeB00RKAX9uJfyZyJ3qSYTXX215naqXXozjqB46ApmYe+vnP+7sj73xpg++Gw==",
+        "dependencies": {
+          "nhapi.model.v21": "3.2.3",
+          "nhapi.model.v22": "3.2.3",
+          "nhapi.model.v23": "3.2.3",
+          "nhapi.model.v231": "3.2.3",
+          "nhapi.model.v24": "3.2.3",
+          "nhapi.model.v25": "3.2.3",
+          "nhapi.model.v251": "3.2.3",
+          "nhapi.model.v26": "3.2.3",
+          "nhapi.model.v27": "3.2.3",
+          "nhapi.model.v271": "3.2.3",
+          "nhapi.model.v28": "3.2.3",
+          "nhapi.model.v281": "3.2.3"
+        }
+      },
+      "nhapi.base": {
+        "type": "Transitive",
+        "resolved": "3.2.3",
+        "contentHash": "MYbx5AoEA1kdB+C180K5X2RTCpY9tHl+GY24BZLXunvFIbXfP0ol1U461DMvW1Ygm+4Huj6gCm4cccHWNrtWMw==",
+        "dependencies": {
+          "System.Configuration.ConfigurationManager": "8.0.1"
+        }
+      },
+      "nhapi.model.v21": {
+        "type": "Transitive",
+        "resolved": "3.2.3",
+        "contentHash": "aI0TegIkefGmG7Z+ZR1UiW5qFEu6GzYocVf9VVit6YX+EKPLADubTG0zUbtSzaVeLX4rYIBExMVlT96UvGag5g==",
+        "dependencies": {
+          "nhapi.base": "3.2.3"
+        }
+      },
+      "nhapi.model.v22": {
+        "type": "Transitive",
+        "resolved": "3.2.3",
+        "contentHash": "j2Bdkzq6CQ3Hb84IMOV/unMCo2bCQq016YUPJKHzP3xfvHOqWDvpsy0v/Axz+9ifrNWvr+/DWKau8R/Z1x21vA==",
+        "dependencies": {
+          "nhapi.base": "3.2.3"
+        }
+      },
+      "nhapi.model.v23": {
+        "type": "Transitive",
+        "resolved": "3.2.3",
+        "contentHash": "mqcfyLv3AwK81ygrrJyE/7cF58fQsdpF3oNTHmj+BgoS2SuAbhmwfdkOwCCOJnnpJJgpha3EAoZ59zIhlB3DJA==",
+        "dependencies": {
+          "nhapi.base": "3.2.3"
+        }
+      },
+      "nhapi.model.v231": {
+        "type": "Transitive",
+        "resolved": "3.2.3",
+        "contentHash": "VRqMhTvti4SSffGOrDACqFN4bSMwfj4a5JgIG2tdLZAS9b0WQzjGQQo6qeCF6A6QHnqV/n6DuciP0/M4ZA03qw==",
+        "dependencies": {
+          "nhapi.base": "3.2.3"
+        }
+      },
+      "nhapi.model.v24": {
+        "type": "Transitive",
+        "resolved": "3.2.3",
+        "contentHash": "X3eKTl4Gn2KulKPQuuJ9bAyFLp/gzVatGT5MGf3M+qA8hxTDiLd4Ob3QLFqf3fwegncjDINsygytSZ9WaCB9Vw==",
+        "dependencies": {
+          "nhapi.base": "3.2.3"
+        }
+      },
+      "nhapi.model.v25": {
+        "type": "Transitive",
+        "resolved": "3.2.3",
+        "contentHash": "ftBg/X3eiopSqauhGDauqQYCJcmgvD5aW1jkqZf2MImN62HGL94tFVL/zUpu1Q4BgViHtvhzVbEEIqZ5pRkOLg==",
+        "dependencies": {
+          "nhapi.base": "3.2.3"
+        }
+      },
+      "nhapi.model.v251": {
+        "type": "Transitive",
+        "resolved": "3.2.3",
+        "contentHash": "xAqdjoj2w27l1nrVEDQ5qAHA22pTuul/3M0NnBdXhhYw7SODNUHBinivPewyHASDGVqxWdmzRnPDLzV2q5TNmg==",
+        "dependencies": {
+          "nhapi.base": "3.2.3"
+        }
+      },
+      "nhapi.model.v26": {
+        "type": "Transitive",
+        "resolved": "3.2.3",
+        "contentHash": "HZI97F8w6eUmHb1oyd4uIpRDxT9ApK3AU7uCWe5XqcL/y9ln+gKdGG6Rww1znnyHngb0StpICH4NtkOQjTDdRw==",
+        "dependencies": {
+          "nhapi.base": "3.2.3"
+        }
+      },
+      "nhapi.model.v27": {
+        "type": "Transitive",
+        "resolved": "3.2.3",
+        "contentHash": "TlYV6hlJyAEeq16XWr0tTzVE7bTteFLNrLdWRf+p74rF7FdMTZS3QgN2ZCDCiruDu8SsPhDDr2bdg4VazJz8eg==",
+        "dependencies": {
+          "nhapi.base": "3.2.3"
+        }
+      },
+      "nhapi.model.v271": {
+        "type": "Transitive",
+        "resolved": "3.2.3",
+        "contentHash": "uExC4gMDlT+22ezbw5sHg73J3+1R0n8h+B4m1wbv8L004ILsPRfhgkhG6zuvIIZN2lxeW4td+uAx1tbn9Zj7ZQ==",
+        "dependencies": {
+          "nhapi.base": "3.2.3"
+        }
+      },
+      "nhapi.model.v28": {
+        "type": "Transitive",
+        "resolved": "3.2.3",
+        "contentHash": "PQZt8IoMtsD0IEIPw3XrtCW2/nvBjZcQ9ftGqSxzYEByfVKVaoMBPITBe4jo6IvJkJMvvfwvt6fpzM8wttL8tw==",
+        "dependencies": {
+          "nhapi.base": "3.2.3"
+        }
+      },
+      "nhapi.model.v281": {
+        "type": "Transitive",
+        "resolved": "3.2.3",
+        "contentHash": "lTo/ktIQ0AU89hdgLCLhkN3sLpQdJbQB3XDRKn2PF3t7I9oIhJUxHa8xYmrtswEfCz8mqDQN3lDimyQwAvxC9A==",
+        "dependencies": {
+          "nhapi.base": "3.2.3"
+        }
+      },
+      "System.Configuration.ConfigurationManager": {
+        "type": "Transitive",
+        "resolved": "8.0.1",
+        "contentHash": "gPYFPDyohW2gXNhdQRSjtmeS6FymL2crg4Sral1wtvEJ7DUqFCDWDVbbLobASbzxfic8U1hQEdC7hmg9LHncMw==",
+        "dependencies": {
+          "System.Diagnostics.EventLog": "8.0.1",
+          "System.Security.Cryptography.ProtectedData": "8.0.0"
+        }
+      },
+      "System.Diagnostics.EventLog": {
+        "type": "Transitive",
+        "resolved": "8.0.1",
+        "contentHash": "n1ZP7NM2Gkn/MgD8+eOT5MulMj6wfeQMNS2Pizvq5GHCZfjlFMXV2irQlQmJhwA2VABC57M0auudO89Iu2uRLg=="
+      },
+      "System.Security.Cryptography.ProtectedData": {
+        "type": "Transitive",
+        "resolved": "8.0.0",
+        "contentHash": "+TUFINV2q2ifyXauQXRwy4CiBhqvDEDZeVJU7qfxya4aRYOKzVBpN+4acx25VcPB9ywUN6C0n8drWl110PhZEg=="
+      },
+      "openmpi.application": {
+        "type": "Project",
+        "dependencies": {
+          "OpenMpi.Domain": "[1.0.0, )",
+          "OpenMpi.Storage.Abstractions": "[1.0.0, )"
+        }
+      },
+      "openmpi.domain": {
+        "type": "Project"
+      },
+      "openmpi.storage.abstractions": {
+        "type": "Project",
+        "dependencies": {
+          "OpenMpi.Domain": "[1.0.0, )"
+        }
+      }
+    }
+  }
+}

@@ -1,8 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <Description>Storage provider contract for FhirMpi registry adapters.</Description>
-  </PropertyGroup>
-  <ItemGroup>
-    <ProjectReference Include="../FhirMpi.Domain/FhirMpi.Domain.csproj" />
-  </ItemGroup>
-</Project>

@@ -1,13 +1,13 @@
 # Performance gates
 
-`FhirMpi.Benchmarks` measures the pure scoring path over 500 pre-normalised
+`OpenMpi.Benchmarks` measures the pure scoring path over 500 pre-normalised
 candidates. The checked-in baseline and `scripts/Test-BenchmarkRegression.ps1`
 enforce both the 10 ms ceiling and the 10% regression gate.
 
 The k6 scenario exercises the end-to-end `$match` target:
 
 ```powershell
-$env:BASE_URL = "https://fhir-mpi.example"
+$env:BASE_URL = "https://openmpi.example"
 $env:ACCESS_TOKEN = "<short-lived system token>"
 k6 run benchmarks/k6/match.js
 ```

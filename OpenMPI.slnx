@@ -1,0 +1,26 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/OpenMpi.Api/OpenMpi.Api.csproj" />
+    <Project Path="src/OpenMpi.Application/OpenMpi.Application.csproj" />
+    <Project Path="src/OpenMpi.Domain/OpenMpi.Domain.csproj" />
+    <Project Path="src/OpenMpi.Fhir.R4/OpenMpi.Fhir.R4.csproj" />
+    <Project Path="src/OpenMpi.Hl7v2/OpenMpi.Hl7v2.csproj" />
+    <Project Path="src/OpenMpi.Hl7v2.Host/OpenMpi.Hl7v2.Host.csproj" />
+    <Project Path="src/OpenMpi.Portal/OpenMpi.Portal.csproj" />
+    <Project Path="src/OpenMpi.Storage.Abstractions/OpenMpi.Storage.Abstractions.csproj" />
+    <Project Path="src/OpenMpi.Storage.Gcp/OpenMpi.Storage.Gcp.csproj" />
+    <Project Path="src/OpenMpi.Storage.InMemory/OpenMpi.Storage.InMemory.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/OpenMpi.Api.Tests/OpenMpi.Api.Tests.csproj" />
+    <Project Path="tests/OpenMpi.Domain.Tests/OpenMpi.Domain.Tests.csproj" />
+    <Project Path="tests/OpenMpi.Fhir.R4.Tests/OpenMpi.Fhir.R4.Tests.csproj" />
+    <Project Path="tests/OpenMpi.Hl7v2.Tests/OpenMpi.Hl7v2.Tests.csproj" />
+    <Project Path="tests/OpenMpi.Portal.Tests/OpenMpi.Portal.Tests.csproj" />
+    <Project Path="tests/OpenMpi.Storage.ContractTests/OpenMpi.Storage.ContractTests.csproj" />
+    <Project Path="tests/OpenMpi.Storage.Gcp.Tests/OpenMpi.Storage.Gcp.Tests.csproj" />
+  </Folder>
+  <Folder Name="/benchmarks/">
+    <Project Path="benchmarks/OpenMpi.Benchmarks/OpenMpi.Benchmarks.csproj" />
+  </Folder>
+</Solution>

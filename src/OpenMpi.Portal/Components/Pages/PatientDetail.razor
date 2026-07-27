@@ -1,0 +1,525 @@
+@page "/patients/{Id:guid}"
+@attribute [Authorize(Policy = "ReviewAccess")]
+@inject RegistryService Registry
+@inject PortalActorContextFactory Actors
+@inject NavigationManager Navigation
+
+<PageTitle>@PageTitleText · OpenMPI</PageTitle>
+
+<a class="back-link" href="/patients">← Back to patient search</a>
+
+@if (LoadError is not null)
+{
+    <AlertMessage Tone="danger" Title="The enterprise identity could not be loaded" Message="@LoadError" />
+}
+else if (Identity is null)
+{
+    <div class="loading-panel" role="status">
+        <span class="loading-spinner" aria-hidden="true"></span>
+        <span>Loading the enterprise identity…</span>
+    </div>
+}
+else
+{
+    <PageHeader
+        Eyebrow="Enterprise identity"
+        Title="@PortalDisplay.PatientName(Identity.CanonicalPatient.Profile)"
+        Description="@Identity.CanonicalPatient.EnterpriseId.ToString()">
+        <Actions>
+            @if (Identity.CanonicalPatient.IsActive)
+            {
+                <StatusBadge Label="Active canonical record" Tone="success" />
+            }
+            else
+            {
+                <StatusBadge Label="Replaced identity" Tone="warning" />
+            }
+            @if (Identity.CanonicalPatient.IsActive && HasManagedSource)
+            {
+                <AuthorizeView Policy="PatientWriteAccess">
+                    <Authorized>
+                        <a class="button button-secondary"
+                           href="/patients/@Identity.CanonicalPatient.EnterpriseId.Value/edit">
+                            Edit portal record
+                        </a>
+                    </Authorized>
+                </AuthorizeView>
+            }
+        </Actions>
+    </PageHeader>
+
+    @if (Success is not null)
+    {
+        <AlertMessage Tone="success" Title="@Success" />
+    }
+
+    @if (!Identity.CanonicalPatient.IsActive &&
+         Identity.CanonicalPatient.ReplacedBy is { } replacement)
+    {
+        <section class="redirect-banner">
+            <div>
+                <strong>This identity has been replaced</strong>
+                <p>Use the surviving enterprise identity for current work.</p>
+            </div>
+            <a class="button button-secondary" href="/patients/@replacement">Open surviving identity</a>
+        </section>
+    }
+
+    <section class="identity-hero" aria-label="Identity summary">
+        <div class="identity-hero-person">
+            <span class="patient-avatar patient-avatar-large" aria-hidden="true">
+                @PortalDisplay.Initials(PortalDisplay.PatientName(Identity.CanonicalPatient.Profile))
+            </span>
+            <div>
+                <span class="hero-label">Canonical patient</span>
+                <strong>@PortalDisplay.PatientName(Identity.CanonicalPatient.Profile)</strong>
+                <span>NHS @PortalDisplay.NhsNumber(Identity.CanonicalPatient.Profile)</span>
+            </div>
+        </div>
+        <dl>
+            <div>
+                <dt>Date of birth</dt>
+                <dd>@PortalDisplay.BirthDate(Identity.CanonicalPatient.Profile.BirthDate)</dd>
+            </div>
+            <div>
+                <dt>Source records</dt>
+                <dd>@Identity.SourcePatients.Count</dd>
+            </div>
+            <div>
+                <dt>Survivorship trust</dt>
+                <dd>@Identity.CanonicalPatient.SurvivorshipTrust / 100</dd>
+            </div>
+            <div>
+                <dt>Last updated</dt>
+                <dd>@PortalDisplay.Instant(Identity.CanonicalPatient.LastUpdated)</dd>
+            </div>
+        </dl>
+    </section>
+
+    <div class="detail-layout">
+        <div class="detail-main">
+            <IdentityProfilePanel
+                Profile="Identity.CanonicalPatient.Profile"
+                Kicker="Canonical demographics">
+                <Badge>
+                    <StatusBadge Label="Survivorship view" Tone="info" />
+                </Badge>
+            </IdentityProfilePanel>
+
+            <section class="panel source-records" aria-labelledby="source-records-heading">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">Provenance</p>
+                        <h2 id="source-records-heading">Source records</h2>
+                    </div>
+                    <span class="result-note">Authoritative snapshots</span>
+                </div>
+                <div class="source-record-list">
+                    @foreach (var source in Identity.SourcePatients)
+                    {
+                        <article class="source-record">
+                            <header>
+                                <div>
+                                    <span class="source-code">@source.Key.SourceSystem</span>
+                                    <strong>@source.Key.LocalId</strong>
+                                </div>
+                                <span class="trust-score">Trust @source.SourceTrust</span>
+                            </header>
+                            <dl>
+                                <div>
+                                    <dt>Name</dt>
+                                    <dd>@PortalDisplay.PatientName(source.Profile)</dd>
+                                </div>
+                                <div>
+                                    <dt>NHS number</dt>
+                                    <dd>@PortalDisplay.NhsNumber(source.Profile)</dd>
+                                </div>
+                                <div>
+                                    <dt>Date of birth</dt>
+                                    <dd>@PortalDisplay.BirthDate(source.Profile.BirthDate)</dd>
+                                </div>
+                                <div>
+                                    <dt>Last updated</dt>
+                                    <dd>@PortalDisplay.Instant(source.LastUpdated)</dd>
+                                </div>
+                            </dl>
+                        </article>
+                    }
+                </div>
+            </section>
+        </div>
+
+        <aside class="detail-aside">
+            <section class="action-card" aria-labelledby="duplicate-workbench-heading">
+                <p class="eyebrow">Duplicate workbench</p>
+                <h2 id="duplicate-workbench-heading">Check for another identity</h2>
+                <p>Search using the canonical demographics and review explainable match evidence.</p>
+                @if (DuplicateSearchError is not null)
+                {
+                    <SubmissionFeedback
+                        Title="Possible duplicates could not be checked"
+                        Message="@DuplicateSearchError" />
+                }
+                <button class="button button-secondary button-block"
+                        type="button"
+                        disabled="@IsFindingDuplicates"
+                        @onclick="FindDuplicatesAsync">
+                    @(IsFindingDuplicates ? "Checking…" : "Find possible duplicates")
+                </button>
+            </section>
+
+            <section class="action-card action-card-risk" aria-labelledby="split-workbench-heading">
+                <p class="eyebrow">Corrective workflow</p>
+                <h2 id="split-workbench-heading">Split source records</h2>
+                <p>Move selected records into a new enterprise identity. Two distinct reviewers must approve.</p>
+                @if (Identity.SourcePatients.Count < 2)
+                {
+                    <p class="muted">At least two source records are required.</p>
+                }
+                else
+                {
+                    <fieldset class="source-selector">
+                        <legend>Select records to move</legend>
+                        @foreach (var source in Identity.SourcePatients)
+                        {
+                            <label>
+                                <input type="checkbox"
+                                       checked="@SelectedSources.Contains(source.Key)"
+                                       @onchange="eventArgs => ToggleSource(source.Key, eventArgs)" />
+                                <span>
+                                    <strong>@source.Key.SourceSystem / @source.Key.LocalId</strong>
+                                    <small>@PortalDisplay.PatientName(source.Profile)</small>
+                                </span>
+                            </label>
+                        }
+                    </fieldset>
+                    <div class="field">
+                        <label for="split-reason">Reason for requesting a split</label>
+                        <textarea id="split-reason"
+                                  class="input textarea"
+                                  rows="3"
+                                  @bind="SplitReason"
+                                  @bind:event="oninput"></textarea>
+                    </div>
+                    @if (SplitError is not null)
+                    {
+                        <SubmissionFeedback
+                            Title="The split review could not be opened"
+                            Message="@SplitError" />
+                    }
+                    <button class="button button-danger button-block"
+                            type="button"
+                            disabled="@IsSubmitting"
+                            @onclick="CreateSplitAsync">
+                        Open split review
+                    </button>
+                }
+            </section>
+        </aside>
+    </div>
+
+    @if (Duplicates is not null)
+    {
+        <section class="workbench-results" aria-labelledby="duplicate-results-heading">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Duplicate workbench</p>
+                    <h2 id="duplicate-results-heading">Potential matching identities</h2>
+                </div>
+                <span class="result-note">@Duplicates.CandidateCount bounded candidates assessed</span>
+            </div>
+
+            @if (Duplicates.Matches.Count == 0)
+            {
+                <div class="compact-empty">
+                    <span class="empty-check" aria-hidden="true">✓</span>
+                    <div>
+                        <strong>No duplicates exceeded the matching threshold</strong>
+                        <p>The search used profile @Duplicates.MatchingProfileVersion.</p>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="duplicate-grid">
+                    @foreach (var match in Duplicates.Matches)
+                    {
+                        <article class="duplicate-card">
+                            <header>
+                                <div>
+                                    <StatusBadge
+                                        Label="@PortalDisplay.Grade(match.Grade)"
+                                        Tone="@GradeTone(match.Grade)" />
+                                    <h3>@PortalDisplay.PatientName(match.Patient.Profile)</h3>
+                                    <span>@match.Patient.EnterpriseId</span>
+                                </div>
+                                <strong class="large-score">
+                                    @match.Score.ToString("P0", CultureInfo.InvariantCulture)
+                                </strong>
+                            </header>
+                            <dl>
+                                <div><dt>NHS number</dt><dd>@PortalDisplay.NhsNumber(match.Patient.Profile)</dd></div>
+                                <div><dt>Date of birth</dt><dd>@PortalDisplay.BirthDate(match.Patient.Profile.BirthDate)</dd></div>
+                                <div><dt>Sources</dt><dd>@match.Patient.Sources.Count</dd></div>
+                            </dl>
+                            <div class="duplicate-actions">
+                                @if (match.HasHardConflict)
+                                {
+                                    <AlertMessage
+                                        Tone="danger"
+                                        Title="Authoritative identifier conflict"
+                                        Message="This operation will always require two reviewers." />
+                                }
+                                <details>
+                                    <summary>View match evidence</summary>
+                                    <EvidenceList
+                                        Score="match.Score"
+                                        Grade="match.Grade"
+                                        Evidence="match.Evidence" />
+                                </details>
+                                <div class="field">
+                                    <label for="@($"duplicate-reason-{match.Patient.EnterpriseId}")">
+                                        Reason for opening a review
+                                    </label>
+                                    <textarea id="@($"duplicate-reason-{match.Patient.EnterpriseId}")"
+                                              class="input textarea"
+                                              rows="2"
+                                              @bind="DuplicateReason"
+                                              @bind:event="oninput"></textarea>
+                                </div>
+                                @if (DuplicateReviewErrorCandidate is { } errorCandidate &&
+                                     errorCandidate.Equals(match.Patient.EnterpriseId) &&
+                                     DuplicateReviewError is not null)
+                                {
+                                    <SubmissionFeedback
+                                        Title="The merge review could not be opened"
+                                        Message="@DuplicateReviewError" />
+                                }
+                                <button class="button button-primary duplicate-review-button"
+                                        type="button"
+                                        disabled="@IsSubmitting"
+                                        @onclick="() => CreateDuplicateReviewAsync(match.Patient)">
+                                    Open governed merge review
+                                </button>
+                                <small class="operation-note">
+                                    The selected identity will survive if the merge is approved.
+                                </small>
+                            </div>
+                        </article>
+                    }
+                </div>
+            }
+        </section>
+    }
+}
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    [SupplyParameterFromQuery(Name = "notice")]
+    public string? Notice { get; set; }
+
+    [SupplyParameterFromQuery(Name = "reviews")]
+    public int ReviewsCreated { get; set; }
+
+    private PatientIdentityView? Identity { get; set; }
+
+    private DuplicateSearchResult? Duplicates { get; set; }
+
+    private HashSet<SourceRecordKey> SelectedSources { get; } = [];
+
+    private ActorContext? Actor { get; set; }
+
+    private string DuplicateReason { get; set; } = string.Empty;
+
+    private string SplitReason { get; set; } = string.Empty;
+
+    private string? LoadError { get; set; }
+
+    private string? DuplicateSearchError { get; set; }
+
+    private string? DuplicateReviewError { get; set; }
+
+    private EnterpriseId? DuplicateReviewErrorCandidate { get; set; }
+
+    private string? SplitError { get; set; }
+
+    private string? Success { get; set; }
+
+    private bool IsFindingDuplicates { get; set; }
+
+    private bool IsSubmitting { get; set; }
+
+    private string PageTitleText =>
+        Identity is null ? "Enterprise identity" : PortalDisplay.PatientName(Identity.CanonicalPatient.Profile);
+
+    private bool HasManagedSource =>
+        Identity?.SourcePatients.Any(source =>
+            source.Key.SourceSystem == Actors.ManagedSourceSystem) == true;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        LoadError = null;
+        DuplicateSearchError = null;
+        DuplicateReviewError = null;
+        DuplicateReviewErrorCandidate = null;
+        SplitError = null;
+        try
+        {
+            Actor ??= await Actors.CreateAsync();
+            Identity = await Registry.GetPatientIdentityViewAsync(
+                Actor,
+                new EnterpriseId(Id),
+                CancellationToken.None);
+            Success = Notice switch
+            {
+                "created" when ReviewsCreated > 0 =>
+                    $"The patient was created. {ReviewsCreated} possible " +
+                    (ReviewsCreated == 1 ? "duplicate was" : "duplicates were") +
+                    " sent for governed review.",
+                "created" => "The patient was created in the portal-managed source.",
+                "updated" => "The portal-managed patient record was updated.",
+                _ => null
+            };
+        }
+        catch (RegistryException exception)
+        {
+            LoadError = exception.Message;
+        }
+    }
+
+    private async Task FindDuplicatesAsync()
+    {
+        if (Actor is null)
+        {
+            return;
+        }
+
+        IsFindingDuplicates = true;
+        DuplicateSearchError = null;
+        Success = null;
+        try
+        {
+            Duplicates = await Registry.FindDuplicateCandidatesAsync(
+                Actor,
+                new EnterpriseId(Id),
+                10,
+                CancellationToken.None);
+        }
+        catch (RegistryException exception)
+        {
+            DuplicateSearchError = exception.Message;
+        }
+        finally
+        {
+            IsFindingDuplicates = false;
+        }
+    }
+
+    private async Task CreateDuplicateReviewAsync(CanonicalPatient candidate)
+    {
+        if (Actor is null || Identity is null)
+        {
+            return;
+        }
+
+        DuplicateReviewErrorCandidate = candidate.EnterpriseId;
+        DuplicateReviewError = null;
+        Success = null;
+        if (string.IsNullOrWhiteSpace(DuplicateReason))
+        {
+            DuplicateReviewError = "Enter a meaningful reason before opening a duplicate review.";
+            return;
+        }
+
+        IsSubmitting = true;
+        try
+        {
+            var review = await Registry.CreateDuplicateReviewCaseAsync(
+                Actor,
+                new CreateDuplicateReviewCommand(
+                    Identity.CanonicalPatient.EnterpriseId,
+                    candidate.EnterpriseId,
+                    DuplicateReason,
+                    Identity.CanonicalPatient.Version,
+                    candidate.Version),
+                CancellationToken.None);
+            Navigation.NavigateTo($"/reviews/{review.Id:D}");
+        }
+        catch (RegistryException exception)
+        {
+            DuplicateReviewError = exception.Message;
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
+    }
+
+    private async Task CreateSplitAsync()
+    {
+        if (Actor is null || Identity is null)
+        {
+            return;
+        }
+
+        SplitError = null;
+        Success = null;
+        if (SelectedSources.Count == 0 ||
+            SelectedSources.Count >= Identity.SourcePatients.Count)
+        {
+            SplitError = "Select at least one, but not all, source records to move.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(SplitReason))
+        {
+            SplitError = "Enter a meaningful reason before opening a split review.";
+            return;
+        }
+
+        IsSubmitting = true;
+        try
+        {
+            var review = await Registry.CreateSplitReviewCaseAsync(
+                Actor,
+                new CreateSplitReviewCommand(
+                    Identity.CanonicalPatient.EnterpriseId,
+                    SelectedSources.ToArray(),
+                    SplitReason,
+                    Identity.CanonicalPatient.Version),
+                CancellationToken.None);
+            Navigation.NavigateTo($"/reviews/{review.Id:D}");
+        }
+        catch (RegistryException exception)
+        {
+            SplitError = exception.Message;
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
+    }
+
+    private void ToggleSource(SourceRecordKey key, ChangeEventArgs eventArgs)
+    {
+        if (eventArgs.Value is true)
+        {
+            SelectedSources.Add(key);
+        }
+        else
+        {
+            SelectedSources.Remove(key);
+        }
+    }
+
+    private static string GradeTone(MatchGrade grade) =>
+        grade switch
+        {
+            MatchGrade.Certain => "success",
+            MatchGrade.Probable => "warning",
+            MatchGrade.Possible => "info",
+            _ => "neutral"
+        };
+}

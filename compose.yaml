@@ -1,8 +1,10 @@
+name: openmpi
+
 services:
   api:
     build:
       context: .
-      dockerfile: src/FhirMpi.Api/Dockerfile
+      dockerfile: src/OpenMpi.Api/Dockerfile
     environment:
       DOTNET_ENVIRONMENT: Development
       Authentication__Enabled: "false"
@@ -21,7 +23,7 @@ services:
   mllp:
     build:
       context: .
-      dockerfile: src/FhirMpi.Hl7v2.Host/Dockerfile
+      dockerfile: src/OpenMpi.Hl7v2.Host/Dockerfile
     environment:
       DOTNET_ENVIRONMENT: Development
       RegistryProvider__Type: InMemory
@@ -39,7 +41,7 @@ services:
   portal:
     build:
       context: .
-      dockerfile: src/FhirMpi.Portal/Dockerfile
+      dockerfile: src/OpenMpi.Portal/Dockerfile
     environment:
       DOTNET_ENVIRONMENT: Development
       PortalAuthentication__Enabled: "false"
