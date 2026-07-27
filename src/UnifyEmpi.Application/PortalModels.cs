@@ -27,3 +27,15 @@ public sealed record RegistryOperationalSummary(
     int RecentDecisions,
     TenantSettings Settings,
     DateTimeOffset GeneratedAt);
+
+public sealed record ResolutionConfigurationView(
+    string MatchingProfileVersion,
+    MatchingWeights Weights,
+    double PossibleThreshold,
+    double ProbableThreshold,
+    int MaximumCandidates,
+    int DefaultResultCount,
+    int MaximumResultCount,
+    IReadOnlySet<BlockingRuleKind> BlockingRules,
+    IReadOnlySet<string> AuthoritativeIdentifierSystems,
+    int RequiredLinkApprovals);

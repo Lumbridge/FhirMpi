@@ -164,6 +164,11 @@ else
         </section>
     }
 
+    @if (review.Kind != ReviewCaseKind.Split)
+    {
+        <AssistedReviewPanel Detail="Detail" />
+    }
+
     @if (review.Kind == ReviewCaseKind.Split)
     {
         <section class="comparison-grid comparison-single">
@@ -306,6 +311,37 @@ else
                     <p class="eyebrow">Reviewer action</p>
                     <h2 id="record-decision-heading">Record your decision</h2>
                     <p>@ActionExplanation(review, canCompleteUnderCurrentPolicy)</p>
+                    @if (review.Kind != ReviewCaseKind.Split)
+                    {
+                        <fieldset class="review-checklist">
+                            <legend>Complete the safety checks</legend>
+                            <label>
+                                <input type="checkbox" @bind="IdentifiersChecked" />
+                                <span>
+                                    <strong>Identifiers checked</strong>
+                                    <small>I compared authoritative identifiers and investigated any conflict.</small>
+                                </span>
+                            </label>
+                            <label>
+                                <input type="checkbox" @bind="DemographicsChecked" />
+                                <span>
+                                    <strong>Demographics compared</strong>
+                                    <small>I reviewed names, birth date, address and contact evidence.</small>
+                                </span>
+                            </label>
+                            <label>
+                                <input type="checkbox" @bind="SurvivorChecked" />
+                                <span>
+                                    <strong>Proposed survivor confirmed</strong>
+                                    <small>I checked which enterprise identity will remain active after a link.</small>
+                                </span>
+                            </label>
+                            <div class="checklist-progress">
+                                <span>@CompletedCheckCount of 3 checks complete</span>
+                                <progress max="3" value="@CompletedCheckCount">@CompletedCheckCount of 3</progress>
+                            </div>
+                        </fieldset>
+                    }
                     <div class="field">
                         <label for="decision-reason">Clinical or operational rationale</label>
                         <textarea id="decision-reason"
@@ -315,6 +351,14 @@ else
                                   @bind="Reason"
                                   @bind:event="oninput"></textarea>
                         <small>Required. Do not include unnecessary clinical detail.</small>
+                        @if (review.Kind != ReviewCaseKind.Split)
+                        {
+                            <div class="reason-prompts" aria-label="Rationale prompts">
+                                <span>Start with:</span>
+                                <button type="button" @onclick="UseLinkRationale">Link rationale</button>
+                                <button type="button" @onclick="UseRejectRationale">Reject rationale</button>
+                            </div>
+                        }
                     </div>
                     @if (ActionError is not null)
                     {
@@ -331,17 +375,29 @@ else
                     <div class="decision-actions">
                         <button class="button button-primary"
                                 type="button"
-                                disabled="@IsSubmitting"
+                                disabled="@(IsSubmitting || !CanApprove(review))"
                                 @onclick="ApproveAsync">
                             @ApproveLabel(review, canCompleteUnderCurrentPolicy)
                         </button>
                         <button class="button button-danger-outline"
                                 type="button"
-                                disabled="@IsSubmitting"
+                                disabled="@(IsSubmitting || !CanReject(review))"
                                 @onclick="RejectAsync">
                             Reject
                         </button>
                     </div>
+                    @if (review.Kind != ReviewCaseKind.Split && CompletedCheckCount < 2)
+                    {
+                        <p class="operation-note">
+                            Check identifiers and demographics before recording a decision.
+                        </p>
+                    }
+                    else if (review.Kind != ReviewCaseKind.Split && !SurvivorChecked)
+                    {
+                        <p class="operation-note">
+                            Confirm the proposed survivor to enable the link action.
+                        </p>
+                    }
                 </section>
             }
         }
@@ -373,7 +429,32 @@ else
 
     private bool IsSubmitting { get; set; }
 
-    protected override Task OnParametersSetAsync() => LoadAsync();
+    private bool IdentifiersChecked { get; set; }
+
+    private bool DemographicsChecked { get; set; }
+
+    private bool SurvivorChecked { get; set; }
+
+    private Guid? LoadedReviewId { get; set; }
+
+    private int CompletedCheckCount =>
+        (IdentifiersChecked ? 1 : 0) +
+        (DemographicsChecked ? 1 : 0) +
+        (SurvivorChecked ? 1 : 0);
+
+    protected override Task OnParametersSetAsync()
+    {
+        if (LoadedReviewId != Id)
+        {
+            LoadedReviewId = Id;
+            IdentifiersChecked = false;
+            DemographicsChecked = false;
+            SurvivorChecked = false;
+            Reason = string.Empty;
+        }
+
+        return LoadAsync();
+    }
 
     private async Task LoadAsync()
     {
@@ -397,6 +478,28 @@ else
             : ReviewDecision.Link);
 
     private Task RejectAsync() => DecideAsync(ReviewDecision.Reject);
+
+    private bool CanApprove(ReviewCase review) =>
+        review.Kind == ReviewCaseKind.Split ||
+        (IdentifiersChecked && DemographicsChecked && SurvivorChecked);
+
+    private bool CanReject(ReviewCase review) =>
+        review.Kind == ReviewCaseKind.Split ||
+        (IdentifiersChecked && DemographicsChecked);
+
+    private void UseLinkRationale()
+    {
+        Reason =
+            "Identifiers and demographic evidence were reviewed. The records are judged to " +
+            "represent the same person, and the proposed survivor was confirmed because ";
+    }
+
+    private void UseRejectRationale()
+    {
+        Reason =
+            "Identifiers and demographic evidence were reviewed. The records are judged to " +
+            "represent different people because ";
+    }
 
     private Task CloseSupersededAsync() =>
         DecideAsync(

@@ -1,0 +1,317 @@
+@page "/resolution"
+@attribute [Authorize(Policy = "ConfigurationReadAccess")]
+@inject RegistryService Registry
+@inject PortalActorContextFactory Actors
+
+<PageTitle>Resolution pipeline · UnifyEMPI</PageTitle>
+
+<PageHeader
+    Eyebrow="Identity resolution"
+    Title="Blocking, matching and review"
+    Description="See how this tenant narrows candidate records, scores identity evidence and routes uncertain pairs to governed human review.">
+    <Actions>
+        <AuthorizeView Policy="ConfigurationWriteAccess">
+            <Authorized>
+                <a class="button button-secondary" href="/settings">Edit matching policy</a>
+            </Authorized>
+        </AuthorizeView>
+    </Actions>
+</PageHeader>
+
+@if (LoadError is not null)
+{
+    <AlertMessage
+        Tone="danger"
+        Title="The resolution configuration could not be loaded"
+        Message="@LoadError" />
+}
+else if (Configuration is null)
+{
+    <div class="loading-panel" role="status">
+        <span class="loading-spinner" aria-hidden="true"></span>
+        <span>Loading the active resolution pipeline…</span>
+    </div>
+}
+else
+{
+    <section class="resolution-flow" aria-label="Identity resolution pipeline">
+        <a href="#blocking">
+            <span class="flow-step">01</span>
+            <span>
+                <strong>Block</strong>
+                <small>Generate bounded candidates</small>
+            </span>
+        </a>
+        <span class="flow-arrow" aria-hidden="true">→</span>
+        <a href="#matching">
+            <span class="flow-step">02</span>
+            <span>
+                <strong>Match</strong>
+                <small>Score field-level evidence</small>
+            </span>
+        </a>
+        <span class="flow-arrow" aria-hidden="true">→</span>
+        <a href="#manual-review">
+            <span class="flow-step">03</span>
+            <span>
+                <strong>Review</strong>
+                <small>Resolve uncertain pairs safely</small>
+            </span>
+        </a>
+    </section>
+
+    <section id="blocking" class="resolution-section" aria-labelledby="blocking-heading">
+        <div class="resolution-section-heading">
+            <div>
+                <p class="eyebrow">Stage 01 · Candidate generation</p>
+                <h2 id="blocking-heading">Blocking strategy</h2>
+                <p>
+                    Only records sharing at least one privacy-preserving blocking key are scored.
+                    This avoids an all-to-all comparison while retaining several independent paths
+                    for finding likely duplicates.
+                </p>
+            </div>
+            <div class="resolution-stat">
+                <strong>@Configuration.MaximumCandidates</strong>
+                <span>candidate safety limit</span>
+            </div>
+        </div>
+
+        <div class="blocking-rule-grid">
+            @foreach (var rule in Configuration.BlockingRules.OrderBy(static rule => rule))
+            {
+                var details = RuleDetails(rule);
+                <article class="blocking-rule-card">
+                    <header>
+                        <span class="rule-status" aria-label="Enabled"></span>
+                        <span>Enabled round</span>
+                        <strong>@RuleShortName(rule)</strong>
+                    </header>
+                    <h3>@details.Title</h3>
+                    <p>@details.Description</p>
+                    <dl>
+                        <div>
+                            <dt>Required data</dt>
+                            <dd>@details.RequiredData</dd>
+                        </div>
+                        <div>
+                            <dt>Normalisation</dt>
+                            <dd>@details.Normalisation</dd>
+                        </div>
+                    </dl>
+                </article>
+            }
+        </div>
+
+        <div class="resolution-note">
+            <span aria-hidden="true">i</span>
+            <div>
+                <strong>Blocking configuration is deployment-managed</strong>
+                <p>
+                    Changing rounds requires a full index rebuild. This page deliberately exposes
+                    the live configuration without offering an unsafe partial reindex. Key values
+                    are HMAC-protected and never shown in the portal.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <section id="matching" class="resolution-section" aria-labelledby="matching-heading">
+        <div class="resolution-section-heading">
+            <div>
+                <p class="eyebrow">Stage 02 · Explainable scoring</p>
+                <h2 id="matching-heading">Weighted matching</h2>
+                <p>
+                    Every bounded candidate is compared field by field. The weighted evidence and
+                    active thresholds determine whether a pair is below threshold, possible or probable.
+                </p>
+            </div>
+            <div class="resolution-stat resolution-stat-wide">
+                <strong>@Configuration.MatchingProfileVersion</strong>
+                <span>active profile</span>
+            </div>
+        </div>
+
+        <div class="matching-policy-layout">
+            <section class="panel matching-bands" aria-labelledby="bands-heading">
+                <p class="eyebrow">Classification bands</p>
+                <h3 id="bands-heading">Decision thresholds</h3>
+                <div class="threshold-track" aria-label="Matching score thresholds">
+                    <div class="threshold-segment threshold-none"
+                         style="@($"width: {Configuration.PossibleThreshold * 100:F2}%")">
+                        <span>Below</span>
+                    </div>
+                    <div class="threshold-segment threshold-possible"
+                         style="@($"width: {(Configuration.ProbableThreshold - Configuration.PossibleThreshold) * 100:F2}%")">
+                        <span>Possible</span>
+                    </div>
+                    <div class="threshold-segment threshold-probable"
+                         style="@($"width: {(1 - Configuration.ProbableThreshold) * 100:F2}%")">
+                        <span>Probable</span>
+                    </div>
+                </div>
+                <div class="threshold-labels">
+                    <span>0%</span>
+                    <span style="@($"left: {Configuration.PossibleThreshold * 100:F2}%")">
+                        @Configuration.PossibleThreshold.ToString("P0", CultureInfo.InvariantCulture)
+                    </span>
+                    <span style="@($"left: {Configuration.ProbableThreshold * 100:F2}%")">
+                        @Configuration.ProbableThreshold.ToString("P0", CultureInfo.InvariantCulture)
+                    </span>
+                    <span>100%</span>
+                </div>
+                <p class="muted">
+                    Verified authoritative identifiers may produce a certain match. Conflicts always
+                    stay in governed review and require two distinct reviewers.
+                </p>
+            </section>
+
+            <section class="panel matching-weights" aria-labelledby="weights-heading">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">Scoring model</p>
+                        <h3 id="weights-heading">Field influence</h3>
+                    </div>
+                    <span class="result-note">Normalised to 100%</span>
+                </div>
+                @foreach (var weight in Weights(Configuration.Weights))
+                {
+                    <div class="weight-row">
+                        <div>
+                            <strong>@weight.Label</strong>
+                            <span>@weight.Comparator</span>
+                        </div>
+                        <progress max="@Configuration.Weights.Total" value="@weight.Value">
+                            @((weight.Value / Configuration.Weights.Total).ToString("P0", CultureInfo.InvariantCulture))
+                        </progress>
+                        <span class="tabular">
+                            @((weight.Value / Configuration.Weights.Total).ToString("P0", CultureInfo.InvariantCulture))
+                        </span>
+                    </div>
+                }
+            </section>
+        </div>
+
+        <div class="resolution-metrics">
+            <div><strong>@Configuration.DefaultResultCount</strong><span>results returned by default</span></div>
+            <div><strong>@Configuration.MaximumResultCount</strong><span>maximum results per request</span></div>
+            <div><strong>@Configuration.RequiredLinkApprovals</strong><span>reviewer approval@(Configuration.RequiredLinkApprovals == 1 ? string.Empty : "s")</span></div>
+            <div>
+                <strong>@Configuration.AuthoritativeIdentifierSystems.Count</strong>
+                <span>authoritative identifier system@(Configuration.AuthoritativeIdentifierSystems.Count == 1 ? string.Empty : "s")</span>
+            </div>
+        </div>
+    </section>
+
+    <section id="manual-review" class="resolution-section" aria-labelledby="review-heading">
+        <div class="manual-review-feature">
+            <div>
+                <p class="eyebrow">Stage 03 · Governed resolution</p>
+                <h2 id="review-heading">Assisted manual review</h2>
+                <p>
+                    Reviewers get a field-by-field comparison, conflicts and missing data called
+                    out explicitly, a non-binding recommendation, and a safety checklist before
+                    an audited decision can be submitted.
+                </p>
+                <ul class="feature-check-list">
+                    <li><span aria-hidden="true">✓</span> Explainable evidence, never a black-box answer</li>
+                    <li><span aria-hidden="true">✓</span> Proposed survivor and provenance remain visible</li>
+                    <li><span aria-hidden="true">✓</span> Version drift and self-approval are blocked by the service</li>
+                </ul>
+            </div>
+            <AuthorizeView Policy="ReviewAccess">
+                <Authorized>
+                    <a class="button button-primary" href="/reviews">
+                        Open assisted review queue
+                    </a>
+                </Authorized>
+            </AuthorizeView>
+        </div>
+    </section>
+}
+
+@code {
+    private ResolutionConfigurationView? Configuration { get; set; }
+
+    private string? LoadError { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Configuration = await Registry.GetResolutionConfigurationAsync(
+                await Actors.CreateAsync(),
+                CancellationToken.None);
+        }
+        catch (RegistryException exception)
+        {
+            LoadError = exception.Message;
+        }
+    }
+
+    private static BlockingRuleDetails RuleDetails(BlockingRuleKind rule) =>
+        rule switch
+        {
+            BlockingRuleKind.AuthoritativeIdentifier => new(
+                "Authoritative identifier",
+                "Finds records sharing a verified identifier such as an NHS number.",
+                "Verified configured identifier",
+                "System-aware exact value"),
+            BlockingRuleKind.FamilyNameAndBirthDate => new(
+                "Family name + birth date",
+                "Provides a precise demographic path when both core fields are present.",
+                "Family name and date of birth",
+                "Canonical text + exact date"),
+            BlockingRuleKind.PhoneticFamilyNameAndBirthDate => new(
+                "Phonetic family name + birth date",
+                "Recovers candidates with spelling variation but a similar-sounding surname.",
+                "Family name and date of birth",
+                "Phonetic encoding + exact date"),
+            BlockingRuleKind.PostcodeAndBirthDate => new(
+                "Postcode + birth date",
+                "Finds likely household or registration matches independently of name spelling.",
+                "Postcode and date of birth",
+                "Space-free postcode + exact date"),
+            BlockingRuleKind.Phone => new(
+                "Telephone",
+                "Uses a normalised phone or SMS value as an independent candidate path.",
+                "Phone or SMS contact",
+                "Normalised exact value"),
+            BlockingRuleKind.Email => new(
+                "Email",
+                "Uses a normalised email address as an independent candidate path.",
+                "Email contact",
+                "Case-normalised exact value"),
+            _ => new(rule.ToString(), "Configured blocking round.", "Configured fields", "Tenant rule")
+        };
+
+    private static string RuleShortName(BlockingRuleKind rule) =>
+        rule switch
+        {
+            BlockingRuleKind.AuthoritativeIdentifier => "ID",
+            BlockingRuleKind.FamilyNameAndBirthDate => "FM+DOB",
+            BlockingRuleKind.PhoneticFamilyNameAndBirthDate => "PH+DOB",
+            BlockingRuleKind.PostcodeAndBirthDate => "PC+DOB",
+            BlockingRuleKind.Phone => "TEL",
+            BlockingRuleKind.Email => "EMAIL",
+            _ => rule.ToString()
+        };
+
+    private static IReadOnlyList<WeightDetails> Weights(MatchingWeights weights) =>
+    [
+        new("Family name", "Jaro-Winkler / phonetic", weights.FamilyName),
+        new("Given names", "Jaro-Winkler", weights.GivenNames),
+        new("Date of birth", "Exact / transposition", weights.BirthDate),
+        new("Address", "Postcode / token overlap", weights.Address),
+        new("Telephone or email", "Normalised exact", weights.Telecom),
+        new("Gender", "Exact", weights.Gender)
+    ];
+
+    private sealed record BlockingRuleDetails(
+        string Title,
+        string Description,
+        string RequiredData,
+        string Normalisation);
+
+    private sealed record WeightDetails(string Label, string Comparator, double Value);
+}

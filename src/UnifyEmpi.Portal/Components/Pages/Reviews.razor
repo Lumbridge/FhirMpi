@@ -76,6 +76,7 @@ else
                     <tr>
                         <th scope="col">Type</th>
                         <th scope="col">Status</th>
+                        <th scope="col">Triage</th>
                         <th scope="col">Match</th>
                         <th scope="col">Approvals</th>
                         <th scope="col">Updated</th>
@@ -94,6 +95,11 @@ else
                                 <StatusBadge
                                     Label="@PortalDisplay.ReviewStatus(EffectiveStatus(review))"
                                     Tone="@StatusTone(EffectiveStatus(review))" />
+                            </td>
+                            <td>
+                                <StatusBadge
+                                    Label="@TriageLabel(review)"
+                                    Tone="@TriageTone(review)" />
                             </td>
                             <td>
                                 @if (review.Kind == ReviewCaseKind.Split)
@@ -291,4 +297,21 @@ else
             ReviewCaseStatus.Rejected or ReviewCaseStatus.Superseded => "neutral",
             _ => "info"
         };
+
+    private static string TriageLabel(ReviewCase review) =>
+        review.Status == ReviewCaseStatus.AwaitingSecondApproval
+            ? "Final approval"
+            : review.Kind == ReviewCaseKind.Split || review.ApprovalPolicyLocked
+                ? "Safety critical"
+                : review.Grade == MatchGrade.Possible
+                    ? "Needs judgement"
+                    : "Evidence ready";
+
+    private static string TriageTone(ReviewCase review) =>
+        review.Kind == ReviewCaseKind.Split || review.ApprovalPolicyLocked
+            ? "danger"
+            : review.Status == ReviewCaseStatus.AwaitingSecondApproval ||
+              review.Grade == MatchGrade.Possible
+                ? "warning"
+                : "info";
 }

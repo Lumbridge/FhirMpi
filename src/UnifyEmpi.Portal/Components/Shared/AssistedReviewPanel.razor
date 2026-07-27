@@ -1,0 +1,83 @@
+@if (Detail.Candidate is not null && Detail.ReviewCase.Kind != ReviewCaseKind.Split)
+{
+    var assessment = ReviewAssistant.Assess(Detail);
+    <section class="review-assistant" aria-labelledby="@HeadingId">
+        <div class="@($"assistant-recommendation assistant-{assessment.Tone}")">
+            <div class="assistant-mark" aria-hidden="true">DS</div>
+            <div>
+                <p class="eyebrow">Decision support · not an automated decision</p>
+                <h2 id="@HeadingId">@assessment.Title</h2>
+                <p>@assessment.Description</p>
+            </div>
+            <div class="assistant-action">
+                <span>Suggested next step</span>
+                <strong>@assessment.RecommendedAction</strong>
+            </div>
+        </div>
+
+        <div class="assistant-summary" aria-label="Comparison summary">
+            <div><strong>@assessment.AgreementCount</strong><span>agreement signals</span></div>
+            <div><strong>@assessment.ConflictCount</strong><span>conflicts</span></div>
+            <div><strong>@assessment.MissingCount</strong><span>missing values</span></div>
+            <div>
+                <strong>@Detail.ReviewCase.Score.ToString("P0", CultureInfo.InvariantCulture)</strong>
+                <span>weighted score</span>
+            </div>
+        </div>
+
+        <div class="assisted-comparison" role="table" aria-label="Field-by-field identity comparison">
+            <div class="assisted-comparison-header" role="row">
+                <span role="columnheader">Field</span>
+                <span role="columnheader">Subject</span>
+                <span role="columnheader">Proposed survivor</span>
+                <span role="columnheader">Assessment</span>
+            </div>
+            @foreach (var row in assessment.Rows)
+            {
+                <div class="@($"assisted-comparison-row comparison-{StateClass(row.State)}")" role="row">
+                    <strong role="cell">@row.Field</strong>
+                    <span role="cell">@row.SubjectValue</span>
+                    <span role="cell">@row.CandidateValue</span>
+                    <span role="cell" class="comparison-state">
+                        <span aria-hidden="true">@StateSymbol(row.State)</span>
+                        @StateLabel(row.State)
+                    </span>
+                </div>
+            }
+        </div>
+        <p class="assistant-disclaimer">
+            This assistant organises the stored match evidence. It does not use clinical data,
+            replace source verification, or make the final identity decision.
+        </p>
+    </section>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public ReviewCaseDetail Detail { get; set; } = default!;
+
+    private string HeadingId { get; } = $"review-assistant-{Guid.NewGuid():N}";
+
+    private static string StateClass(ComparisonState state) =>
+        state.ToString().ToLowerInvariant();
+
+    private static string StateLabel(ComparisonState state) =>
+        state switch
+        {
+            ComparisonState.Agreement => "Agreement",
+            ComparisonState.Close => "Close match",
+            ComparisonState.Conflict => "Check conflict",
+            ComparisonState.Missing => "Missing",
+            _ => state.ToString()
+        };
+
+    private static string StateSymbol(ComparisonState state) =>
+        state switch
+        {
+            ComparisonState.Agreement => "✓",
+            ComparisonState.Close => "≈",
+            ComparisonState.Conflict => "!",
+            ComparisonState.Missing => "–",
+            _ => "•"
+        };
+}

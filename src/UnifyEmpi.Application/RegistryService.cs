@@ -910,6 +910,28 @@ public sealed class RegistryService(
             0);
     }
 
+    public async ValueTask<ResolutionConfigurationView> GetResolutionConfigurationAsync(
+        ActorContext context,
+        CancellationToken cancellationToken)
+    {
+        EnsureTenantAdministrator(context, allowReadOnly: true);
+        var configuration = await configurationProvider.GetConfigurationAsync(
+            context.TenantId,
+            cancellationToken);
+        var profile = configuration.MatchingProfile;
+        return new ResolutionConfigurationView(
+            profile.Version,
+            profile.Weights,
+            profile.PossibleThreshold,
+            profile.ProbableThreshold,
+            profile.MaximumCandidates,
+            profile.DefaultResultCount,
+            profile.MaximumResultCount,
+            profile.BlockingRules,
+            profile.AuthoritativeIdentifierSystems,
+            configuration.RequiredLinkApprovals);
+    }
+
     public async ValueTask<TenantSettings> UpdateTenantSettingsAsync(
         ActorContext context,
         UpdateTenantSettingsCommand command,
