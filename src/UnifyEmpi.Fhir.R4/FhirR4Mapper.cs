@@ -59,6 +59,14 @@ public static class FhirR4Mapper
                 contact.Value!,
                 contact.Use?.ToString().ToLowerInvariant()))
             .ToArray();
+        var tags = patient.Meta?.Tag
+            .Where(static tag => !string.IsNullOrWhiteSpace(tag.Code))
+            .Select(static tag => new Domain.IdentityTag(
+                tag.System,
+                tag.Code!,
+                tag.Display))
+            .Distinct()
+            .ToArray() ?? [];
 
         return new Domain.IdentityProfile(
             identifiers,
@@ -67,7 +75,10 @@ public static class FhirR4Mapper
             MapGender(patient.Gender),
             addresses,
             telecoms,
-            patient.Deceased is FhirBoolean { Value: true });
+            patient.Deceased is FhirBoolean { Value: true })
+        {
+            Tags = tags
+        };
     }
 
     public static Patient ToSourcePatient(
@@ -81,6 +92,7 @@ public static class FhirR4Mapper
             source.Version,
             source.LastUpdated,
             FhirR4Constants.UkCorePatientProfile);
+        AddIdentityTags(patient.Meta, source.Profile.Tags);
         patient.Identifier.Add(new Identifier(
             FhirR4Constants.EnterpriseIdentifierSystem,
             source.EnterpriseId.ToString())
@@ -105,6 +117,7 @@ public static class FhirR4Mapper
             canonical.Version,
             canonical.LastUpdated,
             FhirR4Constants.UkCorePatientProfile);
+        AddIdentityTags(patient.Meta, canonical.Profile.Tags);
         patient.Identifier.Insert(0, new Identifier(
             FhirR4Constants.EnterpriseIdentifierSystem,
             canonical.EnterpriseId.ToString())
@@ -323,6 +336,16 @@ public static class FhirR4Mapper
         patient.Address.AddRange(profile.Addresses.Select(ToAddress));
         patient.Telecom.AddRange(profile.Telecoms.Select(ToContactPoint));
         return patient;
+    }
+
+    private static void AddIdentityTags(
+        Meta meta,
+        IReadOnlyList<Domain.IdentityTag> tags)
+    {
+        meta.Tag.AddRange(tags
+            .Where(static tag => !string.IsNullOrWhiteSpace(tag.Code))
+            .Select(static tag => new Coding(tag.System, tag.Code, tag.Display))
+            .Distinct());
     }
 
     private static Identifier ToIdentifier(Domain.IdentityIdentifier identifier)

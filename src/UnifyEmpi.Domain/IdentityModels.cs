@@ -99,6 +99,11 @@ public sealed record IdentityIdentifier(
     bool IsAuthoritative = false,
     string? Use = null);
 
+public sealed record IdentityTag(
+    string? System,
+    string Code,
+    string? Display = null);
+
 public sealed record PersonName(
     string? Family,
     IReadOnlyList<string> Given,
@@ -128,6 +133,8 @@ public sealed record IdentityProfile(
     IReadOnlyList<ContactPoint> Telecoms,
     bool IsDeceased = false)
 {
+    public IReadOnlyList<IdentityTag> Tags { get; init; } = [];
+
     public static IdentityProfile Empty { get; } = new(
         [],
         [],

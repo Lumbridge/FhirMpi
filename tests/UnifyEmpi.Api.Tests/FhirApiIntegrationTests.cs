@@ -75,6 +75,12 @@ public sealed class FhirApiIntegrationTests : IClassFixture<FhirApiFactory>
             {
               "resourceType": "Patient",
               "id": "local-100",
+              "meta": {
+                "tag": [
+                  { "code": "traced" },
+                  { "code": "gold" }
+                ]
+              },
               "identifier": [{
                 "system": "https://fhir.nhs.uk/Id/nhs-number",
                 "value": "9434765919"

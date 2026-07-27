@@ -127,7 +127,10 @@ public sealed class PatientRecordFormModel : IValidatableObject
             Gender,
             addresses,
             telecoms,
-            IsDeceased);
+            IsDeceased)
+        {
+            Tags = existing?.Tags ?? []
+        };
     }
 
     public static PatientRecordFormModel From(SourcePatientRecord source)

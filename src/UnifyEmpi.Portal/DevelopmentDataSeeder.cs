@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Options;
 using UnifyEmpi.Application;
+using UnifyEmpi.Application.Normalisation;
 using UnifyEmpi.Domain;
 using UnifyEmpi.Storage.Abstractions;
 
@@ -166,7 +167,7 @@ public sealed partial class DevelopmentDataSeeder(
         string city,
         string postcode,
         string phone) =>
-        new(
+        new IdentityProfile(
             nhsNumber is null
                 ? []
                 :
@@ -179,7 +180,16 @@ public sealed partial class DevelopmentDataSeeder(
             birthDate,
             gender,
             [new PostalAddress([address], city, null, postcode, "GB", AddressUse.Home)],
-            [new ContactPoint(ContactPointSystem.Phone, phone, "mobile")]);
+            [new ContactPoint(ContactPointSystem.Phone, phone, "mobile")])
+        {
+            Tags = NhsNumberValidator.IsValid(nhsNumber)
+                ?
+                [
+                    new IdentityTag(null, NhsNumberValidator.TracedTag),
+                    new IdentityTag(null, NhsNumberValidator.GoldTag)
+                ]
+                : []
+        };
 
     [LoggerMessage(
         EventId = 6200,

@@ -3,6 +3,8 @@ namespace UnifyEmpi.Application.Normalisation;
 public static class NhsNumberValidator
 {
     public const string IdentifierSystem = "https://fhir.nhs.uk/Id/nhs-number";
+    public const string TracedTag = "traced";
+    public const string GoldTag = "gold";
 
     public static string Normalise(string? value) =>
         string.IsNullOrWhiteSpace(value)

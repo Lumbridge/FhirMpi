@@ -31,7 +31,10 @@ public sealed class SurvivorshipService
             primary.Gender != AdministrativeGender.Unknown ? primary.Gender : secondary.Gender,
             MergeDistinct(primary.Addresses, secondary.Addresses, PostalAddressValueComparer.Instance),
             MergeDistinct(primary.Telecoms, secondary.Telecoms),
-            primary.IsDeceased || secondary.IsDeceased);
+            primary.IsDeceased || secondary.IsDeceased)
+        {
+            Tags = MergeDistinct(primary.Tags, secondary.Tags)
+        };
     }
 
     private static int CompareRank(

@@ -1,6 +1,7 @@
 using UnifyEmpi.Application;
 using UnifyEmpi.Application.Configuration;
 using UnifyEmpi.Application.Matching;
+using UnifyEmpi.Application.Normalisation;
 using UnifyEmpi.Domain;
 using UnifyEmpi.Storage.Abstractions;
 using UnifyEmpi.Storage.InMemory;
@@ -10,6 +11,41 @@ namespace UnifyEmpi.Domain.Tests;
 
 public sealed class RegistryWorkflowTests
 {
+    [Theory]
+    [InlineData(false, false, false)]
+    [InlineData(true, false, false)]
+    [InlineData(false, true, false)]
+    [InlineData(true, true, true)]
+    public async Task NhsNumberAuthorityRequiresTracedAndGoldTags(
+        bool hasTracedTag,
+        bool hasGoldTag,
+        bool expectedAuthoritative)
+    {
+        var fixture = CreateFixture();
+        var tags = new List<IdentityTag>();
+        if (hasTracedTag)
+        {
+            tags.Add(new IdentityTag(null, NhsNumberValidator.TracedTag));
+        }
+
+        if (hasGoldTag)
+        {
+            tags.Add(new IdentityTag(null, NhsNumberValidator.GoldTag));
+        }
+
+        var result = await fixture.UpsertAsync(
+            "pas",
+            $"P-{hasTracedTag}-{hasGoldTag}",
+            ProfileWithTags("9434765919", "Smith", tags));
+
+        var sourceIdentifier = Assert.Single(result.SourcePatient.Profile.Identifiers);
+        var canonicalIdentifier = Assert.Single(result.CanonicalPatient.Profile.Identifiers);
+        Assert.Equal(expectedAuthoritative, sourceIdentifier.IsVerified);
+        Assert.Equal(expectedAuthoritative, sourceIdentifier.IsAuthoritative);
+        Assert.Equal(expectedAuthoritative, canonicalIdentifier.IsVerified);
+        Assert.Equal(expectedAuthoritative, canonicalIdentifier.IsAuthoritative);
+    }
+
     [Fact]
     public async Task DuplicateLinkRequiresDistinctApproversAndRetiresTheSubject()
     {
@@ -516,7 +552,22 @@ public sealed class RegistryWorkflowTests
     }
 
     private static IdentityProfile Profile(string? nhsNumber, string family) =>
-        new(
+        ProfileWithTags(
+            nhsNumber,
+            family,
+            nhsNumber is null
+                ? []
+                :
+                [
+                    new IdentityTag(null, NhsNumberValidator.TracedTag),
+                    new IdentityTag(null, NhsNumberValidator.GoldTag)
+                ]);
+
+    private static IdentityProfile ProfileWithTags(
+        string? nhsNumber,
+        string family,
+        IReadOnlyList<IdentityTag> tags) =>
+        new IdentityProfile(
             nhsNumber is null
                 ? []
                 :
@@ -531,7 +582,10 @@ public sealed class RegistryWorkflowTests
             new DateOnly(1980, 1, 2),
             AdministrativeGender.Unknown,
             [new PostalAddress(["1 High Street"], "Leeds", null, "LS1 1AA", "GB")],
-            []);
+            [])
+        {
+            Tags = tags
+        };
 
     private sealed record Fixture(
         TenantId Tenant,

@@ -58,7 +58,7 @@ internal static class GcpDomainResourceMapper
             new SourceRecordKey(new SourceSystemId(sourceSystem), localId),
             patient.Id ?? throw new InvalidOperationException("Stored Patient.id is missing."),
             ParseEnterpriseId(GetStringExtension(patient, EnterpriseExtension)),
-            WithoutInternalIdentifiers(FhirR4Mapper.ToTrustedDomain(patient)),
+            WithoutInternalMetadata(FhirR4Mapper.ToTrustedDomain(patient)),
             GetIntegerExtension(patient, SourceTrustExtension),
             patient.Meta!.LastUpdated ?? DateTimeOffset.MinValue,
             ParseVersion(patient));
@@ -110,7 +110,7 @@ internal static class GcpDomainResourceMapper
             : null;
         return new CanonicalPatient(
             ParseEnterpriseId(patient.Id),
-            WithoutInternalIdentifiers(FhirR4Mapper.ToTrustedDomain(patient)),
+            WithoutInternalMetadata(FhirR4Mapper.ToTrustedDomain(patient)),
             sources.Select(static source => new SourceRecordKey(
                 new SourceSystemId(source.SourceSystem),
                 source.LocalId)).ToArray(),
@@ -450,7 +450,7 @@ internal static class GcpDomainResourceMapper
     public static void AssertTenant(Resource resource, TenantId tenant) =>
         FhirR4Mapper.AssertTenant(resource, tenant);
 
-    private static IdentityProfile WithoutInternalIdentifiers(IdentityProfile profile) =>
+    private static IdentityProfile WithoutInternalMetadata(IdentityProfile profile) =>
         profile with
         {
             Identifiers = profile.Identifiers.Where(identifier =>
@@ -459,6 +459,10 @@ internal static class GcpDomainResourceMapper
                     FhirR4Constants.EnterpriseIdentifierSystem,
                     StringComparison.Ordinal) &&
                 !identifier.System.StartsWith(SourceKeySystemPrefix, StringComparison.Ordinal))
+                .ToArray(),
+            Tags = profile.Tags.Where(tag =>
+                !string.Equals(tag.System, InternalSystem, StringComparison.Ordinal) &&
+                tag.System?.StartsWith(BlockingSystemPrefix, StringComparison.Ordinal) != true)
                 .ToArray()
         };
 

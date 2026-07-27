@@ -116,4 +116,44 @@ public sealed class FhirR4AdapterTests
         Assert.True(trusted.IsVerified);
         Assert.True(trusted.IsAuthoritative);
     }
+
+    [Fact]
+    public void PatientMetadataTagsRoundTripThroughTheDomainProfile()
+    {
+        var patient = new Patient
+        {
+            Meta = new Meta
+            {
+                Tag =
+                [
+                    new Coding("https://example.test/identity", NhsNumberValidator.TracedTag),
+                    new Coding("https://example.test/identity", NhsNumberValidator.GoldTag)
+                ]
+            }
+        };
+        var profile = FhirR4Mapper.ToDomain(patient);
+        var source = new SourcePatientRecord(
+            new SourceRecordKey(new SourceSystemId("pas"), "P-100"),
+            "src-100",
+            new EnterpriseId(Guid.Parse("018f6f9a-1533-7b1c-8d7b-b85f4383a154")),
+            profile,
+            100,
+            DateTimeOffset.UnixEpoch,
+            1);
+
+        var roundTrip = FhirR4Mapper.ToSourcePatient(source, new TenantId("tenant-a"));
+
+        Assert.Contains(
+            profile.Tags,
+            static tag => tag.Code == NhsNumberValidator.TracedTag);
+        Assert.Contains(
+            profile.Tags,
+            static tag => tag.Code == NhsNumberValidator.GoldTag);
+        Assert.Contains(
+            roundTrip.Meta!.Tag,
+            static tag => tag.Code == NhsNumberValidator.TracedTag);
+        Assert.Contains(
+            roundTrip.Meta.Tag,
+            static tag => tag.Code == NhsNumberValidator.GoldTag);
+    }
 }

@@ -1676,15 +1676,24 @@ public sealed class RegistryService(
         MatchingProfile matchingProfile,
         bool isAuthoritative)
     {
+        var hasTracedTag = HasIdentityTag(
+            profile,
+            NhsNumberValidator.TracedTag);
+        var hasGoldTag = HasIdentityTag(
+            profile,
+            NhsNumberValidator.GoldTag);
         var identifiers = profile.Identifiers.Select(identifier =>
         {
             var authoritativeSystem =
                 matchingProfile.AuthoritativeIdentifierSystems.Contains(identifier.System);
-            var valid = !string.Equals(
-                            identifier.System,
-                            NhsNumberValidator.IdentifierSystem,
-                            StringComparison.Ordinal) ||
-                        NhsNumberValidator.IsValid(identifier.Value);
+            var isNhsNumber = string.Equals(
+                identifier.System,
+                NhsNumberValidator.IdentifierSystem,
+                StringComparison.Ordinal);
+            var valid = !isNhsNumber ||
+                        NhsNumberValidator.IsValid(identifier.Value) &&
+                        hasTracedTag &&
+                        hasGoldTag;
             var trusted = isAuthoritative && authoritativeSystem && valid;
             return identifier with
             {
@@ -1694,4 +1703,8 @@ public sealed class RegistryService(
         }).ToArray();
         return profile with { Identifiers = identifiers };
     }
+
+    private static bool HasIdentityTag(IdentityProfile profile, string code) =>
+        profile.Tags.Any(tag =>
+            string.Equals(tag.Code, code, StringComparison.OrdinalIgnoreCase));
 }
