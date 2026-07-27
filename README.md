@@ -4,7 +4,6 @@
 [![.NET 10](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
 [![FHIR R4](https://img.shields.io/badge/FHIR-R4-E34A6F)](https://hl7.org/fhir/R4/)
 [![Licence: CC0 1.0](https://img.shields.io/badge/licence-CC0--1.0-lightgrey.svg)](LICENSE)
-[![Live synthetic demo](https://img.shields.io/badge/live-synthetic_demo-0B7285)](https://fhir-mpi-demo-204975513415.europe-west2.run.app)
 
 UnifyEMPI is a high-performance, multi-tenant master patient index (MPI) foundation for FHIR R4 and HL7v2. It is a modular monolith with three independently scalable hosts:
 
@@ -15,8 +14,8 @@ UnifyEMPI is a high-performance, multi-tenant master patient index (MPI) foundat
 The registry is hybrid. Source systems remain authoritative for their Patient snapshots; UnifyEMPI owns enterprise UUIDv7 identities, Person links, candidate indexes, canonical Patient views, review cases, receipts, and audit evidence.
 
 > [!IMPORTANT]
-> UnifyEMPI is an engineering foundation, not a certified clinical product. The public
-> deployment contains synthetic data only. Production NHS use requires the independent
+> UnifyEMPI is an engineering foundation, not a certified clinical product. Demonstration
+> deployments must contain synthetic data only. Production NHS use requires the independent
 > safety, privacy, security, operational and contractual work described below.
 
 See [core paths and processing model](docs/core-paths.md) for annotated diagrams of real-time duplicate detection, FHIR and HL7 ingestion, `$match`, merge, split, survivorship, tenant isolation, and provider boundaries.
@@ -38,17 +37,17 @@ HMAC blocking tags and review errors, start with
 - **Replaceable storage:** an ephemeral in-memory provider for development and a durable GCP Healthcare API provider are included behind the same storage contract.
 - **Production foundations:** external OIDC and SMART scopes, mutual-TLS MLLP, health checks, OpenTelemetry, JSON logging, containers, Compose, and a Helm chart.
 
-## Live public demo
+## Synthetic demonstration
 
-Explore the synthetic deployment in the **Ryan's Apps** Google Cloud project:
+The Compose quick start below provides a complete local synthetic demonstration. The
+repository also includes a reproducible GCP deployment that creates branded
+`unifyempi-demo` resources and prints the assigned Cloud Run URLs after deployment.
+Never enter real patient or confidential information into a demonstration environment.
+Public MLLP is deliberately excluded because production HL7v2 ingress must use a
+private endpoint and mutual TLS.
 
-- [Operations portal](https://fhir-mpi-demo-204975513415.europe-west2.run.app)
-- [FHIR and operations API](https://fhir-mpi-demo-api-204975513415.europe-west2.run.app)
-- [FHIR capability statement](https://fhir-mpi-demo-api-204975513415.europe-west2.run.app/fhir/R4/metadata)
-
-The public deployment is unauthenticated, shared and mutable. It contains synthetic patients only; never enter real patient or confidential information. Public MLLP is deliberately excluded because production HL7v2 ingress must use a private endpoint and mutual TLS.
-
-See [public-demo.md](docs/public-demo.md) for the deployed topology, verified scenarios, cost controls, reproducible deployment and safe teardown.
+See [public-demo.md](docs/public-demo.md) for the GCP topology, verified scenarios,
+cost controls, reproducible deployment and safe teardown.
 
 ## Quick start
 
@@ -129,7 +128,7 @@ The core benchmark runs on every default CI build. Its checked-in number is a
 BenchmarkDotNet `ShortRun` mean for regression detection, not a p95/p99 result and not
 an end-to-end throughput claim. The k6 and 10-million-identity figures are release
 acceptance targets that require a representative, same-region GCP environment; they
-have not been demonstrated merely by running the public demo.
+have not been demonstrated merely by running the synthetic demonstration.
 
 Run the scoring benchmark and its regression gate with:
 
@@ -167,7 +166,7 @@ See [the benchmark guide](benchmarks/README.md) and
   replaceable provider contract.
 - [Configuration](docs/configuration.md): API, portal, OIDC, tenant, HMAC and MLLP
   settings.
-- [Public demonstration](docs/public-demo.md): deployed topology, synthetic scenarios,
+- [GCP demonstration deployment](docs/public-demo.md): deployable topology, synthetic scenarios,
   cost controls and safe teardown.
 - [Postman collection](docs/postman/README.md): importable discovery, matching, source
   write and reviewer-operation examples.

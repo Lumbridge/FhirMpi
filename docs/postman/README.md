@@ -20,17 +20,16 @@ Run folders in order where one request captures an identifier or ETag for the ne
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `baseUrl` | Public synthetic API | Read-only discovery, canonical search and matching |
+| `baseUrl` | `http://localhost:8080` | Discovery, canonical search and matching |
 | `sourceBaseUrl` | `http://localhost:8080` | Mutating source-system examples |
 | `operationsBaseUrl` | `http://localhost:8080` | Reviewer and operational reads |
 | `accessToken` | Empty | Bearer token for a protected deployment |
 
 The remaining variables are managed automatically by the collection.
 
-The public demonstration is shared, unauthenticated and synthetic-only. Never enter real
-patient or confidential information. Source-system writes deliberately use
-`sourceBaseUrl`, not the public `baseUrl`; do not change that variable to the public
-demonstration.
+The local demonstration is unauthenticated and synthetic-only. Never enter real patient
+or confidential information. Keep source-system writes pointed at an isolated local or
+approved protected deployment.
 
 For local development:
 

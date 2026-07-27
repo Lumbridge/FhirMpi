@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "2f5fb064-3929-4da7-a26a-e528e0ea285b",
     "name": "UnifyEMPI — API demonstration",
-    "description": "An importable tour of UnifyEMPI discovery, canonical Patient search, FHIR R4 Patient $match, source-system writes and read-only reviewer operations. Public requests use synthetic data only. Mutating requests target localhost by default and must never be pointed at the public demonstration.",
+    "description": "An importable tour of UnifyEMPI discovery, canonical Patient search, FHIR R4 Patient $match, source-system writes and read-only reviewer operations. The collection targets the local synthetic environment by default.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -519,7 +519,7 @@
     },
     {
       "name": "3 — Source-system writes",
-      "description": "Create, update and read a synthetic source Patient. These requests use sourceBaseUrl, which is localhost by default. In an authenticated deployment, set accessToken to a JWT containing trusted tenant_id, source_system and system/Patient.write claims. Never point these requests at the shared public demonstration.",
+      "description": "Create, update and read a synthetic source Patient. These requests use sourceBaseUrl, which is localhost by default. In an authenticated deployment, set accessToken to a JWT containing trusted tenant_id, source_system and system/Patient.write claims.",
       "item": [
         {
           "name": "Create a source Patient",
@@ -847,15 +847,15 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "https://fhir-mpi-demo-api-204975513415.europe-west2.run.app",
+      "value": "http://localhost:8080",
       "type": "string",
-      "description": "Read-only public synthetic API. It may also be changed to a local or protected UnifyEMPI API."
+      "description": "Local synthetic API. It may be changed to an approved protected UnifyEMPI API."
     },
     {
       "key": "sourceBaseUrl",
       "value": "http://localhost:8080",
       "type": "string",
-      "description": "Target for mutating source-system requests. Keep this separate from the shared public demonstration."
+      "description": "Target for mutating source-system requests. Use only an isolated local or approved protected deployment."
     },
     {
       "key": "operationsBaseUrl",

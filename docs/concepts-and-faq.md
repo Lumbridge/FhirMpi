@@ -385,6 +385,6 @@ Test assemblies must never be deployed in production images.
   split, survivorship and isolation diagrams.
 - [Architecture](architecture.md): dependency boundaries and provider model.
 - [Configuration](configuration.md): API, portal, tenant, HMAC and MLLP settings.
-- [Public demo](public-demo.md): synthetic deployment topology and safe operation.
+- [GCP demonstration deployment](public-demo.md): synthetic topology and safe operation.
 - [Provider ADR](adr/0001-modular-monolith-and-provider-contract.md): the storage
   abstraction decision.
