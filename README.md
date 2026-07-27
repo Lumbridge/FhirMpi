@@ -4,6 +4,7 @@
 [![.NET 10](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
 [![FHIR R4](https://img.shields.io/badge/FHIR-R4-E34A6F)](https://hl7.org/fhir/R4/)
 [![Licence: CC0 1.0](https://img.shields.io/badge/licence-CC0--1.0-lightgrey.svg)](LICENSE)
+[![Live synthetic demo](https://img.shields.io/badge/demo-live-148A08)](https://unifyempi-demo-mjpwolhr6q-nw.a.run.app)
 
 UnifyEMPI is a high-performance, multi-tenant master patient index (MPI) foundation for FHIR R4 and HL7v2. It is a modular monolith with three independently scalable hosts:
 
@@ -42,8 +43,14 @@ HMAC blocking tags and review errors, start with
 
 ## Synthetic demonstration
 
-The Compose quick start below provides a complete local synthetic demonstration. The
-repository also includes a reproducible GCP deployment that creates branded
+The Compose quick start below provides a complete local synthetic demonstration. A
+branded deployment is also available:
+
+- [Operations portal](https://unifyempi-demo-mjpwolhr6q-nw.a.run.app)
+- [FHIR R4 CapabilityStatement](https://unifyempi-demo-api-mjpwolhr6q-nw.a.run.app/fhir/R4/metadata)
+  (API base: `https://unifyempi-demo-api-mjpwolhr6q-nw.a.run.app`)
+
+The repository includes the reproducible GCP deployment that creates those
 `unifyempi-demo` resources and prints the assigned Cloud Run URLs after deployment.
 Never enter real patient or confidential information into a demonstration environment.
 Public MLLP is deliberately excluded because production HL7v2 ingress must use a

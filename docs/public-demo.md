@@ -1,12 +1,17 @@
 # GCP demonstration deployment
 
 The deployment script creates a branded synthetic UnifyEMPI demonstration in a chosen
-Google Cloud project. No shared hosted endpoint is advertised from this repository;
-the script prints the assigned portal and API URLs after a successful deployment.
+Google Cloud project. The current shared synthetic deployment is available at:
+
+- Portal: <https://unifyempi-demo-mjpwolhr6q-nw.a.run.app>
+- FHIR/API base: `https://unifyempi-demo-api-mjpwolhr6q-nw.a.run.app`
+- [FHIR R4 CapabilityStatement](https://unifyempi-demo-api-mjpwolhr6q-nw.a.run.app/fhir/R4/metadata)
+
+The script prints the assigned portal and API URLs after every successful deployment.
 
 The portal opens as a synthetic reviewer in tenant `demo`. It includes six source
 records, six enterprise identities and three explainable probable-match cases. The
-workbench demonstrates patient creation and update in the non-authoritative `portal`
+workbench demonstrates patient creation and update in the non-authoritative `demo-ui`
 source, patient search, provenance, survivorship, matching evidence, merge review,
 rejection, corrective unlink/split, source trust, matching policy and audit history.
 
@@ -29,8 +34,8 @@ evaluated; use invented data only.
 ## Postman `$match` demonstration
 
 Import [`UnifyEMPI-Match-Demo.postman_collection.json`](postman/UnifyEMPI-Match-Demo.postman_collection.json)
-into Postman, set `baseUrl` to the API URL printed by the deployment script, and send
-**Match a synthetic patient**. The collection contains a synthetic partial Patient,
+into Postman and send **Match a synthetic patient**. Its default `baseUrl` points to
+the shared synthetic API above. The collection contains a synthetic partial Patient,
 FHIR media-type headers, the R4 `Parameters` wrapper, `onlyCertainMatches`, `count`,
 and response tests for the searchset Bundle, score and `match-grade`.
 

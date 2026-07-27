@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "2f5fb064-3929-4da7-a26a-e528e0ea285b",
     "name": "UnifyEMPI — API demonstration",
-    "description": "An importable tour of UnifyEMPI discovery, canonical Patient search, FHIR R4 Patient $match, source-system writes and read-only reviewer operations. The collection targets the local synthetic environment by default.",
+    "description": "An importable tour of UnifyEMPI discovery, canonical Patient search, FHIR R4 Patient $match, source-system writes and read-only reviewer operations. Non-mutating requests target the shared synthetic API by default; writes and operational requests remain local.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -250,7 +250,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"resourceType\": \"Parameters\",\n  \"parameter\": [\n    {\n      \"name\": \"resource\",\n      \"resource\": {\n        \"resourceType\": \"Patient\",\n        \"name\": [\n          {\n            \"use\": \"official\",\n            \"family\": \"Khan\",\n            \"given\": [\"Sameera\"]\n          }\n        ],\n        \"birthDate\": \"1991-07-28\",\n        \"gender\": \"female\",\n        \"address\": [\n          {\n            \"use\": \"home\",\n            \"line\": [\"22 Orchard Close\"],\n            \"city\": \"Bradford\",\n            \"postalCode\": \"BD1 2RD\"\n          }\n        ],\n        \"telecom\": [\n          {\n            \"system\": \"phone\",\n            \"value\": \"07700 900347\",\n            \"use\": \"mobile\"\n          }\n        ]\n      }\n    },\n    {\n      \"name\": \"onlyCertainMatches\",\n      \"valueBoolean\": false\n    },\n    {\n      \"name\": \"count\",\n      \"valueInteger\": 10\n    }\n  ]\n}",
+              "raw": "{\n  \"resourceType\": \"Parameters\",\n  \"parameter\": [\n    {\n      \"name\": \"resource\",\n      \"resource\": {\n        \"resourceType\": \"Patient\",\n        \"name\": [\n          {\n            \"use\": \"official\",\n            \"family\": \"Khan\",\n            \"given\": [\"Sameera\"]\n          }\n        ],\n        \"birthDate\": \"1991-07-28\",\n        \"gender\": \"female\",\n        \"address\": [\n          {\n            \"use\": \"home\",\n            \"line\": [\"22 Orchard Close\"],\n            \"city\": \"Swansea\",\n            \"postalCode\": \"SA1 1AA\"\n          }\n        ],\n        \"telecom\": [\n          {\n            \"system\": \"phone\",\n            \"value\": \"07700 900347\",\n            \"use\": \"mobile\"\n          }\n        ]\n      }\n    },\n    {\n      \"name\": \"onlyCertainMatches\",\n      \"valueBoolean\": false\n    },\n    {\n      \"name\": \"count\",\n      \"valueInteger\": 10\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -847,9 +847,9 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:8080",
+      "value": "https://unifyempi-demo-api-mjpwolhr6q-nw.a.run.app",
       "type": "string",
-      "description": "Local synthetic API. It may be changed to an approved protected UnifyEMPI API."
+      "description": "Shared synthetic API for non-mutating discovery, search and matching. It may be changed to a local or approved protected UnifyEMPI API."
     },
     {
       "key": "sourceBaseUrl",
