@@ -1,10 +1,10 @@
 ---
-title: GCP demonstration deployment
-description: Deploy, verify, operate and safely remove the shared synthetic UnifyEMPI environment.
+title: GCP demo deployment
+description: Deploy, verify, operate and safely remove the shared UnifyEMPI demo.
 ---
 
-The deployment script creates a branded synthetic UnifyEMPI demonstration in a chosen
-Google Cloud project. The current shared synthetic deployment is available at:
+The deployment script creates a branded UnifyEMPI demo in a chosen Google Cloud
+project. The current shared demo is available at:
 
 - Portal: <https://unifyempi-demo-mjpwolhr6q-nw.a.run.app>
 - FHIR/API base: `https://unifyempi-demo-api-mjpwolhr6q-nw.a.run.app`
@@ -12,7 +12,7 @@ Google Cloud project. The current shared synthetic deployment is available at:
 
 The script prints the assigned portal and API URLs after every successful deployment.
 
-The portal opens as a synthetic reviewer in tenant `demo`. It includes six source
+The portal opens as a demo reviewer in tenant `demo`. It includes six source
 records, six enterprise identities and three explainable probable-match cases. The
 workbench demonstrates patient creation and update in the non-authoritative `demo-ui`
 source, patient search, provenance, survivorship, matching evidence, merge review,
@@ -22,23 +22,23 @@ rejection, corrective unlink/split, source trust, matching policy and audit hist
 
 This deployment is intentionally unauthenticated so that it can be explored without an account. It must contain synthetic data only. Never submit real patient, staff, credential or organisation-confidential information.
 
-When exposed publicly, visitors share one mutable demonstration tenant. Changes are
+When exposed publicly, visitors share one mutable demo tenant. Changes are
 audited but can affect what later visitors see, and the store may be reset without
 notice. The API uses a consumer identity for Patient search and `$match`; source-system
-Patient writes are disabled in the demonstration API configuration. This deployment is
+Patient writes are disabled in the demo API configuration. This deployment is
 not a production reference for identity, availability, clinical safety or data
 governance.
 
-The public portal can create and update only records owned by its configured synthetic
-`demo-ui` source. Health-board, WDS, Velindre and other organisation-owned source
+The public portal can create and update only records owned by its configured `demo-ui`
+source. Health-board, WDS, Velindre and other organisation-owned source
 records remain read-only. Create and update exist so the complete workflow can be
 evaluated; use invented data only.
 
-## Postman `$match` demonstration
+## Postman `$match` demo
 
 Import [`UnifyEMPI-Match-Demo.postman_collection.json`](/UnifyEMPI/downloads/UnifyEMPI-Match-Demo.postman_collection.json)
 into Postman and send **Match a synthetic patient**. Its default `baseUrl` points to
-the shared synthetic API above. The collection contains a synthetic partial Patient,
+the shared demo API above. The collection contains a synthetic partial Patient,
 FHIR media-type headers, the R4 `Parameters` wrapper, `onlyCertainMatches`, `count`,
 and response tests for the searchset Bundle, score and `match-grade`.
 
@@ -78,7 +78,7 @@ Prerequisites are Google Cloud CLI, Docker and a billing-enabled project. Authen
 
 The script creates only resources bearing the `unifyempi-demo` name, creates a cryptographically random blocking-key secret without printing it, publishes immutable images, deploys both Cloud Run services and verifies readiness. It reuses the named Healthcare dataset when it already exists.
 
-To update an existing deployment, run the same command. The script publishes a new immutable timestamped image tag and creates new Cloud Run revisions. It does not erase an existing demonstration store.
+To update an existing deployment, run the same command. The script publishes a new immutable timestamped image tag and creates new Cloud Run revisions. It does not erase an existing demo store.
 
 ## Verification
 
@@ -101,7 +101,7 @@ Scale-to-zero removes idle Cloud Run instance time, but it does not make the who
 
 Set a project budget and alert in Cloud Billing before promoting the link widely. No budget or billing alert is created automatically because those controls belong to the billing-account owner.
 
-## Remove the demonstration
+## Remove the demo
 
 Review the exact names in the removal script, then run:
 

@@ -46,7 +46,7 @@ Bevan and Velindre sources. These form three probable-match review cases.
 
 The local stack disables authentication and gives each host its own ephemeral in-memory
 provider. Data disappears when a host stops, and records sent to the API or MLLP host
-are not visible in the portal. This is a developer demonstration, not a production
+are not visible in the portal. This is a developer demo, not a production
 topology.
 
 :::caution
@@ -74,4 +74,4 @@ docker compose down
 - Learn the [identity model and terminology](/UnifyEMPI/concepts/identity-model/).
 - Run the prepared [Postman matching tour](/UnifyEMPI/guides/postman/).
 - Review [configuration](/UnifyEMPI/reference/configuration/) before changing tenants or sources.
-- Explore the [public synthetic demonstration](/UnifyEMPI/deployment/public-demo/).
+- Explore the [public demo](/UnifyEMPI/deployment/public-demo/).

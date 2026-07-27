@@ -18,7 +18,7 @@ for broader production operation.
 | Tenancy | Trusted tenant and source context on every identity, query, receipt, decision and audit event |
 | Storage | Development in-memory provider and durable GCP Healthcare API R4 provider behind one contract |
 | Operations | Blazor portal, source trust, policy editing, audit search, health checks and OpenTelemetry |
-| Deployment | Containers, Compose, Helm, Terraform foundations and a reproducible GCP synthetic demo |
+| Deployment | Containers, Compose, Helm, Terraform foundations and a reproducible GCP demo |
 
 ## Deliberate gaps
 

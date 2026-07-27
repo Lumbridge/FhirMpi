@@ -136,7 +136,7 @@ export default defineConfig({
 					label: 'Live resources',
 					items: [
 						{
-							label: 'Synthetic operations portal',
+							label: 'Demo operations portal',
 							link: 'https://unifyempi-demo-mjpwolhr6q-nw.a.run.app',
 						},
 						{

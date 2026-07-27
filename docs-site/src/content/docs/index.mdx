@@ -8,7 +8,7 @@ hero:
     - text: Start locally
       link: /UnifyEMPI/getting-started/
       icon: right-arrow
-    - text: Explore the synthetic demo
+    - text: Explore the demo
       link: https://unifyempi-demo-mjpwolhr6q-nw.a.run.app
       icon: external
       variant: minimal
@@ -20,7 +20,7 @@ import { Badge, Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
 	<Badge text="FHIR R4" variant="success" />
 	<Badge text="HL7v2 ADT" variant="note" />
 	<Badge text="Multi-tenant" variant="tip" />
-	<Badge text="Synthetic demo live" variant="success" />
+	<Badge text="Demo live" variant="success" />
 </div>
 
 UnifyEMPI links source Patient records into governed enterprise identities while
@@ -28,14 +28,14 @@ preserving source provenance. Matching decisions remain bounded, explainable and
 reviewable.
 
 :::caution[Engineering foundation]
-UnifyEMPI is not a certified clinical product. Use only synthetic data in demonstrations.
+UnifyEMPI is not a certified clinical product. Use only synthetic data in demos.
 Production NHS use requires independent clinical-safety, privacy, security, operational
 and contractual assurance.
 :::
 
 ## Choose your route
 
-<CardGrid stagger>
+<CardGrid>
 	<Card title="Run it" icon="rocket">
 		Bring up the API, operations portal and HL7v2 listener with the
 		[ten-minute quick start](/UnifyEMPI/getting-started/).
@@ -82,7 +82,7 @@ receipts and audit evidence.
 	/>
 	<LinkCard
 		title="Inspect FHIR capabilities"
-		description="Open the live synthetic API CapabilityStatement."
+		description="Open the live demo API CapabilityStatement."
 		href="https://unifyempi-demo-api-mjpwolhr6q-nw.a.run.app/fhir/R4/metadata"
 	/>
 </div>

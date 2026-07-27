@@ -359,7 +359,7 @@ Use the [Postman collection and guide](/UnifyEMPI/guides/postman/). It includes 
 canonical search, JSON/XML matching, safe error examples, local synthetic source writes
 and read-only reviewer operations. It targets localhost by default and includes
 assertions for the FHIR searchset, score and `match-grade`. Never use real patient
-information in a demonstration environment.
+information in a demo environment.
 
 ## Build and security questions
 
@@ -397,6 +397,6 @@ Test assemblies must never be deployed in production images.
   split, survivorship and isolation diagrams.
 - [Architecture](/UnifyEMPI/architecture/overview/): dependency boundaries and provider model.
 - [Configuration](/UnifyEMPI/reference/configuration/): API, portal, tenant, HMAC and MLLP settings.
-- [GCP demonstration deployment](/UnifyEMPI/deployment/public-demo/): synthetic topology and safe operation.
+- [GCP demo deployment](/UnifyEMPI/deployment/public-demo/): demo topology and safe operation.
 - [Provider ADR](/UnifyEMPI/architecture/decisions/0001-modular-monolith-and-provider-contract/): the storage
   abstraction decision.

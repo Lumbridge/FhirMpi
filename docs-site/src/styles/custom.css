@@ -42,7 +42,7 @@ header.header {
 
 .hero {
 	position: relative;
-	padding-block: clamp(4rem, 11vw, 8rem);
+	padding-block: clamp(3.5rem, 8vw, 6.5rem) clamp(2rem, 4vw, 3.5rem);
 }
 
 .hero::before {
@@ -57,10 +57,13 @@ header.header {
 }
 
 .hero h1 {
-	max-width: 11ch;
+	max-width: 16ch;
 	font-weight: 780;
 	letter-spacing: -0.06em;
 	line-height: 0.96;
+	overflow-wrap: normal;
+	text-wrap: balance;
+	word-break: normal;
 }
 
 .hero .tagline {
@@ -93,6 +96,15 @@ header.header {
 
 .sl-markdown-content table {
 	font-size: 0.9rem;
+}
+
+.sl-markdown-content .card-grid {
+	grid-auto-rows: 1fr;
+	align-items: stretch;
+}
+
+.sl-markdown-content .card-grid > article {
+	height: 100%;
 }
 
 .sl-markdown-content pre.mermaid {

@@ -12,7 +12,7 @@ supported by evidence and explicit about their operational consequences.
 - Open or reference an issue for substantial matching, security, tenancy, persistence or
   protocol changes.
 - Never use real patient or confidential information in fixtures, screenshots, issues,
-  logs or demonstrations.
+  logs or demos.
 - Read the [architecture](/UnifyEMPI/architecture/overview/),
   [core paths](/UnifyEMPI/architecture/core-paths/) and
   [concepts guide](/UnifyEMPI/concepts/identity-model/) before changing identity semantics.

@@ -22,7 +22,7 @@ Include, where possible:
 - any suggested mitigation.
 
 Do not include real patient information, access tokens, HMAC material, private keys,
-certificates or production payloads. Do not test against the public demonstration in a
+certificates or production payloads. Do not test against the public demo in a
 way that degrades availability, accesses another user's data or changes shared identity
 links.
 

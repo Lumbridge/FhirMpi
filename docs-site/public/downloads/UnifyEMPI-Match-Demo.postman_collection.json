@@ -1,8 +1,8 @@
 {
   "info": {
     "_postman_id": "2f5fb064-3929-4da7-a26a-e528e0ea285b",
-    "name": "UnifyEMPI — API demonstration",
-    "description": "An importable tour of UnifyEMPI discovery, canonical Patient search, FHIR R4 Patient $match, source-system writes and read-only reviewer operations. Non-mutating requests target the shared synthetic API by default; writes and operational requests remain local.",
+    "name": "UnifyEMPI — API demo",
+    "description": "An importable tour of UnifyEMPI discovery, canonical Patient search, FHIR R4 Patient $match, source-system writes and read-only reviewer operations. Non-mutating requests target the shared demo API by default; writes and operational requests remain local.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -18,7 +18,7 @@
   "item": [
     {
       "name": "1 — Discovery and health",
-      "description": "Unauthenticated service discovery and readiness requests. These target the public synthetic deployment by default.",
+      "description": "Unauthenticated service discovery and readiness requests. These target the public demo by default.",
       "item": [
         {
           "name": "Readiness",
@@ -849,7 +849,7 @@
       "key": "baseUrl",
       "value": "https://unifyempi-demo-api-mjpwolhr6q-nw.a.run.app",
       "type": "string",
-      "description": "Shared synthetic API for non-mutating discovery, search and matching. It may be changed to a local or approved protected UnifyEMPI API."
+      "description": "Shared demo API for non-mutating discovery, search and matching. It may be changed to a local or approved protected UnifyEMPI API."
     },
     {
       "key": "sourceBaseUrl",

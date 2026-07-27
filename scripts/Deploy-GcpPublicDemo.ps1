@@ -131,7 +131,7 @@ if (-not (Test-GcloudResource {
         --immutable-tags `
         --location=$Region `
         --project=$ProjectId `
-        --description="UnifyEMPI public demonstration images" `
+        --description="UnifyEMPI public demo images" `
         --quiet
     Assert-LastExitCode "Creating Artifact Registry repository '$Repository'"
 }
@@ -144,7 +144,7 @@ if (-not (Test-GcloudResource {
         })) {
     gcloud iam service-accounts create $ServiceName `
         --project=$ProjectId `
-        --display-name="UnifyEMPI public demonstration" `
+        --display-name="UnifyEMPI public demo" `
         --quiet
     Assert-LastExitCode "Creating service account '$serviceAccountName'"
 }

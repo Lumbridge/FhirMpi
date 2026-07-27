@@ -61,7 +61,7 @@ clinical-safety processes.
 
 Health-board, WDS, Velindre and other organisation-owned records remain read-only in
 the operations portal. A deployment may separately add a UI-managed source for
-governed data entry; the public synthetic demo calls this source `demo-ui`.
+governed data entry; the public demo calls this source `demo-ui`.
 
 See [configuration](/UnifyEMPI/reference/configuration/) for the complete example and
 [identity concepts](/UnifyEMPI/concepts/identity-model/) for the distinction between source and

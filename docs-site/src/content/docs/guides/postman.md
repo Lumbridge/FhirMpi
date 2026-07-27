@@ -23,14 +23,14 @@ Run folders in order where one request captures an identifier or ETag for the ne
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `baseUrl` | `https://unifyempi-demo-api-mjpwolhr6q-nw.a.run.app` | Public synthetic discovery, canonical search and matching |
+| `baseUrl` | `https://unifyempi-demo-api-mjpwolhr6q-nw.a.run.app` | Public demo discovery, canonical search and matching |
 | `sourceBaseUrl` | `http://localhost:8080` | Mutating source-system examples |
 | `operationsBaseUrl` | `http://localhost:8080` | Reviewer and operational reads |
 | `accessToken` | Empty | Bearer token for a protected deployment |
 
 The remaining variables are managed automatically by the collection.
 
-The shared and local demonstrations are unauthenticated and synthetic-only. Never enter
+The shared and local demos are unauthenticated and synthetic-only. Never enter
 real patient or confidential information. The public default is used only for
 non-mutating discovery, search and matching. Keep source-system writes and operational
 requests pointed at an isolated local or approved protected deployment.

@@ -5,7 +5,7 @@
 [![FHIR R4](https://img.shields.io/badge/FHIR-R4-E34A6F)](https://hl7.org/fhir/R4/)
 [![Licence: CC0 1.0](https://img.shields.io/badge/licence-CC0--1.0-lightgrey.svg)](LICENSE)
 [![Documentation](https://img.shields.io/badge/docs-Starlight-0F766E)](https://lumbridge.github.io/UnifyEMPI/)
-[![Live synthetic demo](https://img.shields.io/badge/demo-live-148A08)](https://unifyempi-demo-mjpwolhr6q-nw.a.run.app)
+[![Live demo](https://img.shields.io/badge/demo-live-148A08)](https://unifyempi-demo-mjpwolhr6q-nw.a.run.app)
 
 UnifyEMPI is a high-performance, multi-tenant master patient index (MPI) foundation for FHIR R4 and HL7v2. It is a modular monolith with three independently scalable hosts:
 
@@ -16,7 +16,7 @@ UnifyEMPI is a high-performance, multi-tenant master patient index (MPI) foundat
 The registry is hybrid. Source systems remain authoritative for their Patient snapshots; UnifyEMPI owns enterprise UUIDv7 identities, Person links, candidate indexes, canonical Patient views, review cases, receipts, and audit evidence.
 
 > [!IMPORTANT]
-> UnifyEMPI is an engineering foundation, not a certified clinical product. Demonstration
+> UnifyEMPI is an engineering foundation, not a certified clinical product. Demo
 > deployments must contain synthetic data only. Production NHS use requires the independent
 > safety, privacy, security, operational and contractual work described below.
 
@@ -42,10 +42,10 @@ HMAC blocking tags and review errors, start with
 - **Replaceable storage:** an ephemeral in-memory provider for development and a durable GCP Healthcare API provider are included behind the same storage contract.
 - **Production foundations:** external OIDC and SMART scopes, mutual-TLS MLLP, health checks, OpenTelemetry, JSON logging, containers, Compose, and a Helm chart.
 
-## Synthetic demonstration
+## Demo
 
-The Compose quick start below provides a complete local synthetic demonstration. A
-branded deployment is also available:
+The Compose quick start below provides a complete local demo. A branded deployment is
+also available:
 
 - [Operations portal](https://unifyempi-demo-mjpwolhr6q-nw.a.run.app)
 - [FHIR R4 CapabilityStatement](https://unifyempi-demo-api-mjpwolhr6q-nw.a.run.app/fhir/R4/metadata)
@@ -53,7 +53,7 @@ branded deployment is also available:
 
 The repository includes the reproducible GCP deployment that creates those
 `unifyempi-demo` resources and prints the assigned Cloud Run URLs after deployment.
-Never enter real patient or confidential information into a demonstration environment.
+Never enter real patient or confidential information into a demo environment.
 Public MLLP is deliberately excluded because production HL7v2 ingress must use a
 private endpoint and mutual TLS.
 
@@ -108,7 +108,7 @@ Run it directly with:
 dotnet run --project src/UnifyEmpi.Portal
 ```
 
-The development configuration signs in a synthetic reviewer for tenant `demo`, seeds synthetic records, and uses no real patient data.
+The development configuration signs in a demo reviewer for tenant `demo`, seeds synthetic records, and uses no real patient data.
 
 To build and test the source locally, install the .NET 10 SDK and run:
 
@@ -123,7 +123,7 @@ Stop the local containers with `docker compose down`.
 To explore discovery, canonical search, JSON/XML `$match`, safe error cases, local source
 writes and reviewer reads without assembling requests, use the
 [Postman collection and guide](https://lumbridge.github.io/UnifyEMPI/guides/postman/). Public requests target the
-synthetic API by default; mutating requests deliberately target localhost.
+demo API by default; mutating requests deliberately target localhost.
 
 ## Performance and benchmarking
 
@@ -140,7 +140,7 @@ The core benchmark runs on every default CI build. Its checked-in number is a
 BenchmarkDotNet `ShortRun` mean for regression detection, not a p95/p99 result and not
 an end-to-end throughput claim. The k6 and 10-million-identity figures are release
 acceptance targets that require a representative, same-region GCP environment; they
-have not been demonstrated merely by running the synthetic demonstration.
+have not been demonstrated merely by running the demo.
 
 Run the scoring benchmark and its regression gate with:
 
@@ -180,7 +180,7 @@ See [the benchmark guide](https://lumbridge.github.io/UnifyEMPI/development/perf
   replaceable provider contract.
 - [Configuration](https://lumbridge.github.io/UnifyEMPI/reference/configuration/): API, portal, OIDC, tenant, HMAC and MLLP
   settings.
-- [GCP demonstration deployment](https://lumbridge.github.io/UnifyEMPI/deployment/public-demo/): deployable topology, synthetic scenarios,
+- [GCP demo deployment](https://lumbridge.github.io/UnifyEMPI/deployment/public-demo/): deployable topology, demo scenarios,
   cost controls and safe teardown.
 - [Postman collection](https://lumbridge.github.io/UnifyEMPI/guides/postman/): importable discovery, matching, source
   write and reviewer-operation examples.

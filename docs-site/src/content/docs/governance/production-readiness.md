@@ -3,8 +3,8 @@ title: Production readiness
 description: Safety, identity, infrastructure and governance work required before a production UnifyEMPI deployment.
 ---
 
-UnifyEMPI provides an engineering foundation. A successful build or synthetic
-demonstration does not establish clinical safety, regulatory approval or production
+UnifyEMPI provides an engineering foundation. A successful build or demo does not
+establish clinical safety, regulatory approval or production
 fitness.
 
 ## Required workstreams
@@ -34,7 +34,7 @@ fitness.
 - Organisation-owned source records are not edited through the operations portal.
 - Matching-profile changes are deployed consistently to API, portal and MLLP hosts.
 - Logs, traces, metrics and exceptions do not contain patient values.
-- Demonstrations contain synthetic data only.
+- Demos contain synthetic data only.
 
 ## Before go-live
 
