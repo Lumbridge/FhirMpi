@@ -44,12 +44,15 @@ HMAC blocking tags and review errors, start with
 
 ## Demo
 
-The Compose quick start below provides a complete local demo. A branded deployment is
-also available:
+There is one hosted demo. It consists of two services backed by the same dedicated
+FHIR store:
 
 - [Operations portal](https://unifyempi-demo-mjpwolhr6q-nw.a.run.app)
 - [FHIR R4 CapabilityStatement](https://unifyempi-demo-api-mjpwolhr6q-nw.a.run.app/fhir/R4/metadata)
   (API base: `https://unifyempi-demo-api-mjpwolhr6q-nw.a.run.app`)
+
+The Compose quick start below runs a separate local development stack; it is not a
+second hosted demo.
 
 The repository includes the reproducible GCP deployment that creates those
 `unifyempi-demo` resources and prints the assigned Cloud Run URLs after deployment.

@@ -46,7 +46,7 @@ Bevan and Velindre sources. These form three probable-match review cases.
 
 The local stack disables authentication and gives each host its own ephemeral in-memory
 provider. Data disappears when a host stops, and records sent to the API or MLLP host
-are not visible in the portal. This is a developer demo, not a production
+are not visible in the portal. This is a local development environment, not a production
 topology.
 
 :::caution

@@ -3,8 +3,8 @@ title: GCP demo deployment
 description: Deploy, verify, operate and safely remove the shared UnifyEMPI demo.
 ---
 
-The deployment script creates a branded UnifyEMPI demo in a chosen Google Cloud
-project. The current shared demo is available at:
+The deployment script creates one UnifyEMPI demo in a chosen Google Cloud project.
+The demo has two public services backed by the same dedicated FHIR store:
 
 - Portal: <https://unifyempi-demo-mjpwolhr6q-nw.a.run.app>
 - FHIR/API base: `https://unifyempi-demo-api-mjpwolhr6q-nw.a.run.app`

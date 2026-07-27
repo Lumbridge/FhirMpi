@@ -30,10 +30,10 @@ Run folders in order where one request captures an identifier or ETag for the ne
 
 The remaining variables are managed automatically by the collection.
 
-The shared and local demos are unauthenticated and synthetic-only. Never enter
-real patient or confidential information. The public default is used only for
-non-mutating discovery, search and matching. Keep source-system writes and operational
-requests pointed at an isolated local or approved protected deployment.
+The hosted demo and local development stack are unauthenticated and synthetic-only.
+Never enter real patient or confidential information. The public default is used only
+for non-mutating discovery, search and matching. Keep source-system writes and
+operational requests pointed at an isolated local or approved protected deployment.
 
 For local development:
 
