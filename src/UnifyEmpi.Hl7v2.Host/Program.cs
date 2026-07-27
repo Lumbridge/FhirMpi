@@ -136,10 +136,11 @@ static Dictionary<TenantId, TenantMatchingConfiguration> BuildTenantConfiguratio
                 $"Tenant '{tenant}' must have exactly one active blocking-key secret.");
         }
 
-        var profile = MatchingProfile.UkDefault with
-        {
-            Version = item.MatchingProfileVersion
-        };
+        var profile = MatchingProfileFactory.Create(
+            item.MatchingProfileVersion,
+            item.PossibleThreshold,
+            item.ProbableThreshold,
+            item.MatchingRules);
         var trust = item.SourceTrust.ToDictionary(
             static pair => new SourceSystemId(pair.Key),
             static pair => pair.Value);

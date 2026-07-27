@@ -5,6 +5,8 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
+using UnifyEmpi.Application.Configuration;
+using UnifyEmpi.Domain;
 using Xunit;
 
 namespace UnifyEmpi.Api.Tests;
@@ -166,5 +168,33 @@ public sealed class FhirApiFactory : WebApplicationFactory<Program>
                     ["Authentication:Enabled"] = "false",
                     ["RegistryProvider:Type"] = "InMemory"
                 }));
+    }
+}
+
+public sealed class MatchingRuleConfigurationTests
+{
+    [Fact]
+    public void ExplicitBlockingRulesReplaceTheDefaultSetDuringConfigurationBinding()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(
+                new Dictionary<string, string?>
+                {
+                    ["MatchingRules:BlockingRules:0"] = "Email",
+                    ["MatchingRules:AuthoritativeIdentifierSystems:0"] =
+                        "https://hospital.example/Id/mrn",
+                    ["MatchingRules:Weights:FamilyName"] = "0.4"
+                })
+            .Build();
+
+        var options = configuration
+            .GetRequiredSection("MatchingRules")
+            .Get<MatchingRuleOptions>();
+        var profile = MatchingProfileFactory.Create("tenant-v2", 0.6, 0.85, options);
+
+        Assert.Equal([BlockingRuleKind.Email], profile.BlockingRules);
+        Assert.Equal(["https://hospital.example/Id/mrn"], profile.AuthoritativeIdentifierSystems);
+        Assert.Equal(0.4, profile.Weights.FamilyName);
+        Assert.Equal(0.2, profile.Weights.GivenNames);
     }
 }

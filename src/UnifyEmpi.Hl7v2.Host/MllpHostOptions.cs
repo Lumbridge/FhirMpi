@@ -1,3 +1,5 @@
+using UnifyEmpi.Application.Configuration;
+
 namespace UnifyEmpi.Hl7v2.Host;
 
 public sealed class MllpHostOptions
@@ -55,6 +57,12 @@ public sealed class MllpTenantDefinition
     public string TenantId { get; init; } = string.Empty;
 
     public string MatchingProfileVersion { get; init; } = "uk-default-v1";
+
+    public double PossibleThreshold { get; init; } = 0.62;
+
+    public double ProbableThreshold { get; init; } = 0.82;
+
+    public MatchingRuleOptions MatchingRules { get; init; } = new();
 
     public Dictionary<string, int> SourceTrust { get; init; } =
         new(StringComparer.Ordinal);

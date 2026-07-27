@@ -410,12 +410,11 @@ static Dictionary<TenantId, TenantMatchingConfiguration> BuildTenantConfiguratio
             tenantId,
             new TenantMatchingConfiguration(
                 tenantId,
-                MatchingProfile.UkDefault with
-                {
-                    Version = item.MatchingProfileVersion,
-                    PossibleThreshold = item.PossibleThreshold,
-                    ProbableThreshold = item.ProbableThreshold
-                },
+                MatchingProfileFactory.Create(
+                    item.MatchingProfileVersion,
+                    item.PossibleThreshold,
+                    item.ProbableThreshold,
+                    item.MatchingRules),
                 secrets,
                 trust,
                 authoritative,

@@ -13,6 +13,16 @@ public enum MatchGrade
     Certain
 }
 
+public enum BlockingRuleKind
+{
+    AuthoritativeIdentifier,
+    FamilyNameAndBirthDate,
+    PhoneticFamilyNameAndBirthDate,
+    PostcodeAndBirthDate,
+    Phone,
+    Email
+}
+
 public sealed record FieldEvidence(
     string Field,
     double Similarity,
@@ -61,6 +71,7 @@ public sealed record MatchingProfile(
     int MaximumCandidates,
     int DefaultResultCount,
     int MaximumResultCount,
+    IReadOnlySet<BlockingRuleKind> BlockingRules,
     IReadOnlySet<string> AuthoritativeIdentifierSystems)
 {
     public static MatchingProfile UkDefault { get; } = new(
@@ -71,6 +82,15 @@ public sealed record MatchingProfile(
         500,
         10,
         50,
+        new HashSet<BlockingRuleKind>
+        {
+            BlockingRuleKind.AuthoritativeIdentifier,
+            BlockingRuleKind.FamilyNameAndBirthDate,
+            BlockingRuleKind.PhoneticFamilyNameAndBirthDate,
+            BlockingRuleKind.PostcodeAndBirthDate,
+            BlockingRuleKind.Phone,
+            BlockingRuleKind.Email
+        },
         new HashSet<string>(StringComparer.Ordinal)
         {
             "https://fhir.nhs.uk/Id/nhs-number"

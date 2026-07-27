@@ -1,3 +1,4 @@
+using UnifyEmpi.Application.Configuration;
 using UnifyEmpi.Application.Identifiers;
 using UnifyEmpi.Application.Matching;
 using UnifyEmpi.Application.Normalisation;
@@ -107,6 +108,98 @@ public sealed class IdentityAlgorithmsTests
         Assert.Contains(keys, static key => key.Version == "v2");
         Assert.DoesNotContain(keys, static key => key.Value.Contains("SMITH", StringComparison.Ordinal));
         Assert.All(keys, static key => Assert.Equal(64, key.Value.Length));
+    }
+
+    [Fact]
+    public void BlockingRulesCanBeEnabledPerMatchingProfile()
+    {
+        var profile = Profile(
+            nhsNumber: "9434765919",
+            family: "Smith",
+            birthDate: new DateOnly(1980, 1, 2),
+            postcode: "LS1 1AA",
+            phone: "0113 555 0100") with
+        {
+            Telecoms =
+            [
+                new ContactPoint(ContactPointSystem.Phone, "0113 555 0100"),
+                new ContactPoint(ContactPointSystem.Email, "alex@example.test")
+            ]
+        };
+        var matchingProfile = MatchingProfile.UkDefault with
+        {
+            BlockingRules = new HashSet<BlockingRuleKind>
+            {
+                BlockingRuleKind.Email
+            }
+        };
+        var configuration = new TenantMatchingConfiguration(
+            new TenantId("tenant-a"),
+            matchingProfile,
+            [new BlockingKeySecret("v1", new byte[32], true)],
+            new Dictionary<SourceSystemId, int>(),
+            new HashSet<SourceSystemId>());
+
+        var keys = BlockingKeyGenerator.Generate(
+            IdentityNormaliser.Normalise(profile),
+            configuration);
+
+        Assert.Single(keys);
+        Assert.Equal("v1", keys[0].Version);
+    }
+
+    [Fact]
+    public void MatchingProfileFactoryBuildsAndValidatesDeclarativeRules()
+    {
+        var options = new MatchingRuleOptions
+        {
+            Weights = new MatchingWeightOptions
+            {
+                FamilyName = 0.5,
+                GivenNames = 0.2,
+                BirthDate = 0.3,
+                Address = 0,
+                Telecom = 0,
+                Gender = 0
+            },
+            BlockingRules =
+            [
+                nameof(BlockingRuleKind.AuthoritativeIdentifier),
+                nameof(BlockingRuleKind.Email)
+            ],
+            AuthoritativeIdentifierSystems =
+            [
+                "https://fhir.nhs.uk/Id/nhs-number",
+                "https://hospital.example/Id/mrn"
+            ],
+            MaximumCandidates = 250,
+            DefaultResultCount = 5,
+            MaximumResultCount = 25
+        };
+
+        var profile = MatchingProfileFactory.Create("tenant-v2", 0.6, 0.85, options);
+
+        Assert.Equal("tenant-v2", profile.Version);
+        Assert.Equal(0.5, profile.Weights.FamilyName);
+        Assert.Equal(250, profile.MaximumCandidates);
+        Assert.Equal(5, profile.DefaultResultCount);
+        Assert.Equal(25, profile.MaximumResultCount);
+        Assert.Contains(BlockingRuleKind.Email, profile.BlockingRules);
+        Assert.Contains("https://hospital.example/Id/mrn", profile.AuthoritativeIdentifierSystems);
+    }
+
+    [Fact]
+    public void MatchingProfileFactoryRejectsUnknownBlockingRules()
+    {
+        var options = new MatchingRuleOptions
+        {
+            BlockingRules = ["NotARealRule"]
+        };
+
+        var exception = Assert.Throws<InvalidOperationException>(
+            () => MatchingProfileFactory.Create("bad-profile", 0.62, 0.82, options));
+
+        Assert.Contains("Unknown blocking rule", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]

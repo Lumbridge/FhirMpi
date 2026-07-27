@@ -30,6 +30,32 @@ for the security and access implications.
     "Items": [{
       "TenantId": "tenant-a",
       "MatchingProfileVersion": "uk-default-v1",
+      "PossibleThreshold": 0.62,
+      "ProbableThreshold": 0.82,
+      "MatchingRules": {
+        "Weights": {
+          "FamilyName": 0.25,
+          "GivenNames": 0.20,
+          "BirthDate": 0.30,
+          "Address": 0.15,
+          "Telecom": 0.07,
+          "Gender": 0.03
+        },
+        "BlockingRules": [
+          "AuthoritativeIdentifier",
+          "FamilyNameAndBirthDate",
+          "PhoneticFamilyNameAndBirthDate",
+          "PostcodeAndBirthDate",
+          "Phone",
+          "Email"
+        ],
+        "AuthoritativeIdentifierSystems": [
+          "https://fhir.nhs.uk/Id/nhs-number"
+        ],
+        "MaximumCandidates": 500,
+        "DefaultResultCount": 10,
+        "MaximumResultCount": 50
+      },
       "SourceTrust": { "pas": 100, "portal": 50 },
       "AuthoritativeSources": ["pas"],
       "BlockingSecrets": [{
@@ -47,6 +73,11 @@ for the security and access implications.
 ```
 
 During key rotation, retain the previous key until all canonical records have been re-indexed. Candidate lookup queries all configured versions; only one version may be active for new stable IDs and tags.
+
+See [matching and blocking rules](matching-and-blocking.md) for the normative rule
+definitions, score formula, configuration constraints, workflow outcomes, examples and
+the re-index requirement when blocking inputs change. Deploy the same tenant rule
+profile to the API, portal and MLLP hosts.
 
 ## Operations portal
 

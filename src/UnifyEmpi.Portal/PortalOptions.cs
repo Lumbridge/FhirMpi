@@ -1,3 +1,5 @@
+using UnifyEmpi.Application.Configuration;
+
 namespace UnifyEmpi.Portal;
 
 public sealed class PortalAuthenticationOptions
@@ -56,6 +58,8 @@ public sealed class PortalTenantDefinition
     public double PossibleThreshold { get; init; } = 0.62;
 
     public double ProbableThreshold { get; init; } = 0.82;
+
+    public MatchingRuleOptions MatchingRules { get; init; } = new();
 
     public int RequiredLinkApprovals { get; init; } = 2;
 

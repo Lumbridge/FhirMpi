@@ -224,12 +224,11 @@ static Dictionary<UnifyEmpi.Domain.TenantId, UnifyEmpi.Domain.TenantMatchingConf
                 $"Tenant '{tenantId}' must have exactly one active blocking-key secret.");
         }
 
-        var profile = UnifyEmpi.Domain.MatchingProfile.UkDefault with
-        {
-            Version = item.MatchingProfileVersion,
-            PossibleThreshold = item.PossibleThreshold,
-            ProbableThreshold = item.ProbableThreshold
-        };
+        var profile = MatchingProfileFactory.Create(
+            item.MatchingProfileVersion,
+            item.PossibleThreshold,
+            item.ProbableThreshold,
+            item.MatchingRules);
         var trust = item.SourceTrust.ToDictionary(
             static pair => new UnifyEmpi.Domain.SourceSystemId(pair.Key),
             static pair => pair.Value);

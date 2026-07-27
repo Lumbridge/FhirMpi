@@ -1,3 +1,5 @@
+using UnifyEmpi.Application.Configuration;
+
 namespace UnifyEmpi.Api;
 
 public sealed class AuthenticationOptions
@@ -49,6 +51,8 @@ public sealed class TenantDefinition
     public double PossibleThreshold { get; init; } = 0.62;
 
     public double ProbableThreshold { get; init; } = 0.82;
+
+    public MatchingRuleOptions MatchingRules { get; init; } = new();
 
     public Dictionary<string, int> SourceTrust { get; init; } =
         new(StringComparer.Ordinal);

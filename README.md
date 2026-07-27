@@ -29,7 +29,9 @@ HMAC blocking tags and review errors, start with
 - **Master patient index:** ingest source Patient records, create enterprise identities, maintain Person links, and serve a survivorship-based canonical Patient view.
 - **FHIR R4 API:** Patient create, update, read, search, and `$match`; Person lookup; JSON and XML; ETags; structured `OperationOutcome` errors; and bounded UK Core validation.
 - **Native HL7v2 ingestion:** MLLP support for ADT A01, A04, A08, A28, A31, A40, and A47 messages from HL7 versions 2.3.1, 2.4, and 2.5.1.
-- **Safe, explainable matching:** weighted demographic evidence, NHS-number validation, HMAC-protected blocking keys, configurable thresholds, and no population-wide scans.
+- **Safe, explainable matching:** configurable blocking rounds, field weights and
+  thresholds; NHS-number validation; HMAC-protected candidate indexes; field-level
+  evidence; and no population-wide scans.
 - **Enterprise operations portal:** tenant dashboard, governed create/update for a portal-managed source, patient registry search, explainable duplicate workbench, governed merge and source-level unlink/split workflows, review queue, source trust, audited policy configuration, and audit search.
 - **Review workflow:** probable matches create review cases that authorised reviewers can inspect, link, reject, correct, or close as superseded when an identity is replaced or its evidence changes. Tenant-configurable dual approval defaults to two distinct reviewers, with no self-approval.
 - **Multi-tenant isolation:** every identity, query, decision, receipt, and audit event is bound to a trusted tenant and source-system context.
@@ -156,6 +158,9 @@ See [the benchmark guide](benchmarks/README.md) and
 - [Concepts and frequently asked questions](docs/concepts-and-faq.md): tenants,
   national deployment, source/canonical records, blocking, reviews, existing-store
   onboarding and troubleshooting.
+- [Matching and blocking rules](docs/matching-and-blocking.md): normative
+  normalisation, configurable blocking rounds, score formula, certainty/conflict
+  rules, routing, examples and feature-alignment gaps.
 - [Core paths and processing model](docs/core-paths.md): annotated diagrams for
   ingestion, matching, merge, split, survivorship and tenant isolation.
 - [Architecture](docs/architecture.md): dependency boundaries, materialisation and the
@@ -267,7 +272,7 @@ Production requires:
 - an unpacked `hl7.fhir.r4.core#4.0.1` and `fhir.r4.ukcore.stu2#2.0.2` package directory for the bounded Firely validator pool;
 - TLS and client-certificate allow-lists for MLLP.
 
-See [configuration.md](docs/configuration.md), [architecture.md](docs/architecture.md), [core paths and processing model](docs/core-paths.md), and the [Helm values](deploy/helm/unifyempi/values.yaml).
+See [configuration.md](docs/configuration.md), [matching and blocking rules](docs/matching-and-blocking.md), [architecture.md](docs/architecture.md), [core paths and processing model](docs/core-paths.md), and the [Helm values](deploy/helm/unifyempi/values.yaml).
 
 ## Safety and scope
 
