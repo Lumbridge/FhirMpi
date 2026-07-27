@@ -2025,20 +2025,29 @@ progress {
 }
 
 .threshold-track {
-    display: flex;
-    height: 3.5rem;
+    width: 100%;
     margin: 1.5rem 0 0.65rem;
-    overflow: hidden;
-    border: 1px solid var(--line-strong);
+    border-collapse: collapse;
+    table-layout: fixed;
 }
 
 .threshold-segment {
-    display: grid;
-    min-width: 2.5rem;
+    height: 3.5rem;
+    padding: 0;
+    border-top: 1px solid var(--line-strong);
+    border-bottom: 1px solid var(--line-strong);
     color: var(--navy-950);
     font-size: 0.7rem;
     font-weight: 850;
-    place-content: center;
+    text-align: center;
+}
+
+.threshold-segment:first-child {
+    border-left: 1px solid var(--line-strong);
+}
+
+.threshold-segment:last-child {
+    border-right: 1px solid var(--line-strong);
 }
 
 .threshold-none {
@@ -2055,21 +2064,32 @@ progress {
     background: var(--success-bg);
 }
 
-.threshold-labels {
+.threshold-scale td {
     position: relative;
-    display: flex;
-    min-height: 2rem;
+    height: 2rem;
+    padding: 0;
     color: var(--muted);
     font-size: 0.68rem;
-    justify-content: space-between;
 }
 
-.threshold-labels span:nth-child(2),
-.threshold-labels span:nth-child(3) {
+.threshold-scale span {
     position: absolute;
+    top: 0.5rem;
+}
+
+.threshold-scale-start {
+    left: 0;
+}
+
+.threshold-scale-boundary {
+    right: 0;
     color: var(--navy-900);
     font-weight: 800;
-    transform: translateX(-50%);
+    transform: translateX(50%);
+}
+
+.threshold-scale-end {
+    right: 0;
 }
 
 .weight-row {

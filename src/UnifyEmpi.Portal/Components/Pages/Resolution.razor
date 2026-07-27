@@ -133,33 +133,49 @@ else
         </div>
 
         <div class="matching-policy-layout">
+            @{
+                var thresholdColumns = ThresholdColumns(Configuration);
+            }
             <section class="panel matching-bands" aria-labelledby="bands-heading">
                 <p class="eyebrow">Classification bands</p>
                 <h3 id="bands-heading">Decision thresholds</h3>
-                <div class="threshold-track" aria-label="Matching score thresholds">
-                    <div class="threshold-segment threshold-none"
-                         style="@($"width: {Configuration.PossibleThreshold * 100:F2}%")">
-                        <span>Below</span>
-                    </div>
-                    <div class="threshold-segment threshold-possible"
-                         style="@($"width: {(Configuration.ProbableThreshold - Configuration.PossibleThreshold) * 100:F2}%")">
-                        <span>Possible</span>
-                    </div>
-                    <div class="threshold-segment threshold-probable"
-                         style="@($"width: {(1 - Configuration.ProbableThreshold) * 100:F2}%")">
-                        <span>Probable</span>
-                    </div>
-                </div>
-                <div class="threshold-labels">
-                    <span>0%</span>
-                    <span style="@($"left: {Configuration.PossibleThreshold * 100:F2}%")">
-                        @Configuration.PossibleThreshold.ToString("P0", CultureInfo.InvariantCulture)
-                    </span>
-                    <span style="@($"left: {Configuration.ProbableThreshold * 100:F2}%")">
-                        @Configuration.ProbableThreshold.ToString("P0", CultureInfo.InvariantCulture)
-                    </span>
-                    <span>100%</span>
-                </div>
+                <table class="threshold-track">
+                    <caption class="visually-hidden">
+                        Matching score classifications from zero to one hundred percent
+                    </caption>
+                    <colgroup>
+                        @for (var column = 0; column < 100; column++)
+                        {
+                            <col />
+                        }
+                    </colgroup>
+                    <tbody>
+                        <tr>
+                            <td class="threshold-segment threshold-none"
+                                colspan="@thresholdColumns.Below">Below</td>
+                            <td class="threshold-segment threshold-possible"
+                                colspan="@thresholdColumns.Possible">Possible</td>
+                            <td class="threshold-segment threshold-probable"
+                                colspan="@thresholdColumns.Probable">Probable</td>
+                        </tr>
+                        <tr class="threshold-scale" aria-hidden="true">
+                            <td colspan="@thresholdColumns.Below">
+                                <span class="threshold-scale-start">0%</span>
+                                <span class="threshold-scale-boundary">
+                                    @Configuration.PossibleThreshold.ToString("P0", CultureInfo.InvariantCulture)
+                                </span>
+                            </td>
+                            <td colspan="@thresholdColumns.Possible">
+                                <span class="threshold-scale-boundary">
+                                    @Configuration.ProbableThreshold.ToString("P0", CultureInfo.InvariantCulture)
+                                </span>
+                            </td>
+                            <td colspan="@thresholdColumns.Probable">
+                                <span class="threshold-scale-end">100%</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
                 <p class="muted">
                     Verified authoritative identifiers may produce a certain match. Conflicts always
                     stay in governed review and require two distinct reviewers.
@@ -297,6 +313,24 @@ else
             _ => rule.ToString()
         };
 
+    private static ThresholdColumnCounts ThresholdColumns(
+        ResolutionConfigurationView configuration)
+    {
+        var below = Math.Clamp(
+            (int)Math.Round(configuration.PossibleThreshold * 100),
+            1,
+            98);
+        var probableBoundary = Math.Clamp(
+            (int)Math.Round(configuration.ProbableThreshold * 100),
+            below + 1,
+            99);
+
+        return new(
+            below,
+            probableBoundary - below,
+            100 - probableBoundary);
+    }
+
     private static IReadOnlyList<WeightDetails> Weights(MatchingWeights weights) =>
     [
         new("Family name", "Jaro-Winkler / phonetic", weights.FamilyName),
@@ -312,6 +346,8 @@ else
         string Description,
         string RequiredData,
         string Normalisation);
+
+    private sealed record ThresholdColumnCounts(int Below, int Possible, int Probable);
 
     private sealed record WeightDetails(string Label, string Comparator, double Value);
 }
