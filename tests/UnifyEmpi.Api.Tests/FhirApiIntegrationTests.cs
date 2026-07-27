@@ -19,6 +19,39 @@ public sealed class FhirApiIntegrationTests : IClassFixture<FhirApiFactory>
         _client = factory.CreateClient();
 
     [Fact]
+    public async Task ApiRootServesSwaggerUi()
+    {
+        var response = await _client.GetAsync("/", CancellationToken.None);
+        var content = await response.Content.ReadAsStringAsync(CancellationToken.None);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("text/html", response.Content.Headers.ContentType?.MediaType);
+        Assert.Contains("swagger-ui", content, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task SwaggerDocumentIncludesFhirAndOperationalEndpoints()
+    {
+        var response = await _client.GetAsync(
+            "/swagger/v1/swagger.json",
+            CancellationToken.None);
+        var document = JsonDocument.Parse(
+            await response.Content.ReadAsStringAsync(CancellationToken.None));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("UnifyEMPI API", document.RootElement
+            .GetProperty("info")
+            .GetProperty("title")
+            .GetString());
+        Assert.True(document.RootElement
+            .GetProperty("paths")
+            .TryGetProperty("/fhir/R4/Patient", out _));
+        Assert.True(document.RootElement
+            .GetProperty("paths")
+            .TryGetProperty("/api/v1/operations/summary", out _));
+    }
+
+    [Fact]
     public async Task CapabilityStatementAdvertisesR4AndMatch()
     {
         var response = await _client.GetAsync(

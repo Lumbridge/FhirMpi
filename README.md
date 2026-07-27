@@ -6,6 +6,7 @@
 [![Licence: CC0 1.0](https://img.shields.io/badge/licence-CC0--1.0-lightgrey.svg)](LICENSE)
 [![Documentation](https://img.shields.io/badge/docs-Starlight-0F766E)](https://lumbridge.github.io/UnifyEMPI/)
 [![Live demo](https://img.shields.io/badge/demo-live-148A08)](https://unifyempi-demo-mjpwolhr6q-nw.a.run.app)
+[![Swagger UI](https://img.shields.io/badge/API-Swagger_UI-85EA2D?logo=swagger&logoColor=black)](https://unifyempi-demo-api-mjpwolhr6q-nw.a.run.app/)
 
 UnifyEMPI is a high-performance, multi-tenant master patient index (MPI) foundation for FHIR R4 and HL7v2. It is a modular monolith with three independently scalable hosts:
 
@@ -48,7 +49,7 @@ There is one hosted demo. It consists of two services backed by the same dedicat
 FHIR store:
 
 - [Operations portal](https://unifyempi-demo-mjpwolhr6q-nw.a.run.app)
-- [FHIR R4 CapabilityStatement](https://unifyempi-demo-api-mjpwolhr6q-nw.a.run.app/fhir/R4/metadata)
+- [Swagger API explorer](https://unifyempi-demo-api-mjpwolhr6q-nw.a.run.app/)
   (API base: `https://unifyempi-demo-api-mjpwolhr6q-nw.a.run.app`)
 
 The Compose quick start below runs a separate local development stack; it is not a
@@ -80,6 +81,7 @@ Start-Process http://localhost:8081
 ```
 
 - FHIR and review API: `http://localhost:8080`
+- Swagger UI: `http://localhost:8080/`
 - Operations portal: `http://localhost:8081`
 - HL7v2 MLLP listener: `localhost:2575`
 - Development tenant: `demo`

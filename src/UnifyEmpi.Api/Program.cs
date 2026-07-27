@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
+using Microsoft.OpenApi;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -61,6 +62,27 @@ builder.Services.AddAuthorization();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton<ActorContextFactory>();
 builder.Services.AddSingleton<FhirResourceCodec>();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "UnifyEMPI API",
+        Version = "v1",
+        Description = "FHIR R4 identity registry and EMPI operational API."
+    });
+    options.AddSecurityDefinition("bearer", new OpenApiSecurityScheme
+    {
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        Description = "Enter a JWT bearer token."
+    });
+    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+    {
+        [new OpenApiSecuritySchemeReference("bearer", document)] = []
+    });
+});
 var validation = builder.Configuration
     .GetSection(FhirValidationOptions.SectionName)
     .Get<FhirValidationOptions>() ?? new FhirValidationOptions();
@@ -165,6 +187,14 @@ builder.Services.AddOpenTelemetry()
         .AddOtlpExporter());
 
 var app = builder.Build();
+app.UseSwagger();
+app.UseSwaggerUI(options =>
+{
+    options.RoutePrefix = string.Empty;
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "UnifyEMPI API v1");
+    options.DocumentTitle = "UnifyEMPI API";
+    options.EnablePersistAuthorization();
+});
 app.UseMiddleware<FhirExceptionMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
