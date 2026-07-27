@@ -1,6 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <ItemGroup>
-    <ProjectReference Include="../FhirMpi.Application/FhirMpi.Application.csproj" />
-    <PackageReference Include="nHapi" />
-  </ItemGroup>
-</Project>

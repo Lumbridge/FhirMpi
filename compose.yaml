@@ -1,8 +1,10 @@
+name: unifyempi
+
 services:
   api:
     build:
       context: .
-      dockerfile: src/FhirMpi.Api/Dockerfile
+      dockerfile: src/UnifyEmpi.Api/Dockerfile
     environment:
       DOTNET_ENVIRONMENT: Development
       Authentication__Enabled: "false"
@@ -21,7 +23,7 @@ services:
   mllp:
     build:
       context: .
-      dockerfile: src/FhirMpi.Hl7v2.Host/Dockerfile
+      dockerfile: src/UnifyEmpi.Hl7v2.Host/Dockerfile
     environment:
       DOTNET_ENVIRONMENT: Development
       RegistryProvider__Type: InMemory
@@ -39,14 +41,14 @@ services:
   portal:
     build:
       context: .
-      dockerfile: src/FhirMpi.Portal/Dockerfile
+      dockerfile: src/UnifyEmpi.Portal/Dockerfile
     environment:
       DOTNET_ENVIRONMENT: Development
       PortalAuthentication__Enabled: "false"
       PortalAuthentication__DevelopmentTenant: demo
       RegistryProvider__Type: InMemory
       Portal__SeedSyntheticData: "true"
-      Portal__ManagedSourceSystem: portal
+      Portal__ManagedSourceSystem: demo-ui
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
     ports:
       - "8081:8080"

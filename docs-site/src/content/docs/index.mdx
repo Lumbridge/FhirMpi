@@ -1,0 +1,88 @@
+---
+title: UnifyEMPI documentation
+description: Build, understand and operate the UnifyEMPI enterprise master patient index.
+template: splash
+hero:
+  tagline: Explainable identity resolution for FHIR R4 and HL7v2
+  actions:
+    - text: Start locally
+      link: /UnifyEMPI/getting-started/
+      icon: right-arrow
+    - text: Explore the demo
+      link: https://unifyempi-demo-mjpwolhr6q-nw.a.run.app
+      icon: external
+      variant: minimal
+---
+
+import { Badge, Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+<div class="status-line">
+	<Badge text="FHIR R4" variant="success" />
+	<Badge text="HL7v2 ADT" variant="note" />
+	<Badge text="Multi-tenant" variant="tip" />
+	<Badge text="Demo live" variant="success" />
+</div>
+
+UnifyEMPI links source Patient records into governed enterprise identities while
+preserving source provenance. Matching decisions remain bounded, explainable and
+reviewable.
+
+:::caution[Engineering foundation]
+UnifyEMPI is not a certified clinical product. Use only synthetic data in demos.
+Production NHS use requires independent clinical-safety, privacy, security, operational
+and contractual assurance.
+:::
+
+## Choose your route
+
+<CardGrid>
+	<Card title="Run it" icon="rocket">
+		Bring up the API, operations portal and HL7v2 listener with the
+		[ten-minute quick start](/UnifyEMPI/getting-started/).
+	</Card>
+	<Card title="Understand it" icon="open-book">
+		Start with the [identity model](/UnifyEMPI/concepts/identity-model/) and the
+		[NHS Wales source model](/UnifyEMPI/concepts/nhs-wales-sources/).
+	</Card>
+	<Card title="Tune matching" icon="setting">
+		Read the normative [matching and blocking rules](/UnifyEMPI/matching/rules/) before
+		changing candidate discovery, weights or thresholds.
+	</Card>
+	<Card title="Operate it" icon="approve-check">
+		Use the [configuration reference](/UnifyEMPI/reference/configuration/) and
+		[production-readiness guide](/UnifyEMPI/governance/production-readiness/).
+	</Card>
+</CardGrid>
+
+## What the platform owns
+
+```mermaid
+flowchart LR
+    SOURCES["Health boards, WDS, Velindre<br/>and other source systems"]
+    INGEST["FHIR R4 API<br/>or HL7v2 MLLP"]
+    EMPI["UnifyEMPI<br/>normalise · block · score · resolve"]
+    REVIEW["Governed review<br/>merge · reject · split"]
+    CONSUMERS["Canonical Patient<br/>and Person links"]
+
+    SOURCES --> INGEST --> EMPI
+    EMPI -->|"Probable or conflicting"| REVIEW
+    REVIEW --> EMPI
+    EMPI --> CONSUMERS
+```
+
+Source systems remain authoritative for their own Patient snapshots. UnifyEMPI owns
+enterprise UUIDv7 identities, links, candidate indexes, canonical views, review cases,
+receipts and audit evidence.
+
+<div class="link-grid">
+	<LinkCard
+		title="View implementation"
+		description="Browse the UnifyEMPI repository on GitHub."
+		href="https://github.com/Lumbridge/UnifyEMPI"
+	/>
+	<LinkCard
+		title="Inspect FHIR capabilities"
+		description="Open the live demo API CapabilityStatement."
+		href="https://unifyempi-demo-api-mjpwolhr6q-nw.a.run.app/fhir/R4/metadata"
+	/>
+</div>

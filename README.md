@@ -1,52 +1,64 @@
-# FhirMpi
+# UnifyEMPI
 
-[![CI](https://github.com/Lumbridge/FhirMpi/actions/workflows/ci.yml/badge.svg)](https://github.com/Lumbridge/FhirMpi/actions/workflows/ci.yml)
+[![CI](https://github.com/Lumbridge/UnifyEMPI/actions/workflows/ci.yml/badge.svg)](https://github.com/Lumbridge/UnifyEMPI/actions/workflows/ci.yml)
 [![.NET 10](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
 [![FHIR R4](https://img.shields.io/badge/FHIR-R4-E34A6F)](https://hl7.org/fhir/R4/)
 [![Licence: CC0 1.0](https://img.shields.io/badge/licence-CC0--1.0-lightgrey.svg)](LICENSE)
-[![Live synthetic demo](https://img.shields.io/badge/live-synthetic_demo-0B7285)](https://fhir-mpi-demo-204975513415.europe-west2.run.app)
+[![Documentation](https://img.shields.io/badge/docs-Starlight-0F766E)](https://lumbridge.github.io/UnifyEMPI/)
+[![Live demo](https://img.shields.io/badge/demo-live-148A08)](https://unifyempi-demo-mjpwolhr6q-nw.a.run.app)
 
-FhirMpi is a high-performance, multi-tenant master patient index (MPI) foundation for FHIR R4 and HL7v2. It is a modular monolith with three independently scalable hosts:
+UnifyEMPI is a high-performance, multi-tenant master patient index (MPI) foundation for FHIR R4 and HL7v2. It is a modular monolith with three independently scalable hosts:
 
-- `FhirMpi.Api`: FHIR R4, SMART discovery, and reviewer APIs.
-- `FhirMpi.Hl7v2.Host`: native MLLP ingestion for ADT identity events.
-- `FhirMpi.Portal`: an enterprise operations portal using Blazor Interactive Server and generic OIDC.
+- `UnifyEmpi.Api`: FHIR R4, SMART discovery, and reviewer APIs.
+- `UnifyEmpi.Hl7v2.Host`: native MLLP ingestion for ADT identity events.
+- `UnifyEmpi.Portal`: an enterprise operations portal using Blazor Interactive Server and generic OIDC.
 
-The registry is hybrid. Source systems remain authoritative for their Patient snapshots; FhirMpi owns enterprise UUIDv7 identities, Person links, candidate indexes, canonical Patient views, review cases, receipts, and audit evidence.
+The registry is hybrid. Source systems remain authoritative for their Patient snapshots; UnifyEMPI owns enterprise UUIDv7 identities, Person links, candidate indexes, canonical Patient views, review cases, receipts, and audit evidence.
 
 > [!IMPORTANT]
-> FhirMpi is an engineering foundation, not a certified clinical product. The public
-> deployment contains synthetic data only. Production NHS use requires the independent
+> UnifyEMPI is an engineering foundation, not a certified clinical product. Demo
+> deployments must contain synthetic data only. Production NHS use requires the independent
 > safety, privacy, security, operational and contractual work described below.
 
-See [core paths and processing model](docs/core-paths.md) for annotated diagrams of real-time duplicate detection, FHIR and HL7 ingestion, `$match`, merge, split, survivorship, tenant isolation, and provider boundaries.
+See [core paths and processing model](https://lumbridge.github.io/UnifyEMPI/architecture/core-paths/) for annotated diagrams of real-time duplicate detection, FHIR and HL7 ingestion, `$match`, merge, split, survivorship, tenant isolation, and provider boundaries.
 For the operational meaning of tenants, source Patients, canonical Patients, `Person`,
 HMAC blocking tags and review errors, start with
-[concepts and frequently asked questions](docs/concepts-and-faq.md).
+[identity concepts and frequently asked questions](https://lumbridge.github.io/UnifyEMPI/concepts/identity-model/).
 
 ## Capabilities out of the box
 
 - **Master patient index:** ingest source Patient records, create enterprise identities, maintain Person links, and serve a survivorship-based canonical Patient view.
 - **FHIR R4 API:** Patient create, update, read, search, and `$match`; Person lookup; JSON and XML; ETags; structured `OperationOutcome` errors; and bounded UK Core validation.
 - **Native HL7v2 ingestion:** MLLP support for ADT A01, A04, A08, A28, A31, A40, and A47 messages from HL7 versions 2.3.1, 2.4, and 2.5.1.
-- **Safe, explainable matching:** weighted demographic evidence, NHS-number validation, HMAC-protected blocking keys, configurable thresholds, and no population-wide scans.
-- **Enterprise operations portal:** tenant dashboard, governed create/update for a portal-managed source, patient registry search, explainable duplicate workbench, governed merge and source-level unlink/split workflows, review queue, source trust, audited policy configuration, and audit search.
+- **Safe, explainable matching:** configurable blocking rounds, field weights and
+  thresholds; NHS-number validation; HMAC-protected candidate indexes; field-level
+  evidence; and no population-wide scans.
+- **Enterprise operations portal:** tenant dashboard, optional governed create/update
+  for a separately configured UI-managed source, patient registry search, explainable
+  duplicate workbench, governed merge and source-level unlink/split workflows, review
+  queue, source trust, audited policy configuration, and audit search.
 - **Review workflow:** probable matches create review cases that authorised reviewers can inspect, link, reject, correct, or close as superseded when an identity is replaced or its evidence changes. Tenant-configurable dual approval defaults to two distinct reviewers, with no self-approval.
 - **Multi-tenant isolation:** every identity, query, decision, receipt, and audit event is bound to a trusted tenant and source-system context.
 - **Replaceable storage:** an ephemeral in-memory provider for development and a durable GCP Healthcare API provider are included behind the same storage contract.
 - **Production foundations:** external OIDC and SMART scopes, mutual-TLS MLLP, health checks, OpenTelemetry, JSON logging, containers, Compose, and a Helm chart.
 
-## Live public demo
+## Demo
 
-Explore the synthetic deployment in the **Ryan's Apps** Google Cloud project:
+The Compose quick start below provides a complete local demo. A branded deployment is
+also available:
 
-- [Operations portal](https://fhir-mpi-demo-204975513415.europe-west2.run.app)
-- [FHIR and operations API](https://fhir-mpi-demo-api-204975513415.europe-west2.run.app)
-- [FHIR capability statement](https://fhir-mpi-demo-api-204975513415.europe-west2.run.app/fhir/R4/metadata)
+- [Operations portal](https://unifyempi-demo-mjpwolhr6q-nw.a.run.app)
+- [FHIR R4 CapabilityStatement](https://unifyempi-demo-api-mjpwolhr6q-nw.a.run.app/fhir/R4/metadata)
+  (API base: `https://unifyempi-demo-api-mjpwolhr6q-nw.a.run.app`)
 
-The public deployment is unauthenticated, shared and mutable. It contains synthetic patients only; never enter real patient or confidential information. Public MLLP is deliberately excluded because production HL7v2 ingress must use a private endpoint and mutual TLS.
+The repository includes the reproducible GCP deployment that creates those
+`unifyempi-demo` resources and prints the assigned Cloud Run URLs after deployment.
+Never enter real patient or confidential information into a demo environment.
+Public MLLP is deliberately excluded because production HL7v2 ingress must use a
+private endpoint and mutual TLS.
 
-See [public-demo.md](docs/public-demo.md) for the deployed topology, verified scenarios, cost controls, reproducible deployment and safe teardown.
+See the [public-demo guide](https://lumbridge.github.io/UnifyEMPI/deployment/public-demo/) for the GCP topology, verified scenarios,
+cost controls, reproducible deployment and safe teardown.
 
 ## Quick start
 
@@ -78,7 +90,8 @@ The portal is a server-rendered operations surface; patient data and OIDC tokens
 
 Out of the box, authorised staff can:
 
-- create and update Patient records owned by a server-configured portal source, with NHS-number validation and optimistic concurrency protection;
+- optionally create and update Patient records owned by a separate server-configured
+  UI-managed source, with NHS-number validation and optimistic concurrency protection;
 - find canonical patients using a strong identifier or family name with date of birth;
 - compare canonical and source demographics with provenance and survivorship trust;
 - run a bounded duplicate search and inspect the evidence behind every score;
@@ -92,29 +105,29 @@ Out of the box, authorised staff can:
 Run it directly with:
 
 ```powershell
-dotnet run --project src/FhirMpi.Portal
+dotnet run --project src/UnifyEmpi.Portal
 ```
 
-The development configuration signs in a synthetic reviewer for tenant `demo`, seeds synthetic records, and uses no real patient data.
+The development configuration signs in a demo reviewer for tenant `demo`, seeds synthetic records, and uses no real patient data.
 
 To build and test the source locally, install the .NET 10 SDK and run:
 
 ```powershell
-dotnet restore FhirMpi.slnx --locked-mode
-dotnet build FhirMpi.slnx -c Release --no-restore
-dotnet test FhirMpi.slnx -c Release --no-build
+dotnet restore UnifyEMPI.slnx --locked-mode
+dotnet build UnifyEMPI.slnx -c Release --no-restore
+dotnet test UnifyEMPI.slnx -c Release --no-build
 ```
 
 Stop the local containers with `docker compose down`.
 
 To explore discovery, canonical search, JSON/XML `$match`, safe error cases, local source
 writes and reviewer reads without assembling requests, use the
-[Postman collection and guide](docs/postman/README.md). Public requests target the
-synthetic API by default; mutating requests deliberately target localhost.
+[Postman collection and guide](https://lumbridge.github.io/UnifyEMPI/guides/postman/). Public requests target the
+demo API by default; mutating requests deliberately target localhost.
 
 ## Performance and benchmarking
 
-FhirMpi protects performance at three different levels; each test answers a different
+UnifyEMPI protects performance at three different levels; each test answers a different
 question and the results should not be mixed:
 
 | Level | What it measures | Current gate or target |
@@ -127,12 +140,12 @@ The core benchmark runs on every default CI build. Its checked-in number is a
 BenchmarkDotNet `ShortRun` mean for regression detection, not a p95/p99 result and not
 an end-to-end throughput claim. The k6 and 10-million-identity figures are release
 acceptance targets that require a representative, same-region GCP environment; they
-have not been demonstrated merely by running the public demo.
+have not been demonstrated merely by running the demo.
 
 Run the scoring benchmark and its regression gate with:
 
 ```powershell
-dotnet run --project benchmarks/FhirMpi.Benchmarks -c Release -- `
+dotnet run --project benchmarks/UnifyEmpi.Benchmarks -c Release -- `
   --filter "*ScoreFiveHundred*" --job short --exporters json
 ./scripts/Test-BenchmarkRegression.ps1
 ```
@@ -140,7 +153,7 @@ dotnet run --project benchmarks/FhirMpi.Benchmarks -c Release -- `
 Run the end-to-end scenario only against an isolated synthetic store:
 
 ```powershell
-$env:BASE_URL = "https://fhir-mpi.example"
+$env:BASE_URL = "https://unifyempi.example"
 $env:ACCESS_TOKEN = "<short-lived system token>"
 k6 run benchmarks/k6/match.js
 ```
@@ -148,27 +161,32 @@ k6 run benchmarks/k6/match.js
 Performance comes primarily from bounded work: ingestion precomputes HMAC blocking
 keys, candidate lookup never scans the patient population, at most 500 normalised
 candidates reach the scoring engine, and API, MLLP and portal hosts scale independently.
-See [the benchmark guide](benchmarks/README.md) and
-[core-path diagrams](docs/core-paths.md) for methodology and data flow.
+See [the benchmark guide](https://lumbridge.github.io/UnifyEMPI/development/performance/) and
+[core-path diagrams](https://lumbridge.github.io/UnifyEMPI/architecture/core-paths/) for methodology and data flow.
 
 ## Documentation map
 
-- [Concepts and frequently asked questions](docs/concepts-and-faq.md): tenants,
+- [Identity model and frequently asked questions](https://lumbridge.github.io/UnifyEMPI/concepts/identity-model/): tenants,
   national deployment, source/canonical records, blocking, reviews, existing-store
   onboarding and troubleshooting.
-- [Core paths and processing model](docs/core-paths.md): annotated diagrams for
+- [NHS Wales source model](https://lumbridge.github.io/UnifyEMPI/concepts/nhs-wales-sources/):
+  organisation-level sources for all seven health boards, WDS and Velindre.
+- [Matching and blocking rules](https://lumbridge.github.io/UnifyEMPI/matching/rules/): normative
+  normalisation, configurable blocking rounds, score formula, certainty/conflict
+  rules, routing, examples and feature-alignment gaps.
+- [Core paths and processing model](https://lumbridge.github.io/UnifyEMPI/architecture/core-paths/): annotated diagrams for
   ingestion, matching, merge, split, survivorship and tenant isolation.
-- [Architecture](docs/architecture.md): dependency boundaries, materialisation and the
+- [Architecture](https://lumbridge.github.io/UnifyEMPI/architecture/overview/): dependency boundaries, materialisation and the
   replaceable provider contract.
-- [Configuration](docs/configuration.md): API, portal, OIDC, tenant, HMAC and MLLP
+- [Configuration](https://lumbridge.github.io/UnifyEMPI/reference/configuration/): API, portal, OIDC, tenant, HMAC and MLLP
   settings.
-- [Public demonstration](docs/public-demo.md): deployed topology, synthetic scenarios,
+- [GCP demo deployment](https://lumbridge.github.io/UnifyEMPI/deployment/public-demo/): deployable topology, demo scenarios,
   cost controls and safe teardown.
-- [Postman collection](docs/postman/README.md): importable discovery, matching, source
+- [Postman collection](https://lumbridge.github.io/UnifyEMPI/guides/postman/): importable discovery, matching, source
   write and reviewer-operation examples.
 - [Contributing](CONTRIBUTING.md) and [security policy](SECURITY.md): development
   expectations and private vulnerability reporting.
-- [Storage-provider ADR](docs/adr/0001-modular-monolith-and-provider-contract.md): why
+- [Storage-provider ADR](https://lumbridge.github.io/UnifyEMPI/architecture/decisions/0001-modular-monolith-and-provider-contract/): why
   the modular monolith and provider contract were selected.
 
 ## Moving to production
@@ -188,7 +206,7 @@ Do not promote the Compose development settings directly. A production deploymen
    ```
 
 3. **Publish immutable images.** Build the API, MLLP and portal Dockerfiles, scan all three images, generate an SBOM, and push versioned tags or digests to your approved registry. Do not deploy the mutable `latest` tag.
-4. **Configure identity, tenants, and secrets.** Connect the API and portal to an external OIDC issuer. API service credentials must supply trusted `tenant_id` and `source_system` claims; interactive portal identities must supply exactly one trusted `tenant_id` plus the required MPI permissions. Grant `mpi.patient.write` only to staff allowed to create and update records in the configured `Portal:ManagedSourceSystem`; external source records remain read-only. Register the portal as an authorisation-code client with PKCE and a server-side client secret. Supply tenant definitions, source trust, authoritative sources, and at least one active 256-bit HMAC secret through a managed secret store; never commit secrets to a values file.
+4. **Configure identity, tenants, and secrets.** Connect the API and portal to an external OIDC issuer. API service credentials must supply trusted `tenant_id` and `source_system` claims; interactive portal identities must supply exactly one trusted `tenant_id` plus the required MPI permissions. Welsh health-board, WDS, Velindre and other organisation-owned records remain read-only in the portal. Grant `mpi.patient.write` only if the deployment deliberately adds a separate `Portal:ManagedSourceSystem` for UI-created records. Register the portal as an authorisation-code client with PKCE and a server-side client secret. Supply tenant definitions, source trust, authoritative sources, and at least one active 256-bit HMAC secret through a managed secret store; never commit secrets to a values file.
 5. **Install validation packages.** Fetch the pinned FHIR R4 and UK Core packages, scan them, and make them available to the API through the read-only validation-package volume:
 
    ```powershell
@@ -199,8 +217,8 @@ Do not promote the Compose development settings directly. A production deploymen
 7. **Deploy with Helm.** Copy the supplied values file, replace the example image locations, set the GCP store, OIDC issuer, Workload Identity service account, resource limits, and secret references, then deploy:
 
    ```powershell
-   helm upgrade --install fhir-mpi deploy/helm/fhir-mpi `
-     --namespace fhir-mpi `
+   helm upgrade --install unifyempi deploy/helm/unifyempi `
+     --namespace unifyempi `
      --create-namespace `
      --values production-values.yaml
    ```
@@ -209,12 +227,12 @@ Do not promote the Compose development settings directly. A production deploymen
 
 8. **Verify before admitting patient data.** Confirm `/health/live`, `/health/ready`, and `/fhir/R4/metadata`; run synthetic FHIR and HL7 smoke tests; test tenant isolation, JWT scopes, client certificates, audit delivery, alerts, scaling, backup/restore, and failure recovery.
 
-Production NHS use additionally requires an approved DPIA, clinical-safety case, penetration test, data-retention and disaster-recovery policies, operational ownership, and contractual/compliance review. FhirMpi supplies technical controls but does not itself provide production approval or certification.
+Production NHS use additionally requires an approved DPIA, clinical-safety case, penetration test, data-retention and disaster-recovery policies, operational ownership, and contractual/compliance review. UnifyEMPI supplies technical controls but does not itself provide production approval or certification.
 
-Detailed settings are documented in [configuration.md](docs/configuration.md). Use
-[concepts and frequently asked questions](docs/concepts-and-faq.md) when selecting a
+Detailed settings are documented in the [configuration reference](https://lumbridge.github.io/UnifyEMPI/reference/configuration/). Use
+[identity concepts and frequently asked questions](https://lumbridge.github.io/UnifyEMPI/concepts/identity-model/) when selecting a
 tenant boundary or planning an existing-store onboarding. The portable chart is under
-[deploy/helm/fhir-mpi](deploy/helm/fhir-mpi), and the optional GCP reference
+[deploy/helm/unifyempi](deploy/helm/unifyempi), and the optional GCP reference
 infrastructure is under [deploy/terraform](deploy/terraform).
 
 ## Supported interfaces
@@ -267,7 +285,11 @@ Production requires:
 - an unpacked `hl7.fhir.r4.core#4.0.1` and `fhir.r4.ukcore.stu2#2.0.2` package directory for the bounded Firely validator pool;
 - TLS and client-certificate allow-lists for MLLP.
 
-See [configuration.md](docs/configuration.md), [architecture.md](docs/architecture.md), [core paths and processing model](docs/core-paths.md), and the [Helm values](deploy/helm/fhir-mpi/values.yaml).
+See [configuration](https://lumbridge.github.io/UnifyEMPI/reference/configuration/),
+[matching and blocking rules](https://lumbridge.github.io/UnifyEMPI/matching/rules/),
+[architecture](https://lumbridge.github.io/UnifyEMPI/architecture/overview/),
+[core paths and processing model](https://lumbridge.github.io/UnifyEMPI/architecture/core-paths/),
+and the [Helm values](deploy/helm/unifyempi/values.yaml).
 
 ## Safety and scope
 
@@ -279,6 +301,6 @@ Production NHS use still requires an external DPIA, clinical-safety case, penetr
 
 ## Legacy and licence
 
-The original .NET Framework 4.5 prototype is preserved by the `legacy-net45` Git tag. The active solution is `FhirMpi.slnx`.
+The original .NET Framework 4.5 prototype is preserved by the `legacy-net45` Git tag. The active solution is `UnifyEMPI.slnx`.
 
 The repository retains its original [CC0 1.0](LICENSE) dedication.

@@ -3,9 +3,9 @@ param(
     [string] $ProjectId = "ryans-apps",
     [string] $Region = "europe-west2",
     [string] $Dataset = "ryans-dataset",
-    [string] $Store = "fhir-mpi-demo",
-    [string] $Repository = "fhir-mpi-demo",
-    [string] $ServiceName = "fhir-mpi-demo",
+    [string] $Store = "unifyempi-demo",
+    [string] $Repository = "unifyempi-demo",
+    [string] $ServiceName = "unifyempi-demo",
     [string] $Tenant = "demo"
 )
 
@@ -25,6 +25,29 @@ function Test-GcloudResource {
 
     & $Command *> $null
     return $LASTEXITCODE -eq 0
+}
+
+function Invoke-NativeCommandWithRetry {
+    param(
+        [scriptblock] $Command,
+        [string] $Action,
+        [int] $MaxAttempts = 10,
+        [int] $DelaySeconds = 3
+    )
+
+    for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
+        & $Command
+        if ($LASTEXITCODE -eq 0) {
+            return
+        }
+
+        if ($attempt -lt $MaxAttempts) {
+            Write-Warning "$Action attempt $attempt failed; retrying in $DelaySeconds seconds."
+            Start-Sleep -Seconds $DelaySeconds
+        }
+    }
+
+    throw "$Action failed after $MaxAttempts attempts."
 }
 
 foreach ($command in @("gcloud", "docker")) {
@@ -108,7 +131,7 @@ if (-not (Test-GcloudResource {
         --immutable-tags `
         --location=$Region `
         --project=$ProjectId `
-        --description="FhirMpi public demonstration images" `
+        --description="UnifyEMPI public demo images" `
         --quiet
     Assert-LastExitCode "Creating Artifact Registry repository '$Repository'"
 }
@@ -121,16 +144,19 @@ if (-not (Test-GcloudResource {
         })) {
     gcloud iam service-accounts create $ServiceName `
         --project=$ProjectId `
-        --display-name="FhirMpi public demonstration" `
+        --display-name="UnifyEMPI public demo" `
         --quiet
     Assert-LastExitCode "Creating service account '$serviceAccountName'"
 }
 
-gcloud projects add-iam-policy-binding $ProjectId `
-    --member="serviceAccount:$serviceAccountName" `
-    --role="roles/healthcare.fhirResourceEditor" `
-    --quiet | Out-Null
-Assert-LastExitCode "Granting FHIR resource access"
+Invoke-NativeCommandWithRetry `
+    -Action "Granting FHIR resource access" `
+    -Command {
+        gcloud projects add-iam-policy-binding $ProjectId `
+            --member="serviceAccount:$serviceAccountName" `
+            --role="roles/healthcare.fhirResourceEditor" `
+            --quiet | Out-Null
+    }
 
 $secretName = "$ServiceName-hmac"
 if (-not (Test-GcloudResource {
@@ -174,12 +200,15 @@ if ([string]::IsNullOrWhiteSpace(($enabledSecretVersions -join ""))) {
     $secretPayload = $null
 }
 
-gcloud secrets add-iam-policy-binding $secretName `
-    --project=$ProjectId `
-    --member="serviceAccount:$serviceAccountName" `
-    --role="roles/secretmanager.secretAccessor" `
-    --quiet | Out-Null
-Assert-LastExitCode "Granting secret access"
+Invoke-NativeCommandWithRetry `
+    -Action "Granting secret access" `
+    -Command {
+        gcloud secrets add-iam-policy-binding $secretName `
+            --project=$ProjectId `
+            --member="serviceAccount:$serviceAccountName" `
+            --role="roles/secretmanager.secretAccessor" `
+            --quiet | Out-Null
+    }
 
 gcloud auth configure-docker "$Region-docker.pkg.dev" --quiet
 Assert-LastExitCode "Configuring Docker authentication"
@@ -189,11 +218,11 @@ $registryRoot = "$Region-docker.pkg.dev/$ProjectId/$Repository"
 $apiImage = "$registryRoot/api:$imageTag"
 $portalImage = "$registryRoot/portal:$imageTag"
 
-docker build -f src/FhirMpi.Api/Dockerfile -t $apiImage .
+docker build -f src/UnifyEmpi.Api/Dockerfile -t $apiImage .
 Assert-LastExitCode "Building the API image"
 docker push $apiImage
 Assert-LastExitCode "Publishing the API image"
-docker build -f src/FhirMpi.Portal/Dockerfile -t $portalImage .
+docker build -f src/UnifyEmpi.Portal/Dockerfile -t $portalImage .
 Assert-LastExitCode "Building the portal image"
 docker push $portalImage
 Assert-LastExitCode "Publishing the portal image"
@@ -206,12 +235,18 @@ $tenantSettings = @(
     "Tenants__Items__0__PossibleThreshold=0.62",
     "Tenants__Items__0__ProbableThreshold=0.82",
     "Tenants__Items__0__RequiredLinkApprovals=2",
-    "Tenants__Items__0__SourceTrust__pas=100",
-    "Tenants__Items__0__SourceTrust__maternity=90",
-    "Tenants__Items__0__SourceTrust__emergency=85",
-    "Tenants__Items__0__SourceTrust__portal=50",
+    "Tenants__Items__0__SourceTrust__aneurin-bevan=90",
+    "Tenants__Items__0__SourceTrust__betsi-cadwaladr=90",
+    "Tenants__Items__0__SourceTrust__cardiff-and-vale=90",
+    "Tenants__Items__0__SourceTrust__cwm-taf-morgannwg=90",
+    "Tenants__Items__0__SourceTrust__hywel-dda=90",
+    "Tenants__Items__0__SourceTrust__powys=90",
+    "Tenants__Items__0__SourceTrust__swansea-bay=90",
+    "Tenants__Items__0__SourceTrust__wds=100",
+    "Tenants__Items__0__SourceTrust__velindre=90",
+    "Tenants__Items__0__SourceTrust__demo-ui=50",
     "Tenants__Items__0__SourceTrust__demo-source=40",
-    "Tenants__Items__0__AuthoritativeSources__0=pas",
+    "Tenants__Items__0__AuthoritativeSources__0=wds",
     "Tenants__Items__0__BlockingSecrets__0__Version=v1",
     "Tenants__Items__0__BlockingSecrets__0__Active=true"
 )
@@ -229,7 +264,7 @@ $portalEnvironment = @(
     "PortalAuthentication__DevelopmentTenant=$Tenant",
     "Portal__SeedSyntheticData=true",
     "Portal__PublicDemo=true",
-    "Portal__ManagedSourceSystem=portal",
+    "Portal__ManagedSourceSystem=demo-ui",
     "Portal__CircuitRetentionMinutes=3",
     "Portal__OverviewLoadTimeoutSeconds=20"
 ) + $tenantSettings
@@ -253,7 +288,7 @@ gcloud run deploy $apiServiceName `
     --timeout=300 `
     --min-instances=0 `
     --max-instances=2 `
-    --labels="application=fhir-mpi,environment=public-demo" `
+    --labels="application=unifyempi,environment=public-demo" `
     --set-env-vars=$apiEnvironmentSpec `
     --set-secrets=$secretBinding `
     --startup-probe="httpGet.path=/health/ready,httpGet.port=8080,timeoutSeconds=3,periodSeconds=5,failureThreshold=24" `
@@ -276,7 +311,7 @@ gcloud run deploy $ServiceName `
     --timeout=3600 `
     --min-instances=0 `
     --max-instances=1 `
-    --labels="application=fhir-mpi,environment=public-demo" `
+    --labels="application=unifyempi,environment=public-demo" `
     --set-env-vars=$portalEnvironmentSpec `
     --set-secrets=$secretBinding `
     --startup-probe="httpGet.path=/health/ready,httpGet.port=8080,timeoutSeconds=3,periodSeconds=5,failureThreshold=24" `

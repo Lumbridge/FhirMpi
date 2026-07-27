@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="../UnifyEmpi.Application/UnifyEmpi.Application.csproj" />
+    <PackageReference Include="Firely.Fhir.Validation.R4" />
+    <PackageReference Include="Hl7.Fhir.R4" />
+  </ItemGroup>
+</Project>

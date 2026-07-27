@@ -12,6 +12,28 @@ permissions:
   security-events: write
 
 jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: docs-site/pnpm-lock.yaml
+      - name: Install documentation dependencies
+        working-directory: docs-site
+        run: pnpm install --frozen-lockfile
+      - name: Build documentation and validate links
+        working-directory: docs-site
+        run: pnpm build
+      - name: Audit documentation dependencies
+        working-directory: docs-site
+        run: pnpm audit --audit-level high
+
   build-test:
     runs-on: ubuntu-latest
     steps:
@@ -20,15 +42,15 @@ jobs:
         with:
           global-json-file: global.json
       - name: Restore locked dependencies
-        run: dotnet restore FhirMpi.slnx --locked-mode
+        run: dotnet restore UnifyEMPI.slnx --locked-mode
       - name: Verify formatting
-        run: dotnet format FhirMpi.slnx --no-restore --verify-no-changes
+        run: dotnet format UnifyEMPI.slnx --no-restore --verify-no-changes
       - name: Build
-        run: dotnet build FhirMpi.slnx -c Release --no-restore
+        run: dotnet build UnifyEMPI.slnx -c Release --no-restore
       - name: Test
-        run: dotnet test FhirMpi.slnx -c Release --no-build --logger trx --results-directory TestResults
+        run: dotnet test UnifyEMPI.slnx -c Release --no-build --logger trx --results-directory TestResults
       - name: Audit NuGet packages
-        run: dotnet list FhirMpi.slnx package --vulnerable --include-transitive
+        run: dotnet list UnifyEMPI.slnx package --vulnerable --include-transitive
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
@@ -42,11 +64,11 @@ jobs:
       matrix:
         include:
           - name: api
-            dockerfile: src/FhirMpi.Api/Dockerfile
+            dockerfile: src/UnifyEmpi.Api/Dockerfile
           - name: mllp
-            dockerfile: src/FhirMpi.Hl7v2.Host/Dockerfile
+            dockerfile: src/UnifyEmpi.Hl7v2.Host/Dockerfile
           - name: portal
-            dockerfile: src/FhirMpi.Portal/Dockerfile
+            dockerfile: src/UnifyEmpi.Portal/Dockerfile
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
@@ -55,15 +77,15 @@ jobs:
           context: .
           file: ${{ matrix.dockerfile }}
           load: true
-          tags: fhir-mpi-${{ matrix.name }}:${{ github.sha }}
+          tags: unifyempi-${{ matrix.name }}:${{ github.sha }}
       - uses: anchore/sbom-action@v0
         with:
-          image: fhir-mpi-${{ matrix.name }}:${{ github.sha }}
-          artifact-name: fhir-mpi-${{ matrix.name }}.spdx.json
+          image: unifyempi-${{ matrix.name }}:${{ github.sha }}
+          artifact-name: unifyempi-${{ matrix.name }}.spdx.json
       - name: Gate high and critical container vulnerabilities
         uses: aquasecurity/trivy-action@0.35.0
         with:
-          image-ref: fhir-mpi-${{ matrix.name }}:${{ github.sha }}
+          image-ref: unifyempi-${{ matrix.name }}:${{ github.sha }}
           format: table
           scanners: vuln
           severity: HIGH,CRITICAL
@@ -71,7 +93,7 @@ jobs:
       - name: Generate container vulnerability report
         uses: aquasecurity/trivy-action@0.35.0
         with:
-          image-ref: fhir-mpi-${{ matrix.name }}:${{ github.sha }}
+          image-ref: unifyempi-${{ matrix.name }}:${{ github.sha }}
           format: sarif
           output: trivy-${{ matrix.name }}.sarif
           scanners: vuln
@@ -90,8 +112,8 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           global-json-file: global.json
-      - run: dotnet restore benchmarks/FhirMpi.Benchmarks/FhirMpi.Benchmarks.csproj --locked-mode
-      - run: dotnet run --project benchmarks/FhirMpi.Benchmarks -c Release --no-restore -- --filter '*ScoreFiveHundred*' --job short --exporters json
+      - run: dotnet restore benchmarks/UnifyEmpi.Benchmarks/UnifyEmpi.Benchmarks.csproj --locked-mode
+      - run: dotnet run --project benchmarks/UnifyEmpi.Benchmarks -c Release --no-restore -- --filter '*ScoreFiveHundred*' --job short --exporters json
       - shell: pwsh
         run: ./scripts/Test-BenchmarkRegression.ps1
 
@@ -113,5 +135,5 @@ jobs:
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-      - run: dotnet restore tests/FhirMpi.Storage.Gcp.LiveTests/FhirMpi.Storage.Gcp.LiveTests.csproj --locked-mode
-      - run: dotnet test tests/FhirMpi.Storage.Gcp.LiveTests/FhirMpi.Storage.Gcp.LiveTests.csproj -c Release --no-restore
+      - run: dotnet restore tests/UnifyEmpi.Storage.Gcp.LiveTests/UnifyEmpi.Storage.Gcp.LiveTests.csproj --locked-mode
+      - run: dotnet test tests/UnifyEmpi.Storage.Gcp.LiveTests/UnifyEmpi.Storage.Gcp.LiveTests.csproj -c Release --no-restore

@@ -1,5 +1,5 @@
 variable "project_id" {
-  description = "GCP project for the isolated FhirMpi deployment."
+  description = "GCP project for the isolated UnifyEMPI deployment."
   type        = string
 }
 
@@ -12,13 +12,13 @@ variable "region" {
 variable "name" {
   description = "Resource name prefix."
   type        = string
-  default     = "fhir-mpi"
+  default     = "unifyempi"
 }
 
 variable "kubernetes_namespace" {
-  description = "Kubernetes namespace containing the FhirMpi service account."
+  description = "Kubernetes namespace containing the UnifyEMPI service account."
   type        = string
-  default     = "fhir-mpi"
+  default     = "unifyempi"
 }
 
 variable "gke_subnetwork" {

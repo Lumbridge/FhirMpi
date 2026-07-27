@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <UserSecretsId>UnifyEMPI-Api-Development</UserSecretsId>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../UnifyEmpi.Application/UnifyEmpi.Application.csproj" />
+    <ProjectReference Include="../UnifyEmpi.Fhir.R4/UnifyEmpi.Fhir.R4.csproj" />
+    <ProjectReference Include="../UnifyEmpi.Storage.Gcp/UnifyEmpi.Storage.Gcp.csproj" />
+    <ProjectReference Include="../UnifyEmpi.Storage.InMemory/UnifyEmpi.Storage.InMemory.csproj" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" />
+  </ItemGroup>
+</Project>

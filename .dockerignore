@@ -5,8 +5,8 @@
 **/TestResults
 artifacts
 benchmark-results
-FhirMpi.ConsoleServer
-FhirMpi.Library
-FhirMpi.Library.Tests
-FhirMpi.Web
-FhirMpi.Web.Tests
+UnifyEmpi.ConsoleServer
+UnifyEmpi.Library
+UnifyEmpi.Library.Tests
+UnifyEmpi.Web
+UnifyEmpi.Web.Tests

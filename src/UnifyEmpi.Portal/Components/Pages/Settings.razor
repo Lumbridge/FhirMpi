@@ -1,0 +1,258 @@
+@page "/settings"
+@attribute [Authorize(Policy = "ConfigurationWriteAccess")]
+@inject RegistryService Registry
+@inject PortalActorContextFactory Actors
+
+<PageTitle>Matching policy · UnifyEMPI</PageTitle>
+
+<PageHeader
+    Eyebrow="Tenant configuration"
+    Title="Matching and governance policy"
+    Description="Manage audited, non-secret policy for the active tenant. Changes use optimistic concurrency and apply across service hosts." />
+
+@if (LoadError is not null)
+{
+    <AlertMessage Tone="danger" Title="The policy could not be loaded" Message="@LoadError" />
+}
+
+@if (Model is null)
+{
+    @if (LoadError is null)
+    {
+        <div class="loading-panel" role="status">
+            <span class="loading-spinner" aria-hidden="true"></span>
+            <span>Loading tenant policy…</span>
+        </div>
+    }
+}
+else
+{
+    <EditForm Model="Model" OnSubmit="SaveAsync" FormName="tenant-policy">
+        <div class="settings-layout">
+            <section class="panel settings-section">
+                <p class="eyebrow">Match classification</p>
+                <h2>Thresholds and approvals</h2>
+                <div class="field">
+                    <label for="profile-version">Matching profile version</label>
+                    <InputText id="profile-version" class="input" @bind-Value="Model.MatchingProfileVersion" />
+                    <small>Recorded with every decision for reproducibility.</small>
+                </div>
+                <div class="two-column-fields">
+                    <div class="field">
+                        <label for="possible-threshold">Possible threshold</label>
+                        <InputNumber id="possible-threshold"
+                                     class="input"
+                                     min="0"
+                                     max="1"
+                                     step="0.01"
+                                     @bind-Value="Model.PossibleThreshold" />
+                    </div>
+                    <div class="field">
+                        <label for="probable-threshold">Probable threshold</label>
+                        <InputNumber id="probable-threshold"
+                                     class="input"
+                                     min="0"
+                                     max="1"
+                                     step="0.01"
+                                     @bind-Value="Model.ProbableThreshold" />
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="required-approvals">Approvals required for links</label>
+                    <InputSelect id="required-approvals" class="input" @bind-Value="Model.RequiredLinkApprovals">
+                        <option value="1">One reviewer</option>
+                        <option value="2">Two distinct reviewers</option>
+                    </InputSelect>
+                    <small>
+                        Lowering this value can be adopted by ordinary open link reviews through an
+                        explicit audited completion. Corrective splits and authoritative identifier
+                        conflicts always require two distinct reviewers.
+                    </small>
+                </div>
+            </section>
+
+            <section class="panel settings-section">
+                <p class="eyebrow">Survivorship</p>
+                <h2>Source trust</h2>
+                <p class="section-intro">Higher-trust verified values win before recency and the stable source identifier tie-breaker.</p>
+                <div class="source-settings-list">
+                    @foreach (var source in Model.Sources)
+                    {
+                        <article class="source-setting">
+                            <div>
+                                <strong>@source.SourceSystem</strong>
+                                <label class="check-label">
+                                    <InputCheckbox @bind-Value="source.IsAuthoritative" />
+                                    Authoritative source
+                                </label>
+                            </div>
+                            <div class="field compact-field">
+                                <label for="@($"trust-{source.SourceSystem}")">Trust score</label>
+                                <InputNumber id="@($"trust-{source.SourceSystem}")"
+                                             class="input"
+                                             min="0"
+                                             max="100"
+                                             @bind-Value="source.Trust" />
+                            </div>
+                        </article>
+                    }
+                </div>
+            </section>
+        </div>
+
+        <section class="change-control">
+            <div>
+                <p class="eyebrow">Change control</p>
+                <h2>Record why this policy is changing</h2>
+                <p>The reason and your identity will be written to the immutable tenant audit trail.</p>
+            </div>
+            <div class="change-control-action">
+                <div class="field change-reason">
+                    <label for="change-reason">Change reason</label>
+                    <textarea id="change-reason"
+                              class="input textarea"
+                              rows="3"
+                              maxlength="1000"
+                              @bind="Model.Reason"
+                              @bind:event="oninput"></textarea>
+                </div>
+                @if (SaveError is not null)
+                {
+                    <SubmissionFeedback
+                        Title="The policy could not be saved"
+                        Message="@SaveError" />
+                }
+                else if (Success is not null)
+                {
+                    <SubmissionFeedback
+                        Tone="success"
+                        Title="@Success" />
+                }
+                <button class="button button-primary"
+                        type="submit"
+                        disabled="@IsSaving">
+                    @(IsSaving ? "Saving policy…" : "Save audited change")
+                </button>
+            </div>
+        </section>
+    </EditForm>
+}
+
+@code {
+    private SettingsModel? Model { get; set; }
+
+    private string? LoadError { get; set; }
+
+    private string? SaveError { get; set; }
+
+    private string? Success { get; set; }
+
+    private bool IsSaving { get; set; }
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        LoadError = null;
+        try
+        {
+            var settings = await Registry.GetTenantSettingsAsync(
+                await Actors.CreateAsync(),
+                CancellationToken.None);
+            Model = SettingsModel.From(settings);
+        }
+        catch (RegistryException exception)
+        {
+            LoadError = exception.Message;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        if (Model is null)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(Model.Reason))
+        {
+            Success = null;
+            SaveError = "Enter a change reason before saving the tenant policy.";
+            return;
+        }
+
+        IsSaving = true;
+        SaveError = null;
+        Success = null;
+        try
+        {
+            var updated = await Registry.UpdateTenantSettingsAsync(
+                await Actors.CreateAsync(),
+                new UpdateTenantSettingsCommand(
+                    Model.MatchingProfileVersion,
+                    Model.PossibleThreshold,
+                    Model.ProbableThreshold,
+                    Model.RequiredLinkApprovals,
+                    Model.Sources.Select(static source => new SourceSystemSettings(
+                        new SourceSystemId(source.SourceSystem),
+                        source.Trust,
+                        source.IsAuthoritative)).ToArray(),
+                    Model.Reason.Trim(),
+                    Model.Version),
+                CancellationToken.None);
+            Model = SettingsModel.From(updated);
+            Success = "The tenant policy was updated and an audit event was recorded.";
+        }
+        catch (RegistryException exception)
+        {
+            SaveError = exception.Message;
+            await LoadAsync();
+        }
+        finally
+        {
+            IsSaving = false;
+        }
+    }
+
+    private sealed class SettingsModel
+    {
+        public string MatchingProfileVersion { get; set; } = string.Empty;
+
+        public double PossibleThreshold { get; set; }
+
+        public double ProbableThreshold { get; set; }
+
+        public int RequiredLinkApprovals { get; set; }
+
+        public List<SourceModel> Sources { get; set; } = [];
+
+        public string Reason { get; set; } = string.Empty;
+
+        public long Version { get; set; }
+
+        public static SettingsModel From(TenantSettings settings) =>
+            new()
+            {
+                MatchingProfileVersion = settings.MatchingProfileVersion,
+                PossibleThreshold = settings.PossibleThreshold,
+                ProbableThreshold = settings.ProbableThreshold,
+                RequiredLinkApprovals = settings.RequiredLinkApprovals,
+                Sources = settings.Sources.Select(static source => new SourceModel
+                {
+                    SourceSystem = source.SourceSystem.Value,
+                    Trust = source.Trust,
+                    IsAuthoritative = source.IsAuthoritative
+                }).ToList(),
+                Version = settings.Version
+            };
+    }
+
+    private sealed class SourceModel
+    {
+        public string SourceSystem { get; set; } = string.Empty;
+
+        public int Trust { get; set; }
+
+        public bool IsAuthoritative { get; set; }
+    }
+}
