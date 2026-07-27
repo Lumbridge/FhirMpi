@@ -47,6 +47,7 @@ portal:
   dataProtectionPvc: unifyempi-portal-data-protection
   circuitRetentionMinutes: 3
   overviewLoadTimeoutSeconds: 20
+  prerenderInteractiveComponents: false
   managedSourceSystem: ui-managed
 
 secrets:

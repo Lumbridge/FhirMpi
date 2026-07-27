@@ -86,6 +86,8 @@ public sealed class PortalOptions
 
     public int OverviewLoadTimeoutSeconds { get; init; } = 20;
 
+    public bool PrerenderInteractiveComponents { get; init; }
+
     public bool SeedSyntheticData { get; init; }
 
     public bool PublicDemo { get; init; }

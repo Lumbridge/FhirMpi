@@ -266,7 +266,8 @@ $portalEnvironment = @(
     "Portal__PublicDemo=true",
     "Portal__ManagedSourceSystem=demo-ui",
     "Portal__CircuitRetentionMinutes=3",
-    "Portal__OverviewLoadTimeoutSeconds=20"
+    "Portal__OverviewLoadTimeoutSeconds=20",
+    "Portal__PrerenderInteractiveComponents=false"
 ) + $tenantSettings
 $apiEnvironmentSpec = $apiEnvironment -join ","
 $portalEnvironmentSpec = $portalEnvironment -join ","

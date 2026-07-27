@@ -13,10 +13,14 @@ namespace UnifyEmpi.Portal.Tests;
 
 public sealed class OverviewResilienceTests : IClassFixture<FailingOverviewFactory>
 {
+    private readonly FailingOverviewFactory _factory;
     private readonly HttpClient _client;
 
-    public OverviewResilienceTests(FailingOverviewFactory factory) =>
+    public OverviewResilienceTests(FailingOverviewFactory factory)
+    {
+        _factory = factory;
         _client = factory.CreateClient();
+    }
 
     [Fact]
     public async Task ProviderFailureRendersRetryableOverviewError()
@@ -33,6 +37,27 @@ public sealed class OverviewResilienceTests : IClassFixture<FailingOverviewFacto
         Assert.Contains("Try again", html, StringComparison.Ordinal);
         Assert.DoesNotContain("Loading the tenant overview", html, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public async Task NonPrerenderedDocumentDoesNotExposeMutableOverviewDom()
+    {
+        using var factory = _factory.WithWebHostBuilder(builder =>
+            builder.ConfigureAppConfiguration((_, configuration) =>
+                configuration.AddInMemoryCollection(
+                    new Dictionary<string, string?>
+                    {
+                        ["Portal:PrerenderInteractiveComponents"] = "false"
+                    })));
+        using var client = factory.CreateClient();
+
+        var response = await client.GetAsync("/", CancellationToken.None);
+        var html = await response.Content.ReadAsStringAsync(CancellationToken.None);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("_framework/blazor.web.js", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("Loading the tenant overview", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("Operations overview", html, StringComparison.Ordinal);
+    }
 }
 
 public sealed class FailingOverviewFactory : WebApplicationFactory<Program>
@@ -45,6 +70,7 @@ public sealed class FailingOverviewFactory : WebApplicationFactory<Program>
                 new Dictionary<string, string?>
                 {
                     ["PortalAuthentication:Enabled"] = "false",
+                    ["Portal:PrerenderInteractiveComponents"] = "true",
                     ["Portal:SeedSyntheticData"] = "false",
                     ["RegistryProvider:Type"] = "InMemory"
                 }));

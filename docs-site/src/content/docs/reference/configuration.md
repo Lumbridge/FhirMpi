@@ -124,6 +124,7 @@ The portal uses a generic OpenID Connect authorisation-code flow with PKCE and a
   },
   "Portal": {
     "OverviewLoadTimeoutSeconds": 20,
+    "PrerenderInteractiveComponents": false,
     "SeedSyntheticData": false,
     "PublicDemo": false,
     "CircuitRetentionMinutes": 3,
@@ -135,6 +136,13 @@ The portal uses a generic OpenID Connect authorisation-code flow with PKCE and a
 Supply the same `RegistryProvider`, `GcpHealthcare` and `Tenants` sections used by the API. HMAC material and the OIDC client secret must come from a secret store. `DataProtectionKeyPath` is mandatory outside development when OIDC is enabled and must point to encrypted, durable storage shared by all portal replicas.
 
 `OverviewLoadTimeoutSeconds` bounds the dashboard's provider calls between 5 and 120 seconds. A timeout preserves the interactive circuit, shows a retry action beside the failure, and prevents a transient provider delay from leaving the dashboard in a permanent loading state.
+
+`PrerenderInteractiveComponents=false` keeps the interactive portal from reconciling
+server-prerendered overview markup after its Blazor circuit connects. This is the
+recommended setting for the operational portal because browser extensions and edge
+rewriters can otherwise alter that markup before Blazor takes ownership, terminate the
+circuit, and leave a stale loading state visible. Set it to `true` only when the entire
+delivery path is known to preserve Blazor's prerendered DOM.
 
 The standard Welsh configuration does not grant `mpi.patient.write`: health-board, WDS,
 Velindre and other organisation-owned records remain read-only in the portal. A
