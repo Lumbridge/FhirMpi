@@ -94,5 +94,5 @@ public sealed class PortalOptions
 
     public string DataProtectionKeyPath { get; init; } = string.Empty;
 
-    public string ManagedSourceSystem { get; init; } = "portal";
+    public string ManagedSourceSystem { get; init; } = "ui-managed";
 }

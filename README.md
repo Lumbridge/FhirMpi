@@ -31,7 +31,10 @@ HMAC blocking tags and review errors, start with
 - **Safe, explainable matching:** configurable blocking rounds, field weights and
   thresholds; NHS-number validation; HMAC-protected candidate indexes; field-level
   evidence; and no population-wide scans.
-- **Enterprise operations portal:** tenant dashboard, governed create/update for a portal-managed source, patient registry search, explainable duplicate workbench, governed merge and source-level unlink/split workflows, review queue, source trust, audited policy configuration, and audit search.
+- **Enterprise operations portal:** tenant dashboard, optional governed create/update
+  for a separately configured UI-managed source, patient registry search, explainable
+  duplicate workbench, governed merge and source-level unlink/split workflows, review
+  queue, source trust, audited policy configuration, and audit search.
 - **Review workflow:** probable matches create review cases that authorised reviewers can inspect, link, reject, correct, or close as superseded when an identity is replaced or its evidence changes. Tenant-configurable dual approval defaults to two distinct reviewers, with no self-approval.
 - **Multi-tenant isolation:** every identity, query, decision, receipt, and audit event is bound to a trusted tenant and source-system context.
 - **Replaceable storage:** an ephemeral in-memory provider for development and a durable GCP Healthcare API provider are included behind the same storage contract.
@@ -79,7 +82,8 @@ The portal is a server-rendered operations surface; patient data and OIDC tokens
 
 Out of the box, authorised staff can:
 
-- create and update Patient records owned by a server-configured portal source, with NHS-number validation and optimistic concurrency protection;
+- optionally create and update Patient records owned by a separate server-configured
+  UI-managed source, with NHS-number validation and optimistic concurrency protection;
 - find canonical patients using a strong identifier or family name with date of birth;
 - compare canonical and source demographics with provenance and survivorship trust;
 - run a bounded duplicate search and inspect the evidence behind every score;
@@ -192,7 +196,7 @@ Do not promote the Compose development settings directly. A production deploymen
    ```
 
 3. **Publish immutable images.** Build the API, MLLP and portal Dockerfiles, scan all three images, generate an SBOM, and push versioned tags or digests to your approved registry. Do not deploy the mutable `latest` tag.
-4. **Configure identity, tenants, and secrets.** Connect the API and portal to an external OIDC issuer. API service credentials must supply trusted `tenant_id` and `source_system` claims; interactive portal identities must supply exactly one trusted `tenant_id` plus the required MPI permissions. Grant `mpi.patient.write` only to staff allowed to create and update records in the configured `Portal:ManagedSourceSystem`; external source records remain read-only. Register the portal as an authorisation-code client with PKCE and a server-side client secret. Supply tenant definitions, source trust, authoritative sources, and at least one active 256-bit HMAC secret through a managed secret store; never commit secrets to a values file.
+4. **Configure identity, tenants, and secrets.** Connect the API and portal to an external OIDC issuer. API service credentials must supply trusted `tenant_id` and `source_system` claims; interactive portal identities must supply exactly one trusted `tenant_id` plus the required MPI permissions. Welsh health-board, WDS, Velindre and other organisation-owned records remain read-only in the portal. Grant `mpi.patient.write` only if the deployment deliberately adds a separate `Portal:ManagedSourceSystem` for UI-created records. Register the portal as an authorisation-code client with PKCE and a server-side client secret. Supply tenant definitions, source trust, authoritative sources, and at least one active 256-bit HMAC secret through a managed secret store; never commit secrets to a values file.
 5. **Install validation packages.** Fetch the pinned FHIR R4 and UK Core packages, scan them, and make them available to the API through the read-only validation-package volume:
 
    ```powershell

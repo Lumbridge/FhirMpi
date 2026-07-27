@@ -3,8 +3,9 @@
 Environment variables use .NET double-underscore notation, for example `Authentication__Authority`.
 
 Choose the tenant boundary before assigning source systems or generating secrets.
-UnifyEMPI never matches across tenants. For a national registry, participating health
-boards and systems normally use distinct source-system IDs inside one national tenant.
+UnifyEMPI never matches across tenants. For the Welsh national registry, each health
+board, WDS, Velindre and any additional participating national organisation has a
+distinct source-system ID inside one national tenant.
 See [concepts and frequently asked questions](concepts-and-faq.md#tenants-and-national-deployment)
 for the security and access implications.
 
@@ -28,7 +29,7 @@ for the security and access implications.
   },
   "Tenants": {
     "Items": [{
-      "TenantId": "tenant-a",
+      "TenantId": "nhs-wales",
       "MatchingProfileVersion": "uk-default-v1",
       "PossibleThreshold": 0.62,
       "ProbableThreshold": 0.82,
@@ -56,8 +57,18 @@ for the security and access implications.
         "DefaultResultCount": 10,
         "MaximumResultCount": 50
       },
-      "SourceTrust": { "pas": 100, "portal": 50 },
-      "AuthoritativeSources": ["pas"],
+      "SourceTrust": {
+        "aneurin-bevan": 90,
+        "betsi-cadwaladr": 90,
+        "cardiff-and-vale": 90,
+        "cwm-taf-morgannwg": 90,
+        "hywel-dda": 90,
+        "powys": 90,
+        "swansea-bay": 90,
+        "wds": 100,
+        "velindre": 90
+      },
+      "AuthoritativeSources": ["wds"],
       "BlockingSecrets": [{
         "Version": "v2",
         "SecretBase64": "<secret reference, never commit>",
@@ -71,6 +82,11 @@ for the security and access implications.
   }
 }
 ```
+
+The source identifiers mirror the organisation-level Welsh feed model. Add any other
+approved national sources using their interface-catalogue identifiers. The trust values
+and `AuthoritativeSources` entry above are illustrative: approve them through local data
+governance rather than copying them unchanged.
 
 During key rotation, retain the previous key until all canonical records have been re-indexed. Candidate lookup queries all configured versions; only one version may be active for new stable IDs and tags.
 
@@ -99,7 +115,6 @@ The portal uses a generic OpenID Connect authorisation-code flow with PKCE and a
       "mpi.review",
       "mpi.audit",
       "mpi.operations",
-      "mpi.patient.write",
       "mpi.config.read",
       "mpi.config.write"
     ]
@@ -109,8 +124,7 @@ The portal uses a generic OpenID Connect authorisation-code flow with PKCE and a
     "SeedSyntheticData": false,
     "PublicDemo": false,
     "CircuitRetentionMinutes": 3,
-    "DataProtectionKeyPath": "/var/unifyempi/data-protection",
-    "ManagedSourceSystem": "portal"
+    "DataProtectionKeyPath": "/var/unifyempi/data-protection"
   }
 }
 ```
@@ -119,7 +133,13 @@ Supply the same `RegistryProvider`, `GcpHealthcare` and `Tenants` sections used 
 
 `OverviewLoadTimeoutSeconds` bounds the dashboard's provider calls between 5 and 120 seconds. A timeout preserves the interactive circuit, shows a retry action beside the failure, and prevents a transient provider delay from leaving the dashboard in a permanent loading state.
 
-`ManagedSourceSystem` is the only source the interactive portal may create or update. It must be present in every tenant's `SourceTrust` configuration and should normally be non-authoritative. The value comes from trusted server configuration and cannot be overridden through a route, form, header or patient resource. Records owned by PAS, maternity, emergency or other external sources remain read-only in the portal.
+The standard Welsh configuration does not grant `mpi.patient.write`: health-board, WDS,
+Velindre and other organisation-owned records remain read-only in the portal. A
+deployment may optionally configure `Portal:ManagedSourceSystem` and grant
+`mpi.patient.write` for a separate UI-managed record namespace. That source must then be
+present in every tenant's `SourceTrust` configuration and should normally be
+non-authoritative. It is not a replacement for, or alias of, any Welsh organisation
+source.
 
 `PublicDemo=true` is an explicit synthetic-only mode. It requires OIDC to be disabled, displays a permanent warning banner, and permits `SeedSyntheticData=true` in a production environment. Never enable it for a store containing real or potentially identifiable patient information.
 

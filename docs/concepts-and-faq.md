@@ -10,7 +10,7 @@ This guide explains the registry model in operational terms. It complements the
 | --- | --- |
 | MPI | Master patient index: a service that links records believed to describe the same person without replacing the originating systems |
 | Tenant | The hard data, security and matching-policy boundary |
-| Source system | A configured record-owning system, such as a PAS, maternity system or the portal-managed source |
+| Source system | A configured record-owning feed, such as a Welsh health board, WDS or Velindre |
 | Source Patient | The latest authoritative snapshot of one patient record in one source system |
 | Enterprise identity | UnifyEMPI's UUIDv7 identity for one believed person within a tenant |
 | Enterprise cluster | An enterprise identity and all source records currently linked to it |
@@ -30,13 +30,13 @@ convenient consolidated view:
 
 ```mermaid
 flowchart LR
-    PAS["PAS source Patient<br/>active in PAS"] --> PERSON["FHIR Person<br/>enterprise links and assurance"]
-    MAT["Maternity source Patient<br/>active in maternity"] --> PERSON
-    PORTAL["Portal source Patient<br/>active in portal source"] --> PERSON
+    HB1["Health board source Patient<br/>active in that board"] --> PERSON["FHIR Person<br/>enterprise links and assurance"]
+    WDS["WDS source Patient<br/>national demographics"] --> PERSON
+    VEL["Velindre source Patient<br/>active in Velindre"] --> PERSON
     PERSON --> CANONICAL["Canonical Patient<br/>one active enterprise view"]
-    PAS --> SURVIVE["Deterministic survivorship"]
-    MAT --> SURVIVE
-    PORTAL --> SURVIVE
+    HB1 --> SURVIVE["Deterministic survivorship"]
+    WDS --> SURVIVE
+    VEL --> SURVIVE
     SURVIVE --> CANONICAL
     CANONICAL --> TAGS["Versioned HMAC blocking tags<br/>candidate discovery only"]
 ```
@@ -48,9 +48,9 @@ the tenant, source-system ID and source-local ID. It contains the most recent ac
 snapshot from that source and points to its current enterprise identity.
 
 Several active source Patients may legitimately describe the same person. For example,
-a PAS record and a maternity record can both be active and linked to one enterprise
-identity. A merge does not deactivate those records because the source systems still
-regard them as active.
+a health-board record, a WDS record and a Velindre record can all be active and linked
+to one enterprise identity. A merge does not deactivate those records because the
+source organisations still regard them as active.
 
 ### What is a canonical Patient?
 
@@ -61,7 +61,7 @@ telecoms can remain available as aliases.
 
 Canonical does not mean infallible clinical truth. It means UnifyEMPI's current,
 deterministic consolidated view. It is server-managed and read-only to FHIR clients.
-Source-system or portal-managed source updates cause it to be recalculated.
+Accepted source-system updates cause it to be recalculated.
 
 | Property | Source Patient | Canonical Patient |
 | --- | --- | --- |
@@ -121,20 +121,27 @@ Not if the primary requirement is a national MPI. Separate tenants for Cardiff a
 Aneurin Bevan, Betsi Cadwaladr and other organisations would prevent UnifyEMPI from finding
 or linking the same person across those boundaries.
 
-A national pattern is:
+A national pattern is one source boundary for each configured Welsh organisation or
+national service. The identifiers below are illustrative configuration keys:
 
 ```text
 Tenant: nhs-wales
-  Source: cardiff-vale-pas
-  Source: aneurin-bevan-pas
-  Source: betsi-cadwaladr-pas
-  Source: national-maternity
-  Source: national-portal
+  Source: aneurin-bevan
+  Source: betsi-cadwaladr
+  Source: cardiff-and-vale
+  Source: cwm-taf-morgannwg
+  Source: hywel-dda
+  Source: powys
+  Source: swansea-bay
+  Source: wds
+  Source: velindre
+  Source: <other configured national organisation>
 ```
 
-Use a distinct source-system ID for each independently owned record namespace, often per
-PAS instance rather than merely per organisation. Source trust and authority can then
-differ within the national tenant.
+In the current Welsh model, the source ID represents the organisation-level feed—not
+an application-type category. Keep the deployed IDs aligned with the agreed interface
+catalogue. Source trust and identifier authority can then differ for each health board,
+WDS, Velindre and any additional national source inside the one tenant.
 
 One national tenant also means that identities holding tenant-wide reviewer permissions
 can access the national registry. The current release does not provide source-level
@@ -335,19 +342,20 @@ it is not a replacement clinical record.
 
 ### What can users edit?
 
-The portal can create and update only records owned by its configured
-`Portal:ManagedSourceSystem`. External PAS, maternity and other source snapshots remain
-read-only in the portal. Canonical Patients are always server-managed; changing source
-data or governed links causes them to be rebuilt.
+The Welsh health-board, WDS, Velindre and other organisation-owned source snapshots are
+read-only in the operations portal. Optional portal patient-write functionality exists
+only for deployments that deliberately configure a separate UI-managed source and grant
+`mpi.patient.write`; it is not a national source in the Welsh source model. Canonical
+Patients are always server-managed; changing source data or governed links causes them
+to be rebuilt.
 
 ### How can `$match` be demonstrated?
 
 Use the [Postman collection and guide](postman/README.md). It includes discovery,
-canonical search, JSON/XML matching, safe error examples, local source writes and
-read-only reviewer operations. Public requests target the synthetic API by default and
-include assertions for the FHIR searchset, score and `match-grade`. Mutating requests
-target localhost by default. Never place real patient information in the public
-demonstration.
+canonical search, JSON/XML matching, safe error examples, local synthetic source writes
+and read-only reviewer operations. It targets localhost by default and includes
+assertions for the FHIR searchset, score and `match-grade`. Never use real patient
+information in a demonstration environment.
 
 ## Build and security questions
 

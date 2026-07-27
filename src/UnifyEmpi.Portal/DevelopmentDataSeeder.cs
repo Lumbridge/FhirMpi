@@ -77,7 +77,7 @@ public sealed partial class DevelopmentDataSeeder(
     private static IReadOnlyList<SeedPatient> CreatePatients() =>
     [
         new(
-            "pas",
+            "wds",
             "100184",
             Profile(
                 "9434765919",
@@ -86,12 +86,12 @@ public sealed partial class DevelopmentDataSeeder(
                 new DateOnly(1984, 3, 12),
                 AdministrativeGender.Female,
                 "14 Willow Lane",
-                "Leeds",
-                "LS1 4AP",
+                "Cardiff",
+                "CF10 1AA",
                 "07700 900181")),
         new(
-            "portal",
-            "P-7712",
+            "cardiff-and-vale",
+            "CAV-7712",
             Profile(
                 null,
                 "Carter",
@@ -99,11 +99,11 @@ public sealed partial class DevelopmentDataSeeder(
                 new DateOnly(1984, 3, 12),
                 AdministrativeGender.Female,
                 "14 Willow Lane",
-                "Leeds",
-                "LS1 4AP",
+                "Cardiff",
+                "CF10 1AA",
                 "07700 900181")),
         new(
-            "pas",
+            "wds",
             "100263",
             Profile(
                 "9999999999",
@@ -112,12 +112,12 @@ public sealed partial class DevelopmentDataSeeder(
                 new DateOnly(1976, 11, 4),
                 AdministrativeGender.Male,
                 "8 Station Road",
-                "York",
-                "YO1 6GA",
+                "Newport",
+                "NP20 1AA",
                 "07700 900263")),
         new(
-            "emergency",
-            "E-5528",
+            "aneurin-bevan",
+            "AB-5528",
             Profile(
                 null,
                 "Hughes",
@@ -125,11 +125,11 @@ public sealed partial class DevelopmentDataSeeder(
                 new DateOnly(1976, 11, 4),
                 AdministrativeGender.Male,
                 "8 Station Road",
-                "York",
-                "YO1 6GA",
+                "Newport",
+                "NP20 1AA",
                 "07700 900263")),
         new(
-            "pas",
+            "wds",
             "100347",
             Profile(
                 "4857773456",
@@ -138,12 +138,12 @@ public sealed partial class DevelopmentDataSeeder(
                 new DateOnly(1991, 7, 28),
                 AdministrativeGender.Female,
                 "22 Orchard Close",
-                "Bradford",
-                "BD1 2RD",
+                "Swansea",
+                "SA1 1AA",
                 "07700 900347")),
         new(
-            "maternity",
-            "M-9041",
+            "velindre",
+            "VEL-9041",
             Profile(
                 null,
                 "Khan",
@@ -151,8 +151,8 @@ public sealed partial class DevelopmentDataSeeder(
                 new DateOnly(1991, 7, 28),
                 AdministrativeGender.Female,
                 "22 Orchard Close",
-                "Bradford",
-                "BD1 2RD",
+                "Swansea",
+                "SA1 1AA",
                 "07700 900347"))
     ];
 

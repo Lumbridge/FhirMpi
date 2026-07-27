@@ -48,7 +48,7 @@ services:
       PortalAuthentication__DevelopmentTenant: demo
       RegistryProvider__Type: InMemory
       Portal__SeedSyntheticData: "true"
-      Portal__ManagedSourceSystem: portal
+      Portal__ManagedSourceSystem: demo-ui
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
     ports:
       - "8081:8080"

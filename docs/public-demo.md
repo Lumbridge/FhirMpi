@@ -21,7 +21,10 @@ Patient writes are disabled in the demonstration API configuration. This deploym
 not a production reference for identity, availability, clinical safety or data
 governance.
 
-The public portal can create and update only records owned by its configured synthetic `portal` source. PAS, maternity, emergency and other source records remain read-only. Create and update exist so the complete workflow can be evaluated; use invented data only.
+The public portal can create and update only records owned by its configured synthetic
+`demo-ui` source. Health-board, WDS, Velindre and other organisation-owned source
+records remain read-only. Create and update exist so the complete workflow can be
+evaluated; use invented data only.
 
 ## Postman `$match` demonstration
 
