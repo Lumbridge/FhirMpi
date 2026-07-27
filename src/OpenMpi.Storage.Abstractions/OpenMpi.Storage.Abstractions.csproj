@@ -1,8 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <Description>Storage provider contract for OpenMPI registry adapters.</Description>
-  </PropertyGroup>
-  <ItemGroup>
-    <ProjectReference Include="../OpenMpi.Domain/OpenMpi.Domain.csproj" />
-  </ItemGroup>
-</Project>

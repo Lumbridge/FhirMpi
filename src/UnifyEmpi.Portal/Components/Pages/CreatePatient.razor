@@ -1,0 +1,69 @@
+@page "/patients/new"
+@attribute [Authorize(Policy = "PatientWriteAccess")]
+@inject RegistryService Registry
+@inject PortalActorContextFactory Actors
+@inject NavigationManager Navigation
+
+<PageTitle>Create patient · UnifyEMPI</PageTitle>
+
+<a class="back-link" href="/patients">← Back to patient search</a>
+
+<PageHeader
+    Eyebrow="Patient registry"
+    Title="Create a patient record"
+    Description="@($"Add a record to the portal-managed {Actors.ManagedSourceSystem} source. External source records remain read-only.")" />
+
+<PatientRecordForm
+    Model="Model"
+    FormName="create-patient"
+    SourceSystem="@Actors.ManagedSourceSystem.Value"
+    SubmitLabel="Create patient"
+    CancelHref="/patients"
+    AllowLocalReferenceEdit="true"
+    IsSaving="IsSaving"
+    SubmissionErrorTitle="The patient could not be created"
+    SubmissionError="@Error"
+    OnValidSubmit="CreateAsync" />
+
+@code {
+    private PatientRecordFormModel Model { get; } = new();
+
+    private string? Error { get; set; }
+
+    private bool IsSaving { get; set; }
+
+    private async Task CreateAsync()
+    {
+        IsSaving = true;
+        Error = null;
+        try
+        {
+            var actor = await Actors.CreateManagedSourceWriterAsync();
+            var result = await Registry.UpsertPatientAsync(
+                actor,
+                new UpsertPatientCommand(
+                    new SourceRecordKey(
+                        actor.SourceSystem!.Value,
+                        Model.LocalReference.Trim()),
+                    Model.ToProfile(),
+                    ExpectedVersion: 0),
+                CancellationToken.None);
+            var reviewCount = result.ReviewCases.Count;
+            Navigation.NavigateTo(
+                $"/patients/{result.CanonicalPatient.EnterpriseId.Value:D}" +
+                $"?notice=created&reviews={reviewCount}");
+        }
+        catch (RegistryException exception)
+        {
+            Error = exception.Message;
+        }
+        catch (ArgumentException exception)
+        {
+            Error = exception.Message;
+        }
+        finally
+        {
+            IsSaving = false;
+        }
+    }
+}

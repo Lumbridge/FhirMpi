@@ -1,6 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <ItemGroup>
-    <ProjectReference Include="../OpenMpi.Application/OpenMpi.Application.csproj" />
-    <PackageReference Include="nHapi" />
-  </ItemGroup>
-</Project>

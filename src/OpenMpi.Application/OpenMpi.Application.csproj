@@ -1,6 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <ItemGroup>
-    <ProjectReference Include="../OpenMpi.Domain/OpenMpi.Domain.csproj" />
-    <ProjectReference Include="../OpenMpi.Storage.Abstractions/OpenMpi.Storage.Abstractions.csproj" />
-  </ItemGroup>
-</Project>

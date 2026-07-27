@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="../UnifyEmpi.Fhir.R4/UnifyEmpi.Fhir.R4.csproj" />
+    <ProjectReference Include="../UnifyEmpi.Storage.Abstractions/UnifyEmpi.Storage.Abstractions.csproj" />
+    <PackageReference Include="Google.Apis.CloudHealthcare.v1" />
+  </ItemGroup>
+</Project>

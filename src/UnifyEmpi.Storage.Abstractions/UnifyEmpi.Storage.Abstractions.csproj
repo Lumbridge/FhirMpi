@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>Storage provider contract for UnifyEMPI registry adapters.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../UnifyEmpi.Domain/UnifyEmpi.Domain.csproj" />
+  </ItemGroup>
+</Project>

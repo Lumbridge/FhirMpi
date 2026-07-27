@@ -1,7 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <ItemGroup>
-    <ProjectReference Include="../OpenMpi.Fhir.R4/OpenMpi.Fhir.R4.csproj" />
-    <ProjectReference Include="../OpenMpi.Storage.Abstractions/OpenMpi.Storage.Abstractions.csproj" />
-    <PackageReference Include="Google.Apis.CloudHealthcare.v1" />
-  </ItemGroup>
-</Project>

@@ -1,0 +1,252 @@
+@page "/patients"
+@attribute [Authorize(Policy = "ReviewAccess")]
+@inject RegistryService Registry
+@inject PortalActorContextFactory Actors
+
+<PageTitle>Patient registry · UnifyEMPI</PageTitle>
+
+<PageHeader
+    Eyebrow="Patient registry"
+    Title="Find an enterprise identity"
+    Description="Search within the active tenant. Use an NHS number, enterprise ID, or family name with date of birth.">
+    <Actions>
+        <AuthorizeView Policy="PatientWriteAccess">
+            <Authorized>
+                <a class="button button-primary" href="/patients/new">Create patient</a>
+            </Authorized>
+        </AuthorizeView>
+    </Actions>
+</PageHeader>
+
+<section class="search-card" aria-labelledby="patient-search-heading">
+    <h2 id="patient-search-heading" class="visually-hidden">Patient search</h2>
+    <EditForm Model="Search" OnSubmit="RunSearchAsync" FormName="patient-search">
+        <div class="search-fields">
+            <div class="field field-wide">
+                <label for="patient-identifier">NHS number or enterprise ID</label>
+                <input id="patient-identifier"
+                       class="input"
+                       autocomplete="off"
+                       @bind="Search.Identifier"
+                       @bind:event="oninput" />
+                <small>Spaces in NHS numbers are accepted.</small>
+            </div>
+            <div class="field">
+                <label for="patient-family">Family name</label>
+                <input id="patient-family"
+                       class="input"
+                       autocomplete="off"
+                       @bind="Search.FamilyName"
+                       @bind:event="oninput" />
+            </div>
+            <div class="field">
+                <label for="patient-birthdate">Date of birth</label>
+                <input id="patient-birthdate"
+                       class="input"
+                       type="date"
+                       @bind="Search.BirthDate"
+                       @bind:event="oninput" />
+            </div>
+            <div class="search-actions">
+                <button class="button button-primary" type="submit" disabled="@IsLoading">
+                    @(IsLoading ? "Searching…" : "Search registry")
+                </button>
+                <button class="button button-quiet" type="button" @onclick="ClearSearch">Clear</button>
+            </div>
+        </div>
+    </EditForm>
+</section>
+
+@if (Message is not null)
+{
+    <SubmissionFeedback Tone="@MessageTone" Title="@Message" />
+}
+
+@if (HasSearched && Results.Count == 0 && Message is null)
+{
+    <section class="empty-state compact">
+        <p class="eyebrow">No results</p>
+        <h2>No enterprise identities matched</h2>
+        <p>Check the details and try again. Broad, unbounded searches are deliberately unavailable.</p>
+    </section>
+}
+else if (Results.Count > 0)
+{
+    <section class="results-section" aria-labelledby="patient-results-heading">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Search results</p>
+                <h2 id="patient-results-heading">@Results.Count enterprise identities</h2>
+            </div>
+            <span class="result-note">Canonical records only</span>
+        </div>
+        <div class="patient-results">
+            @foreach (var patient in Results)
+            {
+                <PatientSummary Patient="patient" />
+            }
+        </div>
+        @if (NextCursor is not null)
+        {
+            <div class="pagination-actions">
+                @if (LoadMoreError is not null)
+                {
+                    <SubmissionFeedback
+                        Title="More results could not be loaded"
+                        Message="@LoadMoreError" />
+                }
+                <button class="button button-secondary load-more"
+                        type="button"
+                        disabled="@IsLoading"
+                        @onclick="LoadMoreAsync">
+                    Load more results
+                </button>
+            </div>
+        }
+    </section>
+}
+else if (!HasSearched)
+{
+    <section class="search-guidance" aria-labelledby="search-guidance-heading">
+        <div>
+            <p class="eyebrow">Search safely</p>
+            <h2 id="search-guidance-heading">Start with a strong identifier</h2>
+            <p>Exact identifiers are the safest route. If one is not available, use family name and date of birth together.</p>
+        </div>
+        <dl>
+            <div><dt>Best</dt><dd>Enterprise ID</dd></div>
+            <div><dt>Strong</dt><dd>NHS number</dd></div>
+            <div><dt>Supported</dt><dd>Family name + DOB</dd></div>
+        </dl>
+    </section>
+}
+
+@code {
+    private PatientSearchModel Search { get; } = new();
+
+    private List<CanonicalPatient> Results { get; } = [];
+
+    private string? NextCursor { get; set; }
+
+    private string? Message { get; set; }
+
+    private string MessageTone { get; set; } = "info";
+
+    private string? LoadMoreError { get; set; }
+
+    private bool HasSearched { get; set; }
+
+    private bool IsLoading { get; set; }
+
+    private ActorContext? Actor { get; set; }
+
+    private async Task RunSearchAsync()
+    {
+        Results.Clear();
+        NextCursor = null;
+        LoadMoreError = null;
+        HasSearched = true;
+        await SearchAsync(null);
+    }
+
+    private Task LoadMoreAsync() => SearchAsync(NextCursor, isContinuation: true);
+
+    private async Task SearchAsync(string? cursor, bool isContinuation = false)
+    {
+        if (isContinuation)
+        {
+            LoadMoreError = null;
+        }
+        else
+        {
+            Message = null;
+        }
+
+        if (string.IsNullOrWhiteSpace(Search.Identifier) &&
+            (string.IsNullOrWhiteSpace(Search.FamilyName) || !Search.BirthDate.HasValue))
+        {
+            MessageTone = "warning";
+            Message = "Enter an NHS number, enterprise ID, or both family name and date of birth.";
+            return;
+        }
+
+        IsLoading = true;
+        try
+        {
+            Actor ??= await Actors.CreateAsync();
+            var identifier = Search.Identifier?.Trim();
+            if (Guid.TryParse(identifier, out var enterpriseId))
+            {
+                var patient = await Registry.GetCanonicalPatientAsync(
+                    Actor,
+                    new EnterpriseId(enterpriseId),
+                    CancellationToken.None);
+                if (patient is not null)
+                {
+                    Results.Add(patient);
+                }
+
+                return;
+            }
+
+            var digits = string.IsNullOrWhiteSpace(identifier)
+                ? null
+                : new string(identifier.Where(char.IsDigit).ToArray());
+            var page = await Registry.SearchCanonicalPatientsAsync(
+                Actor,
+                new CanonicalPatientSearch(
+                    string.IsNullOrWhiteSpace(digits)
+                        ? null
+                        : "https://fhir.nhs.uk/Id/nhs-number",
+                    digits,
+                    Search.FamilyName?.Trim(),
+                    Search.BirthDate,
+                    25,
+                    cursor),
+                CancellationToken.None);
+            Results.AddRange(page.Items);
+            NextCursor = page.NextCursor;
+        }
+        catch (RegistryNotFoundException)
+        {
+            Results.Clear();
+        }
+        catch (RegistryException exception)
+        {
+            if (isContinuation)
+            {
+                LoadMoreError = exception.Message;
+            }
+            else
+            {
+                MessageTone = "danger";
+                Message = exception.Message;
+            }
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private void ClearSearch()
+    {
+        Search.Identifier = null;
+        Search.FamilyName = null;
+        Search.BirthDate = null;
+        Results.Clear();
+        NextCursor = null;
+        Message = null;
+        LoadMoreError = null;
+        HasSearched = false;
+    }
+
+    private sealed class PatientSearchModel
+    {
+        public string? Identifier { get; set; }
+
+        public string? FamilyName { get; set; }
+
+        public DateOnly? BirthDate { get; set; }
+    }
+}

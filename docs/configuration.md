@@ -3,7 +3,7 @@
 Environment variables use .NET double-underscore notation, for example `Authentication__Authority`.
 
 Choose the tenant boundary before assigning source systems or generating secrets.
-OpenMPI never matches across tenants. For a national registry, participating health
+UnifyEMPI never matches across tenants. For a national registry, participating health
 boards and systems normally use distinct source-system IDs inside one national tenant.
 See [concepts and frequently asked questions](concepts-and-faq.md#tenants-and-national-deployment)
 for the security and access implications.
@@ -15,7 +15,7 @@ for the security and access implications.
   "Authentication": {
     "Enabled": true,
     "Authority": "https://identity.example",
-    "Audience": "openmpi",
+    "Audience": "unifyempi",
     "RequireHttpsMetadata": true
   },
   "RegistryProvider": { "Type": "GcpHealthcare" },
@@ -57,7 +57,7 @@ The portal uses a generic OpenID Connect authorisation-code flow with PKCE and a
   "PortalAuthentication": {
     "Enabled": true,
     "Authority": "https://identity.example",
-    "ClientId": "openmpi-portal",
+    "ClientId": "unifyempi-portal",
     "ClientSecret": "<secret reference, never commit>",
     "RequireHttpsMetadata": true,
     "TenantClaimType": "tenant_id",
@@ -78,7 +78,7 @@ The portal uses a generic OpenID Connect authorisation-code flow with PKCE and a
     "SeedSyntheticData": false,
     "PublicDemo": false,
     "CircuitRetentionMinutes": 3,
-    "DataProtectionKeyPath": "/var/openmpi/data-protection",
+    "DataProtectionKeyPath": "/var/unifyempi/data-protection",
     "ManagedSourceSystem": "portal"
   }
 }

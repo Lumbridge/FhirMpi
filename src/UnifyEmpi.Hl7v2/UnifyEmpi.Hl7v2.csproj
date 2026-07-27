@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="../UnifyEmpi.Application/UnifyEmpi.Application.csproj" />
+    <PackageReference Include="nHapi" />
+  </ItemGroup>
+</Project>

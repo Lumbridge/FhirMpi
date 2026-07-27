@@ -1,6 +1,6 @@
-# Contributing to OpenMPI
+# Contributing to UnifyEMPI
 
-Contributions are welcome. OpenMPI handles identity-resolution concerns that can affect
+Contributions are welcome. UnifyEMPI handles identity-resolution concerns that can affect
 patient safety, privacy and access, so changes should be small enough to review,
 supported by evidence and explicit about their operational consequences.
 
@@ -20,10 +20,10 @@ Install the .NET 10 SDK selected by `global.json`. Docker is optional for the ba
 build, but required for the Compose and container workflows.
 
 ```powershell
-dotnet restore OpenMPI.slnx --locked-mode
-dotnet format OpenMPI.slnx --no-restore --verify-no-changes
-dotnet build OpenMPI.slnx -c Release --no-restore
-dotnet test OpenMPI.slnx -c Release --no-build
+dotnet restore UnifyEMPI.slnx --locked-mode
+dotnet format UnifyEMPI.slnx --no-restore --verify-no-changes
+dotnet build UnifyEMPI.slnx -c Release --no-restore
+dotnet test UnifyEMPI.slnx -c Release --no-build
 ```
 
 Run the local stack with:

@@ -1,8 +1,8 @@
-using OpenMpi.Domain;
-using OpenMpi.Storage.Abstractions;
+using UnifyEmpi.Domain;
+using UnifyEmpi.Storage.Abstractions;
 using Xunit;
 
-namespace OpenMpi.Storage.Testing;
+namespace UnifyEmpi.Storage.Testing;
 
 #pragma warning disable xUnit1031 // Contract providers used here complete their ValueTasks synchronously.
 public abstract class ProviderContractSuite

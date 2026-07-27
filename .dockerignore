@@ -5,8 +5,8 @@
 **/TestResults
 artifacts
 benchmark-results
-OpenMpi.ConsoleServer
-OpenMpi.Library
-OpenMpi.Library.Tests
-OpenMpi.Web
-OpenMpi.Web.Tests
+UnifyEmpi.ConsoleServer
+UnifyEmpi.Library
+UnifyEmpi.Library.Tests
+UnifyEmpi.Web
+UnifyEmpi.Web.Tests

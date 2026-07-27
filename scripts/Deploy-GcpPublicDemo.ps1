@@ -3,9 +3,9 @@ param(
     [string] $ProjectId = "ryans-apps",
     [string] $Region = "europe-west2",
     [string] $Dataset = "ryans-dataset",
-    [string] $Store = "openmpi-demo",
-    [string] $Repository = "openmpi-demo",
-    [string] $ServiceName = "openmpi-demo",
+    [string] $Store = "unifyempi-demo",
+    [string] $Repository = "unifyempi-demo",
+    [string] $ServiceName = "unifyempi-demo",
     [string] $Tenant = "demo"
 )
 
@@ -108,7 +108,7 @@ if (-not (Test-GcloudResource {
         --immutable-tags `
         --location=$Region `
         --project=$ProjectId `
-        --description="OpenMPI public demonstration images" `
+        --description="UnifyEMPI public demonstration images" `
         --quiet
     Assert-LastExitCode "Creating Artifact Registry repository '$Repository'"
 }
@@ -121,7 +121,7 @@ if (-not (Test-GcloudResource {
         })) {
     gcloud iam service-accounts create $ServiceName `
         --project=$ProjectId `
-        --display-name="OpenMPI public demonstration" `
+        --display-name="UnifyEMPI public demonstration" `
         --quiet
     Assert-LastExitCode "Creating service account '$serviceAccountName'"
 }
@@ -189,11 +189,11 @@ $registryRoot = "$Region-docker.pkg.dev/$ProjectId/$Repository"
 $apiImage = "$registryRoot/api:$imageTag"
 $portalImage = "$registryRoot/portal:$imageTag"
 
-docker build -f src/OpenMpi.Api/Dockerfile -t $apiImage .
+docker build -f src/UnifyEmpi.Api/Dockerfile -t $apiImage .
 Assert-LastExitCode "Building the API image"
 docker push $apiImage
 Assert-LastExitCode "Publishing the API image"
-docker build -f src/OpenMpi.Portal/Dockerfile -t $portalImage .
+docker build -f src/UnifyEmpi.Portal/Dockerfile -t $portalImage .
 Assert-LastExitCode "Building the portal image"
 docker push $portalImage
 Assert-LastExitCode "Publishing the portal image"
@@ -253,7 +253,7 @@ gcloud run deploy $apiServiceName `
     --timeout=300 `
     --min-instances=0 `
     --max-instances=2 `
-    --labels="application=openmpi,environment=public-demo" `
+    --labels="application=unifyempi,environment=public-demo" `
     --set-env-vars=$apiEnvironmentSpec `
     --set-secrets=$secretBinding `
     --startup-probe="httpGet.path=/health/ready,httpGet.port=8080,timeoutSeconds=3,periodSeconds=5,failureThreshold=24" `
@@ -276,7 +276,7 @@ gcloud run deploy $ServiceName `
     --timeout=3600 `
     --min-instances=0 `
     --max-instances=1 `
-    --labels="application=openmpi,environment=public-demo" `
+    --labels="application=unifyempi,environment=public-demo" `
     --set-env-vars=$portalEnvironmentSpec `
     --set-secrets=$secretBinding `
     --startup-probe="httpGet.path=/health/ready,httpGet.port=8080,timeoutSeconds=3,periodSeconds=5,failureThreshold=24" `

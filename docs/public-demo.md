@@ -19,7 +19,7 @@ The public portal can create and update only records owned by its configured syn
 
 ## Postman `$match` demonstration
 
-Import [`OpenMPI-Match-Demo.postman_collection.json`](postman/OpenMPI-Match-Demo.postman_collection.json)
+Import [`UnifyEMPI-Match-Demo.postman_collection.json`](postman/UnifyEMPI-Match-Demo.postman_collection.json)
 into Postman and send **Match a synthetic patient**. The collection already targets the
 public API and contains a synthetic partial Patient, FHIR media-type headers, the R4
 `Parameters` wrapper, `onlyCertainMatches`, `count`, and response tests for the searchset
@@ -32,9 +32,9 @@ MLLP is not exposed to the public internet. HL7v2 MLLP carries raw TCP traffic a
 
 ## Deployed topology
 
-The current public demo predates the OpenMPI rebrand, so its externally assigned
+The current public demo predates the UnifyEMPI rebrand, so its externally assigned
 Cloud Run hostnames and GCP resource IDs retain the legacy `fhir-mpi-demo` prefix.
-Fresh deployments created by the repository scripts use the `openmpi-demo` prefix.
+Fresh deployments created by the repository scripts use the `unifyempi-demo` prefix.
 
 | Resource | Value |
 |---|---|
@@ -63,7 +63,7 @@ Prerequisites are Google Cloud CLI, Docker and a billing-enabled project. Authen
   -Dataset ryans-dataset
 ```
 
-The script creates only resources bearing the `openmpi-demo` name, creates a cryptographically random blocking-key secret without printing it, publishes immutable images, deploys both Cloud Run services and verifies readiness. It reuses the named Healthcare dataset when it already exists.
+The script creates only resources bearing the `unifyempi-demo` name, creates a cryptographically random blocking-key secret without printing it, publishes immutable images, deploys both Cloud Run services and verifies readiness. It reuses the named Healthcare dataset when it already exists.
 
 To update an existing deployment, run the same command. The script publishes a new immutable timestamped image tag and creates new Cloud Run revisions. It does not erase an existing demonstration store.
 

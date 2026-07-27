@@ -1,0 +1,26 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/UnifyEmpi.Api/UnifyEmpi.Api.csproj" />
+    <Project Path="src/UnifyEmpi.Application/UnifyEmpi.Application.csproj" />
+    <Project Path="src/UnifyEmpi.Domain/UnifyEmpi.Domain.csproj" />
+    <Project Path="src/UnifyEmpi.Fhir.R4/UnifyEmpi.Fhir.R4.csproj" />
+    <Project Path="src/UnifyEmpi.Hl7v2/UnifyEmpi.Hl7v2.csproj" />
+    <Project Path="src/UnifyEmpi.Hl7v2.Host/UnifyEmpi.Hl7v2.Host.csproj" />
+    <Project Path="src/UnifyEmpi.Portal/UnifyEmpi.Portal.csproj" />
+    <Project Path="src/UnifyEmpi.Storage.Abstractions/UnifyEmpi.Storage.Abstractions.csproj" />
+    <Project Path="src/UnifyEmpi.Storage.Gcp/UnifyEmpi.Storage.Gcp.csproj" />
+    <Project Path="src/UnifyEmpi.Storage.InMemory/UnifyEmpi.Storage.InMemory.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/UnifyEmpi.Api.Tests/UnifyEmpi.Api.Tests.csproj" />
+    <Project Path="tests/UnifyEmpi.Domain.Tests/UnifyEmpi.Domain.Tests.csproj" />
+    <Project Path="tests/UnifyEmpi.Fhir.R4.Tests/UnifyEmpi.Fhir.R4.Tests.csproj" />
+    <Project Path="tests/UnifyEmpi.Hl7v2.Tests/UnifyEmpi.Hl7v2.Tests.csproj" />
+    <Project Path="tests/UnifyEmpi.Portal.Tests/UnifyEmpi.Portal.Tests.csproj" />
+    <Project Path="tests/UnifyEmpi.Storage.ContractTests/UnifyEmpi.Storage.ContractTests.csproj" />
+    <Project Path="tests/UnifyEmpi.Storage.Gcp.Tests/UnifyEmpi.Storage.Gcp.Tests.csproj" />
+  </Folder>
+  <Folder Name="/benchmarks/">
+    <Project Path="benchmarks/UnifyEmpi.Benchmarks/UnifyEmpi.Benchmarks.csproj" />
+  </Folder>
+</Solution>

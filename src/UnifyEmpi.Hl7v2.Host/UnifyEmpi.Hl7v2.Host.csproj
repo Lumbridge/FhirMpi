@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+  <ItemGroup>
+    <ProjectReference Include="../UnifyEmpi.Application/UnifyEmpi.Application.csproj" />
+    <ProjectReference Include="../UnifyEmpi.Hl7v2/UnifyEmpi.Hl7v2.csproj" />
+    <ProjectReference Include="../UnifyEmpi.Storage.Gcp/UnifyEmpi.Storage.Gcp.csproj" />
+    <ProjectReference Include="../UnifyEmpi.Storage.InMemory/UnifyEmpi.Storage.InMemory.csproj" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
+  </ItemGroup>
+</Project>

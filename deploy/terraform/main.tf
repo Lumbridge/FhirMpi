@@ -36,7 +36,7 @@ resource "google_healthcare_fhir_store" "registry" {
 
 resource "google_service_account" "workload" {
   account_id   = substr(replace("${var.name}-workload", "_", "-"), 0, 30)
-  display_name = "OpenMPI Workload Identity"
+  display_name = "UnifyEMPI Workload Identity"
 }
 
 resource "google_project_iam_member" "fhir_editor" {
@@ -103,5 +103,5 @@ resource "google_container_node_pool" "registry" {
 resource "google_service_account_iam_member" "workload_identity" {
   service_account_id = google_service_account.workload.name
   role               = "roles/iam.workloadIdentityUser"
-  member             = "serviceAccount:${var.project_id}.svc.id.goog[${var.kubernetes_namespace}/openmpi]"
+  member             = "serviceAccount:${var.project_id}.svc.id.goog[${var.kubernetes_namespace}/unifyempi]"
 }

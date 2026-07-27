@@ -1,21 +1,21 @@
-# OpenMPI
+# UnifyEMPI
 
-[![CI](https://github.com/Lumbridge/OpenMPI/actions/workflows/ci.yml/badge.svg)](https://github.com/Lumbridge/OpenMPI/actions/workflows/ci.yml)
+[![CI](https://github.com/Lumbridge/UnifyEMPI/actions/workflows/ci.yml/badge.svg)](https://github.com/Lumbridge/UnifyEMPI/actions/workflows/ci.yml)
 [![.NET 10](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
 [![FHIR R4](https://img.shields.io/badge/FHIR-R4-E34A6F)](https://hl7.org/fhir/R4/)
 [![Licence: CC0 1.0](https://img.shields.io/badge/licence-CC0--1.0-lightgrey.svg)](LICENSE)
 [![Live synthetic demo](https://img.shields.io/badge/live-synthetic_demo-0B7285)](https://fhir-mpi-demo-204975513415.europe-west2.run.app)
 
-OpenMPI is a high-performance, multi-tenant master patient index (MPI) foundation for FHIR R4 and HL7v2. It is a modular monolith with three independently scalable hosts:
+UnifyEMPI is a high-performance, multi-tenant master patient index (MPI) foundation for FHIR R4 and HL7v2. It is a modular monolith with three independently scalable hosts:
 
-- `OpenMpi.Api`: FHIR R4, SMART discovery, and reviewer APIs.
-- `OpenMpi.Hl7v2.Host`: native MLLP ingestion for ADT identity events.
-- `OpenMpi.Portal`: an enterprise operations portal using Blazor Interactive Server and generic OIDC.
+- `UnifyEmpi.Api`: FHIR R4, SMART discovery, and reviewer APIs.
+- `UnifyEmpi.Hl7v2.Host`: native MLLP ingestion for ADT identity events.
+- `UnifyEmpi.Portal`: an enterprise operations portal using Blazor Interactive Server and generic OIDC.
 
-The registry is hybrid. Source systems remain authoritative for their Patient snapshots; OpenMPI owns enterprise UUIDv7 identities, Person links, candidate indexes, canonical Patient views, review cases, receipts, and audit evidence.
+The registry is hybrid. Source systems remain authoritative for their Patient snapshots; UnifyEMPI owns enterprise UUIDv7 identities, Person links, candidate indexes, canonical Patient views, review cases, receipts, and audit evidence.
 
 > [!IMPORTANT]
-> OpenMPI is an engineering foundation, not a certified clinical product. The public
+> UnifyEMPI is an engineering foundation, not a certified clinical product. The public
 > deployment contains synthetic data only. Production NHS use requires the independent
 > safety, privacy, security, operational and contractual work described below.
 
@@ -92,7 +92,7 @@ Out of the box, authorised staff can:
 Run it directly with:
 
 ```powershell
-dotnet run --project src/OpenMpi.Portal
+dotnet run --project src/UnifyEmpi.Portal
 ```
 
 The development configuration signs in a synthetic reviewer for tenant `demo`, seeds synthetic records, and uses no real patient data.
@@ -100,9 +100,9 @@ The development configuration signs in a synthetic reviewer for tenant `demo`, s
 To build and test the source locally, install the .NET 10 SDK and run:
 
 ```powershell
-dotnet restore OpenMPI.slnx --locked-mode
-dotnet build OpenMPI.slnx -c Release --no-restore
-dotnet test OpenMPI.slnx -c Release --no-build
+dotnet restore UnifyEMPI.slnx --locked-mode
+dotnet build UnifyEMPI.slnx -c Release --no-restore
+dotnet test UnifyEMPI.slnx -c Release --no-build
 ```
 
 Stop the local containers with `docker compose down`.
@@ -114,7 +114,7 @@ synthetic API by default; mutating requests deliberately target localhost.
 
 ## Performance and benchmarking
 
-OpenMPI protects performance at three different levels; each test answers a different
+UnifyEMPI protects performance at three different levels; each test answers a different
 question and the results should not be mixed:
 
 | Level | What it measures | Current gate or target |
@@ -132,7 +132,7 @@ have not been demonstrated merely by running the public demo.
 Run the scoring benchmark and its regression gate with:
 
 ```powershell
-dotnet run --project benchmarks/OpenMpi.Benchmarks -c Release -- `
+dotnet run --project benchmarks/UnifyEmpi.Benchmarks -c Release -- `
   --filter "*ScoreFiveHundred*" --job short --exporters json
 ./scripts/Test-BenchmarkRegression.ps1
 ```
@@ -140,7 +140,7 @@ dotnet run --project benchmarks/OpenMpi.Benchmarks -c Release -- `
 Run the end-to-end scenario only against an isolated synthetic store:
 
 ```powershell
-$env:BASE_URL = "https://openmpi.example"
+$env:BASE_URL = "https://unifyempi.example"
 $env:ACCESS_TOKEN = "<short-lived system token>"
 k6 run benchmarks/k6/match.js
 ```
@@ -199,8 +199,8 @@ Do not promote the Compose development settings directly. A production deploymen
 7. **Deploy with Helm.** Copy the supplied values file, replace the example image locations, set the GCP store, OIDC issuer, Workload Identity service account, resource limits, and secret references, then deploy:
 
    ```powershell
-   helm upgrade --install openmpi deploy/helm/openmpi `
-     --namespace openmpi `
+   helm upgrade --install unifyempi deploy/helm/unifyempi `
+     --namespace unifyempi `
      --create-namespace `
      --values production-values.yaml
    ```
@@ -209,12 +209,12 @@ Do not promote the Compose development settings directly. A production deploymen
 
 8. **Verify before admitting patient data.** Confirm `/health/live`, `/health/ready`, and `/fhir/R4/metadata`; run synthetic FHIR and HL7 smoke tests; test tenant isolation, JWT scopes, client certificates, audit delivery, alerts, scaling, backup/restore, and failure recovery.
 
-Production NHS use additionally requires an approved DPIA, clinical-safety case, penetration test, data-retention and disaster-recovery policies, operational ownership, and contractual/compliance review. OpenMPI supplies technical controls but does not itself provide production approval or certification.
+Production NHS use additionally requires an approved DPIA, clinical-safety case, penetration test, data-retention and disaster-recovery policies, operational ownership, and contractual/compliance review. UnifyEMPI supplies technical controls but does not itself provide production approval or certification.
 
 Detailed settings are documented in [configuration.md](docs/configuration.md). Use
 [concepts and frequently asked questions](docs/concepts-and-faq.md) when selecting a
 tenant boundary or planning an existing-store onboarding. The portable chart is under
-[deploy/helm/openmpi](deploy/helm/openmpi), and the optional GCP reference
+[deploy/helm/unifyempi](deploy/helm/unifyempi), and the optional GCP reference
 infrastructure is under [deploy/terraform](deploy/terraform).
 
 ## Supported interfaces
@@ -267,7 +267,7 @@ Production requires:
 - an unpacked `hl7.fhir.r4.core#4.0.1` and `fhir.r4.ukcore.stu2#2.0.2` package directory for the bounded Firely validator pool;
 - TLS and client-certificate allow-lists for MLLP.
 
-See [configuration.md](docs/configuration.md), [architecture.md](docs/architecture.md), [core paths and processing model](docs/core-paths.md), and the [Helm values](deploy/helm/openmpi/values.yaml).
+See [configuration.md](docs/configuration.md), [architecture.md](docs/architecture.md), [core paths and processing model](docs/core-paths.md), and the [Helm values](deploy/helm/unifyempi/values.yaml).
 
 ## Safety and scope
 
@@ -279,6 +279,6 @@ Production NHS use still requires an external DPIA, clinical-safety case, penetr
 
 ## Legacy and licence
 
-The original .NET Framework 4.5 prototype is preserved by the `legacy-net45` Git tag. The active solution is `OpenMPI.slnx`.
+The original .NET Framework 4.5 prototype is preserved by the `legacy-net45` Git tag. The active solution is `UnifyEMPI.slnx`.
 
 The repository retains its original [CC0 1.0](LICENSE) dedication.

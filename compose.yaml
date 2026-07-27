@@ -1,10 +1,10 @@
-name: openmpi
+name: unifyempi
 
 services:
   api:
     build:
       context: .
-      dockerfile: src/OpenMpi.Api/Dockerfile
+      dockerfile: src/UnifyEmpi.Api/Dockerfile
     environment:
       DOTNET_ENVIRONMENT: Development
       Authentication__Enabled: "false"
@@ -23,7 +23,7 @@ services:
   mllp:
     build:
       context: .
-      dockerfile: src/OpenMpi.Hl7v2.Host/Dockerfile
+      dockerfile: src/UnifyEmpi.Hl7v2.Host/Dockerfile
     environment:
       DOTNET_ENVIRONMENT: Development
       RegistryProvider__Type: InMemory
@@ -41,7 +41,7 @@ services:
   portal:
     build:
       context: .
-      dockerfile: src/OpenMpi.Portal/Dockerfile
+      dockerfile: src/UnifyEmpi.Portal/Dockerfile
     environment:
       DOTNET_ENVIRONMENT: Development
       PortalAuthentication__Enabled: "false"

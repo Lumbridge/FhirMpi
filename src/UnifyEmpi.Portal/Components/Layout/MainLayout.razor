@@ -1,0 +1,87 @@
+@inherits LayoutComponentBase
+@inject Microsoft.Extensions.Options.IOptions<PortalOptions> PortalConfiguration
+
+<a class="skip-link" href="#main-content">Skip to main content</a>
+<div class="portal-shell">
+    <aside class="sidebar" aria-label="Primary navigation">
+        <a class="brand" href="/" aria-label="UnifyEMPI operations home">
+            <span class="brand-mark" aria-hidden="true">
+                <span></span><span></span><span></span><span></span>
+            </span>
+            <span>
+                <strong>UnifyEMPI</strong>
+                <small>Identity operations</small>
+            </span>
+        </a>
+        <NavMenu />
+        <div class="sidebar-footer">
+            <span class="privacy-dot" aria-hidden="true"></span>
+            <span>Patient data<br /><strong>Handle with care</strong></span>
+        </div>
+    </aside>
+
+    <div class="workspace">
+        @if (PortalConfiguration.Value.PublicDemo)
+        {
+            <div class="demo-banner" role="status">
+                <strong>Public demonstration</strong>
+                <span>Synthetic patient data only · changes may be reset without notice</span>
+            </div>
+        }
+        <header class="topbar">
+            <div class="environment">
+                <span class="environment-label">Active tenant</span>
+                <strong>@TenantName</strong>
+            </div>
+            <div class="topbar-actions">
+                <div class="user-summary">
+                    <span class="avatar" aria-hidden="true">@Initials</span>
+                    <span>
+                        <strong>@DisplayName</strong>
+                        <small>Tenant-bound session</small>
+                    </span>
+                </div>
+                <form action="/auth/logout" method="post">
+                    <AntiforgeryToken />
+                    <button class="button button-quiet button-small" type="submit">Sign out</button>
+                </form>
+            </div>
+        </header>
+
+        <main id="main-content" class="main-content" tabindex="-1">
+            @Body
+        </main>
+
+        <footer class="portal-footer">
+            <span>UnifyEMPI enterprise identity registry</span>
+            <span>Never use this portal as the sole source for clinical decisions.</span>
+        </footer>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
+
+    private string DisplayName { get; set; } = "Signed-in user";
+
+    private string TenantName { get; set; } = "Loading";
+
+    private string Initials { get; set; } = "ID";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (AuthenticationStateTask is null)
+        {
+            return;
+        }
+
+        var user = (await AuthenticationStateTask).User;
+        DisplayName = user.Identity?.Name ??
+                      user.FindFirst("name")?.Value ??
+                      user.FindFirst("sub")?.Value ??
+                      "Signed-in user";
+        TenantName = user.FindFirst("tenant_id")?.Value ?? "Unavailable";
+        Initials = PortalDisplay.Initials(DisplayName);
+    }
+}
