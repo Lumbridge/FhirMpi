@@ -54,4 +54,32 @@ public sealed class MatchingAssurancePortalTests : IClassFixture<FailingOverview
 
         Assert.Contains("match and one non-match", exception.Message, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void SyntheticAssuranceDatasetSupportsHeldOutCalibration()
+    {
+        var pairs = GroundTruthTsvParser.Parse(SyntheticAssuranceDataset.Labels);
+
+        Assert.Equal(
+            SyntheticAssuranceDataset.MatchPairCount +
+            SyntheticAssuranceDataset.NonMatchPairCount,
+            pairs.Count);
+        Assert.Equal(
+            SyntheticAssuranceDataset.MatchPairCount,
+            pairs.Count(static pair => pair.IsMatch));
+        Assert.Equal(
+            SyntheticAssuranceDataset.NonMatchPairCount,
+            pairs.Count(static pair => !pair.IsMatch));
+        Assert.Equal(
+            pairs.Count,
+            pairs.Select(static pair =>
+                    string.Compare(
+                        pair.Left.ToString(),
+                        pair.Right.ToString(),
+                        StringComparison.Ordinal) <= 0
+                        ? $"{pair.Left}|{pair.Right}"
+                        : $"{pair.Right}|{pair.Left}")
+                .Distinct(StringComparer.Ordinal)
+                .Count());
+    }
 }

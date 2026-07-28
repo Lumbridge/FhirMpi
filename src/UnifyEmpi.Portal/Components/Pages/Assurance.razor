@@ -3,6 +3,7 @@
 @inject MatchingAssuranceService MatchingAssurance
 @inject RegistryService Registry
 @inject PortalActorContextFactory Actors
+@inject Microsoft.Extensions.Options.IOptions<PortalOptions> PortalConfiguration
 
 <PageTitle>Match assurance · UnifyEMPI</PageTitle>
 
@@ -72,6 +73,22 @@
             <code>leftSource&#9;leftLocalId&#9;rightSource&#9;rightLocalId&#9;isMatch</code>
             <code>source-a&#9;record-100&#9;source-b&#9;record-900&#9;match</code>
         </div>
+        @if (PortalConfiguration.Value.PublicDemo)
+        {
+            <div class="assurance-demo-labels">
+                <button class="button button-secondary"
+                        type="button"
+                        disabled="@IsBusy"
+                        @onclick="LoadSyntheticDemoLabels">
+                    Load synthetic calibration cohort
+                </button>
+                <small>
+                    Loads @SyntheticAssuranceDataset.MatchPairCount known matches and
+                    @SyntheticAssuranceDataset.NonMatchPairCount known non-matches backed by
+                    records in this public demo.
+                </small>
+            </div>
+        }
     </section>
 
     <div class="assurance-actions-column">
@@ -398,6 +415,11 @@
 
     protected override async Task OnInitializedAsync()
     {
+        if (PortalConfiguration.Value.PublicDemo)
+        {
+            LoadSyntheticDemoLabels();
+        }
+
         try
         {
             Configuration = await Registry.GetResolutionConfigurationAsync(
@@ -408,6 +430,15 @@
         {
             OperationError = exception.Message;
         }
+    }
+
+    private void LoadSyntheticDemoLabels()
+    {
+        DatasetId = SyntheticAssuranceDataset.DatasetId;
+        Labels = SyntheticAssuranceDataset.Labels;
+        OperationError = null;
+        Evaluation = null;
+        Calibration = null;
     }
 
     private async Task EvaluateAsync()
