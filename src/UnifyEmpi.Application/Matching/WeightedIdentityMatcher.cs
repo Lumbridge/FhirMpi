@@ -159,7 +159,7 @@ public sealed class WeightedIdentityMatcher
             comparison.Comparator,
             comparison.Detail,
             comparison.IsMissing,
-            FellegiSunterScorer.Classify(comparison.Similarity, comparison.IsMissing).ToString());
+            FellegiSunterScorer.Classify(comparison.Similarity, comparison.IsMissing));
 
     private static FieldComparison CompareFamilyNames(
         IReadOnlyList<NormalisedName> query,
@@ -187,7 +187,9 @@ public sealed class WeightedIdentityMatcher
                     left.Family,
                     right.Family,
                     profile.FamilyNameComparators,
-                    profile);
+                    profile,
+                    left.FamilyPhonetic,
+                    right.FamilyPhonetic);
                 if (comparison.Similarity > best.Similarity)
                 {
                     best = comparison;
@@ -207,37 +209,34 @@ public sealed class WeightedIdentityMatcher
         IReadOnlyList<NormalisedName> candidate,
         ComparatorProfile profile)
     {
-        var queryNames = query
-            .SelectMany(static name => name.Given)
-            .Distinct(StringComparer.Ordinal)
-            .ToArray();
-        var candidateNames = candidate
-            .SelectMany(static name => name.Given)
-            .Distinct(StringComparer.Ordinal)
-            .ToArray();
-        if (queryNames.Length == 0 || candidateNames.Length == 0)
-        {
-            return FieldComparison.Missing("configured-string-library");
-        }
-
         var best = new StringComparisonResult(0, "none", null);
-        foreach (var left in queryNames)
+        var observed = false;
+        foreach (var leftName in query)
         {
-            foreach (var right in candidateNames)
+            foreach (var left in leftName.Given)
             {
-                var comparison = StringComparatorLibrary.Compare(
-                    left,
-                    right,
-                    profile.GivenNameComparators,
-                    profile);
-                if (comparison.Similarity > best.Similarity)
+                foreach (var rightName in candidate)
                 {
-                    best = comparison;
+                    foreach (var right in rightName.Given)
+                    {
+                        observed = true;
+                        var comparison = StringComparatorLibrary.Compare(
+                            left,
+                            right,
+                            profile.GivenNameComparators,
+                            profile);
+                        if (comparison.Similarity > best.Similarity)
+                        {
+                            best = comparison;
+                        }
+                    }
                 }
             }
         }
 
-        return new FieldComparison(best.Similarity, best.Comparator, best.Detail, false);
+        return observed
+            ? new FieldComparison(best.Similarity, best.Comparator, best.Detail, false)
+            : FieldComparison.Missing("configured-string-library");
     }
 
     private static FieldComparison CompareBirthDates(DateOnly? query, DateOnly? candidate)

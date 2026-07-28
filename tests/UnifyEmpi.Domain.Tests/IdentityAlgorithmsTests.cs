@@ -284,7 +284,7 @@ public sealed class IdentityAlgorithmsTests
                 0.25,
                 "exact",
                 IsMissing: false,
-                ComparisonLevel: nameof(FellegiSunterComparisonLevel.Exact))
+                ComparisonLevel: FellegiSunterComparisonLevel.Exact)
         };
 
         var score = FellegiSunterScorer.Score(evidence, model);

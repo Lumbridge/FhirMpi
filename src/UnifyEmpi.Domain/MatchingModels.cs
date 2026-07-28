@@ -30,7 +30,7 @@ public sealed record FieldEvidence(
     string Comparator,
     string? Detail = null,
     bool IsMissing = false,
-    string? ComparisonLevel = null,
+    FellegiSunterComparisonLevel? ComparisonLevel = null,
     double? LogLikelihoodRatio = null)
 {
     public double Contribution => Similarity * Weight;

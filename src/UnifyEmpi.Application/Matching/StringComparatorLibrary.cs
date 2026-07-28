@@ -9,7 +9,9 @@ public static class StringComparatorLibrary
         string first,
         string second,
         IReadOnlyList<StringComparatorKind> comparators,
-        ComparatorProfile profile)
+        ComparatorProfile profile,
+        string? firstPhonetic = null,
+        string? secondPhonetic = null)
     {
         if (first.Length == 0 || second.Length == 0)
         {
@@ -37,7 +39,12 @@ public static class StringComparatorLibrary
                     StringSimilarity.DiceCoefficient(first, second),
                     "dice-coefficient",
                     null),
-                StringComparatorKind.Phonetic => ComparePhonetic(first, second, profile),
+                StringComparatorKind.Phonetic => ComparePhonetic(
+                    first,
+                    second,
+                    profile,
+                    firstPhonetic,
+                    secondPhonetic),
                 StringComparatorKind.Nickname => CompareNickname(first, second, profile),
                 _ => throw new InvalidOperationException(
                     $"Unsupported string comparator '{comparator}'.")
@@ -55,10 +62,12 @@ public static class StringComparatorLibrary
     private static StringComparisonResult ComparePhonetic(
         string first,
         string second,
-        ComparatorProfile profile)
+        ComparatorProfile profile,
+        string? firstPhonetic,
+        string? secondPhonetic)
     {
-        var firstCode = PhoneticEncoder.Encode(first);
-        var secondCode = PhoneticEncoder.Encode(second);
+        var firstCode = firstPhonetic ?? PhoneticEncoder.Encode(first);
+        var secondCode = secondPhonetic ?? PhoneticEncoder.Encode(second);
         return firstCode.Length > 0 &&
                string.Equals(firstCode, secondCode, StringComparison.Ordinal)
             ? new StringComparisonResult(
