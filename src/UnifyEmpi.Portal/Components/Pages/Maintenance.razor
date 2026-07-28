@@ -289,12 +289,22 @@
         OperationError = null;
         try
         {
+            var recentlyStarted = Jobs
+                .Where(job =>
+                    IsActive(job) &&
+                    job.RequestedAt >= DateTimeOffset.UtcNow.AddMinutes(-1))
+                .ToArray();
             var page = await MaintenanceService.SearchJobsAsync(
                 await Actors.CreateAsync(),
                 new MaintenanceJobSearch(Count: 50),
                 CancellationToken.None);
+            var returnedIds = page.Items
+                .Select(static job => job.Id)
+                .ToHashSet();
             Jobs.Clear();
-            Jobs.AddRange(page.Items.OrderByDescending(static job => job.RequestedAt));
+            Jobs.AddRange(page.Items
+                .Concat(recentlyStarted.Where(job => !returnedIds.Contains(job.Id)))
+                .OrderByDescending(static job => job.RequestedAt));
         }
         catch (Exception exception) when (
             exception is RegistryException or HttpRequestException)
@@ -328,8 +338,8 @@
         OperationError = null;
         try
         {
-            await start(await Actors.CreateAsync(), CancellationToken.None);
-            await LoadAsync();
+            var started = await start(await Actors.CreateAsync(), CancellationToken.None);
+            UpsertJob(started);
         }
         catch (Exception exception) when (
             exception is RegistryException or
@@ -351,11 +361,11 @@
         OperationError = null;
         try
         {
-            await MaintenanceService.CancelJobAsync(
+            var cancelled = await MaintenanceService.CancelJobAsync(
                 await Actors.CreateAsync(),
                 jobId,
                 CancellationToken.None);
-            await LoadAsync();
+            UpsertJob(cancelled);
         }
         catch (Exception exception) when (
             exception is RegistryException or
@@ -411,6 +421,13 @@
 
     private string JobCountLabel =>
         Jobs.Count == 1 ? "1 maintenance job" : $"{Jobs.Count} maintenance jobs";
+
+    private void UpsertJob(RegistryMaintenanceJob job)
+    {
+        Jobs.RemoveAll(existing => existing.Id == job.Id);
+        Jobs.Add(job);
+        Jobs.Sort(static (left, right) => right.RequestedAt.CompareTo(left.RequestedAt));
+    }
 
     private static bool IsActive(RegistryMaintenanceJob job) =>
         job.Status is RegistryMaintenanceJobStatus.Queued or RegistryMaintenanceJobStatus.Running;
