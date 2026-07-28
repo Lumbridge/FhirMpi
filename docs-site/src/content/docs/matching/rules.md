@@ -19,10 +19,11 @@ small, bounded set of patient-specific rules:
 - [OpenEMPI product overview](https://www.openempi.org/)
 - [OpenEMPI release notes](https://openempi.atlassian.net/wiki/spaces/openempi30/pages/1294008321/Release%2BNotes)
 
-UnifyEMPI does **not** currently claim Fellegi–Sunter probabilistic linkage, trainable
-machine learning, arbitrary FHIRPath match expressions or runtime-loaded comparator
-plugins. Its current engine is deterministic candidate blocking plus an explainable
-weighted similarity score and explicit identifier overrides.
+UnifyEMPI supports deterministic candidate blocking followed by either the default
+explainable weighted similarity score or a versioned Fellegi–Sunter model calibrated
+from governed labels. It does not claim adaptive machine learning, arbitrary FHIRPath
+match expressions or runtime-loaded comparator plugins. Explicit trusted-identifier
+and hard-conflict rules remain outside either demographic scorer.
 
 ## Decision pipeline
 
@@ -34,7 +35,7 @@ For a new source record, FHIR `$match`, or duplicate-workbench search, UnifyEMPI
 4. HMACs those keys with every configured tenant key version;
 5. retrieves the union of active canonical patients sharing at least one key;
 6. stops if the candidate set exceeds the configured safety limit;
-7. scores every candidate using the configured field weights;
+7. scores every candidate using the configured weighted or Fellegi–Sunter profile;
 8. applies authoritative-identifier certainty and hard-conflict rules;
 9. assigns a grade; and
 10. routes the result according to the calling workflow.
@@ -77,6 +78,14 @@ rule profile expressed explicitly:
     "AuthoritativeIdentifierSystems": [
       "https://fhir.nhs.uk/Id/nhs-number"
     ],
+    "Comparators": {
+      "Version": "comparators-v1",
+      "FamilyName": ["JaroWinkler", "Phonetic"],
+      "GivenNames": ["JaroWinkler"],
+      "PhoneticMatchFloor": 0.85,
+      "NicknameMatchFloor": 0.92,
+      "NicknameDictionaries": []
+    },
     "MaximumCandidates": 500,
     "DefaultResultCount": 10,
     "MaximumResultCount": 50
@@ -90,6 +99,11 @@ Configuration is validated at host start-up:
 - each weight must be finite and from `0` to `1`, and at least one must be positive;
 - at least one recognised blocking rule must be enabled, with no duplicates;
 - authoritative identifier systems must be unique absolute URIs;
+- comparator names must be recognised and unique, similarity floors must be in
+  `(0,1]`, and nickname dictionaries must be versioned and unambiguous;
+- an optional Fellegi–Sunter model must define every comparison level for all six
+  fields, use positive m/u probabilities whose per-field distributions sum to one,
+  and declare a production prior strictly between zero and one;
 - `MaximumCandidates` must be from `1` to the provider safety limit of `500`;
 - `MaximumResultCount` must be from `1` to `100` and no greater than
   `MaximumCandidates`; and
@@ -104,11 +118,11 @@ normalisation rule changes. The version is an audit label, not a dynamic algorit
 selector.
 
 Changing blocking rules or identifier systems on a populated registry requires every
-canonical patient to be re-indexed before the new profile serves traffic. UnifyEMPI does
-not yet provide an online batch re-index operation, so perform that change as a
-controlled migration or full synthetic re-ingest. Merely changing configuration can
+canonical patient to be re-indexed. Deploy the union of old and new rules, complete the
+guarded online re-index, then remove obsolete inputs. Merely changing configuration can
 otherwise reduce candidate recall because existing records do not contain newly added
-keys.
+keys. Comparator or calibrated-probability changes do not alter blocking keys, but
+should be followed by population reconciliation to discover changed review candidates.
 
 ## Normalisation rules
 
@@ -191,10 +205,11 @@ score = clamp(
   1)
 ```
 
-Missing data has similarity `0`; the denominator is **not** reduced or reweighted.
-This deliberately makes a sparse record less able to cross a demographic threshold.
-Identifiers do not contribute to the numeric score: they control certainty and hard
-conflicts separately.
+With the default weighted scorer, missing data has similarity `0` and the denominator
+is **not** reduced or reweighted. This deliberately makes a sparse record less able to
+cross a demographic threshold. In a Fellegi–Sunter profile, missing comparisons are
+neutral and add no likelihood ratio. Identifiers do not contribute to either
+demographic score: they control certainty and hard conflicts separately.
 
 ### Default field comparators and weights
 
@@ -207,9 +222,16 @@ conflicts separately.
 | Telecom | `0.07` | `1` when any normalised telecom has the same system and exact value on both records; otherwise `0`. |
 | Gender | `0.03` | `1` for equal, known administrative gender; unknown or unequal is `0`. |
 
-The evidence returned with each match includes the field name, comparator label,
-similarity, configured weight and contribution. The numeric score is a weighted
-similarity score, not a calibrated probability that two records belong to one person.
+Family and given-name profiles may additionally select `Exact`,
+`NormalisedDamerauLevenshtein`, `DiceCoefficient`, `Phonetic`, and `Nickname`.
+Every pair is evaluated with the configured catalogue and the highest comparator
+result is retained. Nickname groups are tenant-supplied, culture-labelled and
+versioned; there is no built-in nickname list.
+
+The evidence returned with each match includes the field name, winning comparator,
+similarity, configured weight, comparison level and contribution. Under
+Fellegi–Sunter it also includes the field log likelihood ratio. `ScoreMethod` states
+whether `Score` is `weighted-similarity` or a calibrated `fellegi-sunter` probability.
 
 ### Identifier certainty and conflicts
 
@@ -248,7 +270,8 @@ survivorship after records are linked.
 
 ## Grades
 
-The default thresholds are inclusive:
+Thresholds are inclusive. With the default profile they apply to weighted similarity;
+with an activated Fellegi–Sunter profile they apply to calibrated probability:
 
 | Condition | Grade |
 | --- | --- |
@@ -327,6 +350,11 @@ Do not copy another product's default thresholds blindly. HAPI FHIR and OpenEMPI
 make matching configurable because useful rules depend on local data quality, identifier
 governance and review capacity.
 
+Use the [matching assurance and calibration guide](/UnifyEMPI/guides/matching-assurance/)
+to submit tenant-bound labels, measure blocking recall and precision/recall with
+confidence intervals, govern nickname dictionaries, and produce a held-out
+Fellegi–Sunter calibration report.
+
 ## Feature alignment and deliberate gaps
 
 | Capability | UnifyEMPI status |
@@ -338,9 +366,9 @@ governance and review capacity.
 | Human review with merge/reject, two-person conflict policy and audit trail | Implemented. |
 | Canonical/golden patient survivorship | Implemented with source trust, verification, recency and deterministic tie-breaking. |
 | Batch re-index and scheduled population reconciliation | Implemented as durable, leased, resumable jobs with staged-overlap validation, governed duplicate reviews and optional incremental FHIR R4 Patient ingestion. |
-| Ground-truth blocking and matching evaluation reports | Not implemented; benchmark plumbing exists, but recall/precision tooling is still needed. |
-| Nickname/synonym dictionaries and additional phonetic/comparator algorithms | Not implemented. |
-| Fellegi–Sunter probability calibration or null-value probability models | Not implemented. |
+| Ground-truth blocking and matching evaluation reports | Implemented for tenant-bound labelled source-record pairs, including confidence intervals, field diagnostics and bounded error examples. |
+| Nickname/synonym dictionaries and additional phonetic/comparator algorithms | Implemented through versioned, culture-labelled tenant dictionaries and the exact, Jaro–Winkler, normalised Damerau–Levenshtein, Dice, phonetic and nickname catalogue. |
+| Fellegi–Sunter probability calibration or null-value probability models | Implemented with stratified held-out validation, additive smoothing, explicit production prior, m/u reporting, neutral missing values and governed configuration activation. |
 | Trainable/adaptive ML classification | Not implemented and should not be introduced without governed training data, validation, drift monitoring and human override. |
 | Arbitrary domain/entity models | Not implemented; UnifyEMPI is deliberately patient-focused. |
 | Webhooks and broad non-healthcare integration adapters | Not implemented. Current interfaces are FHIR R4, HL7v2 MLLP and reviewer APIs. |

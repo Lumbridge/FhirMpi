@@ -182,6 +182,9 @@ See [the benchmark guide](https://lumbridge.github.io/UnifyEMPI/development/perf
 - [Matching and blocking rules](https://lumbridge.github.io/UnifyEMPI/matching/rules/): normative
   normalisation, configurable blocking rounds, score formula, certainty/conflict
   rules, routing, examples and feature-alignment gaps.
+- [Matching assurance and calibration](https://lumbridge.github.io/UnifyEMPI/guides/matching-assurance/):
+  ground-truth blocking recall and precision reports, comparator and nickname
+  configuration, and governed Fellegi–Sunter calibration.
 - [Core paths and processing model](https://lumbridge.github.io/UnifyEMPI/architecture/core-paths/): annotated diagrams for
   ingestion, matching, merge, split, survivorship and tenant isolation.
 - [Architecture](https://lumbridge.github.io/UnifyEMPI/architecture/overview/): dependency boundaries, materialisation and the

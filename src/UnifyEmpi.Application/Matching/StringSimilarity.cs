@@ -92,4 +92,94 @@ public static class StringSimilarity
         var union = firstTokens.Count + secondTokens.Count - intersection;
         return union == 0 ? 0 : (double)intersection / union;
     }
+
+    public static double NormalisedDamerauLevenshtein(string first, string second)
+    {
+        if (first.Length == 0 || second.Length == 0)
+        {
+            return 0;
+        }
+
+        if (string.Equals(first, second, StringComparison.Ordinal))
+        {
+            return 1;
+        }
+
+        var previousPrevious = new int[second.Length + 1];
+        var previous = Enumerable.Range(0, second.Length + 1).ToArray();
+        var current = new int[second.Length + 1];
+
+        for (var firstIndex = 1; firstIndex <= first.Length; firstIndex++)
+        {
+            current[0] = firstIndex;
+            for (var secondIndex = 1; secondIndex <= second.Length; secondIndex++)
+            {
+                var substitutionCost = first[firstIndex - 1] == second[secondIndex - 1] ? 0 : 1;
+                current[secondIndex] = Math.Min(
+                    Math.Min(
+                        previous[secondIndex] + 1,
+                        current[secondIndex - 1] + 1),
+                    previous[secondIndex - 1] + substitutionCost);
+
+                if (firstIndex > 1 &&
+                    secondIndex > 1 &&
+                    first[firstIndex - 1] == second[secondIndex - 2] &&
+                    first[firstIndex - 2] == second[secondIndex - 1])
+                {
+                    current[secondIndex] = Math.Min(
+                        current[secondIndex],
+                        previousPrevious[secondIndex - 2] + 1);
+                }
+            }
+
+            (previousPrevious, previous, current) = (previous, current, previousPrevious);
+        }
+
+        var maximumLength = Math.Max(first.Length, second.Length);
+        return 1 - (double)previous[second.Length] / maximumLength;
+    }
+
+    public static double DiceCoefficient(string first, string second)
+    {
+        if (first.Length == 0 || second.Length == 0)
+        {
+            return 0;
+        }
+
+        if (string.Equals(first, second, StringComparison.Ordinal))
+        {
+            return 1;
+        }
+
+        if (first.Length == 1 || second.Length == 1)
+        {
+            return 0;
+        }
+
+        var firstBigrams = Bigrams(first);
+        var secondBigrams = Bigrams(second);
+        var intersection = 0;
+        foreach (var bigram in firstBigrams.Keys)
+        {
+            if (secondBigrams.TryGetValue(bigram, out var secondCount))
+            {
+                intersection += Math.Min(firstBigrams[bigram], secondCount);
+            }
+        }
+
+        return 2.0 * intersection /
+               (firstBigrams.Values.Sum() + secondBigrams.Values.Sum());
+    }
+
+    private static Dictionary<string, int> Bigrams(string value)
+    {
+        var result = new Dictionary<string, int>(StringComparer.Ordinal);
+        for (var index = 0; index < value.Length - 1; index++)
+        {
+            var bigram = value.Substring(index, 2);
+            result[bigram] = result.GetValueOrDefault(bigram) + 1;
+        }
+
+        return result;
+    }
 }

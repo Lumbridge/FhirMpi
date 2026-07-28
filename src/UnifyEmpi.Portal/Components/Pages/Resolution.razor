@@ -108,9 +108,9 @@ else
             <div>
                 <strong>Blocking configuration is deployment-managed</strong>
                 <p>
-                    Changing rounds requires a full index rebuild. This page deliberately exposes
-                    the live configuration without offering an unsafe partial reindex. Key values
-                    are HMAC-protected and never shown in the portal.
+                    Changing rounds requires the guarded online re-index workflow. This page
+                    exposes the live configuration without allowing unsafe partial index changes.
+                    Key values are HMAC-protected and never shown in the portal.
                 </p>
             </div>
         </div>
@@ -120,10 +120,17 @@ else
         <div class="resolution-section-heading">
             <div>
                 <p class="eyebrow">Stage 02 · Explainable scoring</p>
-                <h2 id="matching-heading">Weighted matching</h2>
+                <h2 id="matching-heading">
+                    @(Configuration.ProbabilityModel is null
+                        ? "Weighted matching"
+                        : "Calibrated probability matching")
+                </h2>
                 <p>
-                    Every bounded candidate is compared field by field. The weighted evidence and
-                    active thresholds determine whether a pair is below threshold, possible or probable.
+                    Every bounded candidate is compared field by field. The
+                    @(Configuration.ProbabilityModel is null
+                        ? "weighted evidence"
+                        : "Fellegi–Sunter probability")
+                    and active thresholds determine whether a pair is below threshold, possible or probable.
                 </p>
             </div>
             <div class="resolution-stat resolution-stat-wide">
@@ -188,22 +195,42 @@ else
                         <p class="eyebrow">Scoring model</p>
                         <h3 id="weights-heading">Field influence</h3>
                     </div>
-                    <span class="result-note">Normalised to 100%</span>
+                    <span class="result-note">
+                        @(Configuration.ProbabilityModel is null
+                            ? "Normalised to 100%"
+                            : $"Prior {Configuration.ProbabilityModel.PriorMatchProbability:P3}")
+                    </span>
                 </div>
-                @foreach (var weight in Weights(Configuration.Weights))
+                @if (Configuration.ProbabilityModel is null)
                 {
-                    <div class="weight-row">
-                        <div>
-                            <strong>@weight.Label</strong>
-                            <span>@weight.Comparator</span>
+                    @foreach (var weight in Weights(Configuration.Weights, Configuration.Comparators))
+                    {
+                        <div class="weight-row">
+                            <div>
+                                <strong>@weight.Label</strong>
+                                <span>@weight.Comparator</span>
+                            </div>
+                            <progress max="@Configuration.Weights.Total" value="@weight.Value">
+                                @((weight.Value / Configuration.Weights.Total).ToString("P0", CultureInfo.InvariantCulture))
+                            </progress>
+                            <span class="tabular">
+                                @((weight.Value / Configuration.Weights.Total).ToString("P0", CultureInfo.InvariantCulture))
+                            </span>
                         </div>
-                        <progress max="@Configuration.Weights.Total" value="@weight.Value">
-                            @((weight.Value / Configuration.Weights.Total).ToString("P0", CultureInfo.InvariantCulture))
-                        </progress>
-                        <span class="tabular">
-                            @((weight.Value / Configuration.Weights.Total).ToString("P0", CultureInfo.InvariantCulture))
-                        </span>
-                    </div>
+                    }
+                }
+                else
+                {
+                    @foreach (var field in Configuration.ProbabilityModel.Fields)
+                    {
+                        <div class="weight-row">
+                            <div>
+                                <strong>@FieldLabel(field.Field)</strong>
+                                <span>@field.Levels.Count m/u comparison levels</span>
+                            </div>
+                            <span class="tabular">@Configuration.ProbabilityModel.Version</span>
+                        </div>
+                    }
                 }
             </section>
         </div>
@@ -331,15 +358,44 @@ else
             100 - probableBoundary);
     }
 
-    private static IReadOnlyList<WeightDetails> Weights(MatchingWeights weights) =>
+    private static IReadOnlyList<WeightDetails> Weights(
+        MatchingWeights weights,
+        ComparatorProfile comparators) =>
     [
-        new("Family name", "Jaro-Winkler / phonetic", weights.FamilyName),
-        new("Given names", "Jaro-Winkler", weights.GivenNames),
+        new(
+            "Family name",
+            string.Join(" / ", comparators.FamilyNameComparators.Select(ComparatorLabel)),
+            weights.FamilyName),
+        new(
+            "Given names",
+            string.Join(" / ", comparators.GivenNameComparators.Select(ComparatorLabel)),
+            weights.GivenNames),
         new("Date of birth", "Exact / transposition", weights.BirthDate),
         new("Address", "Postcode / token overlap", weights.Address),
         new("Telephone or email", "Normalised exact", weights.Telecom),
         new("Gender", "Exact", weights.Gender)
     ];
+
+    private static string ComparatorLabel(StringComparatorKind comparator) =>
+        comparator switch
+        {
+            StringComparatorKind.JaroWinkler => "Jaro-Winkler",
+            StringComparatorKind.NormalisedDamerauLevenshtein => "Damerau-Levenshtein",
+            StringComparatorKind.DiceCoefficient => "Dice",
+            _ => comparator.ToString()
+        };
+
+    private static string FieldLabel(string field) =>
+        field switch
+        {
+            "family" => "Family name",
+            "given" => "Given names",
+            "birthDate" => "Date of birth",
+            "address" => "Address",
+            "telecom" => "Telephone or email",
+            "gender" => "Gender",
+            _ => field
+        };
 
     private sealed record BlockingRuleDetails(
         string Title,

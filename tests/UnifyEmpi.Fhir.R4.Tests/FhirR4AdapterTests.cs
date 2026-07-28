@@ -61,6 +61,11 @@ public sealed class FhirR4AdapterTests
             extension =>
                 extension.Url == FhirR4Constants.MatchGradeExtension &&
                 Assert.IsType<Code>(extension.Value).Value == "probable");
+        Assert.Contains(
+            resultPatient.Extension,
+            extension =>
+                extension.Url == FhirR4Constants.MatchScoreMethodExtension &&
+                Assert.IsType<Code>(extension.Value).Value == "weighted-similarity");
     }
 
     [Fact]

@@ -63,6 +63,8 @@ public static class FhirEndpoints
         operations.MapGet("/audit-events", SearchAuditEvents);
         operations.MapGet("/tenant/settings", GetTenantSettings);
         operations.MapPut("/tenant/settings", UpdateTenantSettings);
+        operations.MapPost("/matching/evaluation", EvaluateGroundTruth);
+        operations.MapPost("/matching/calibration/fellegi-sunter", CalibrateFellegiSunter);
         operations.MapPost("/maintenance/reindex", StartReindex);
         operations.MapPost("/maintenance/reconciliation", StartPopulationReconciliation);
         operations.MapGet("/maintenance/jobs", SearchMaintenanceJobs);
@@ -627,6 +629,47 @@ public static class FhirEndpoints
         return Results.Ok(settings);
     }
 
+    private static async Task<IResult> EvaluateGroundTruth(
+        GroundTruthEvaluationRequest request,
+        MatchingAssuranceService assurance,
+        ActorContextFactory actors,
+        CancellationToken cancellationToken)
+    {
+        var actor = actors.Create();
+        Require(actor.HasScope(MpiScopes.Admin));
+        var report = await assurance.EvaluateAsync(
+            actor,
+            new EvaluateGroundTruthCommand(
+                request.DatasetId,
+                request.Pairs.Select(ToGroundTruthPair).ToArray(),
+                request.Thresholds,
+                request.MaximumErrorExamples),
+            cancellationToken);
+        return Results.Ok(report);
+    }
+
+    private static async Task<IResult> CalibrateFellegiSunter(
+        FellegiSunterCalibrationRequest request,
+        MatchingAssuranceService assurance,
+        ActorContextFactory actors,
+        CancellationToken cancellationToken)
+    {
+        var actor = actors.Create();
+        Require(actor.HasScope(MpiScopes.Admin));
+        var report = await assurance.CalibrateAsync(
+            actor,
+            new CalibrateFellegiSunterCommand(
+                request.DatasetId,
+                request.ModelVersion,
+                request.Pairs.Select(ToGroundTruthPair).ToArray(),
+                request.PriorMatchProbability,
+                request.Smoothing,
+                request.ValidationFraction,
+                request.TargetPrecision),
+            cancellationToken);
+        return Results.Ok(report);
+    }
+
     private static async Task<IResult> StartReindex(
         StartReindexRequest request,
         RegistryMaintenanceService maintenance,
@@ -848,6 +891,16 @@ public static class FhirEndpoints
             ? new EnterpriseId(id)
             : throw new FormatException("The enterprise identifier is not a UUID.");
 
+    private static GroundTruthPair ToGroundTruthPair(GroundTruthPairRequest request) =>
+        new(
+            new SourceRecordKey(
+                new SourceSystemId(request.Left.SourceSystem),
+                request.Left.LocalId),
+            new SourceRecordKey(
+                new SourceSystemId(request.Right.SourceSystem),
+                request.Right.LocalId),
+            request.IsMatch);
+
     private static Uri BuildRequestUri(HttpRequest request) =>
         new($"{request.Scheme}://{request.Host}{request.PathBase}{request.Path}{request.QueryString}");
 
@@ -917,3 +970,23 @@ public sealed record StartPopulationReconciliationRequest(
     int BatchSize = 25,
     string? ExternalSourceSystem = null,
     DateTimeOffset? ChangedSince = null);
+
+public sealed record GroundTruthPairRequest(
+    SourceRecordRequest Left,
+    SourceRecordRequest Right,
+    bool IsMatch);
+
+public sealed record GroundTruthEvaluationRequest(
+    string DatasetId,
+    IReadOnlyList<GroundTruthPairRequest> Pairs,
+    IReadOnlyList<double>? Thresholds = null,
+    int MaximumErrorExamples = 25);
+
+public sealed record FellegiSunterCalibrationRequest(
+    string DatasetId,
+    string ModelVersion,
+    IReadOnlyList<GroundTruthPairRequest> Pairs,
+    double PriorMatchProbability,
+    double Smoothing = 1,
+    double ValidationFraction = 0.2,
+    double TargetPrecision = 0.99);

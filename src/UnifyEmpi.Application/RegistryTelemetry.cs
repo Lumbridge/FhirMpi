@@ -25,6 +25,8 @@ internal static class RegistryTelemetry
         Meter.CreateCounter<long>("unifyempi.maintenance.jobs", "{job}");
     private static readonly Counter<long> MaintenanceItems =
         Meter.CreateCounter<long>("unifyempi.maintenance.items", "{item}");
+    private static readonly Counter<long> MatchingAssurancePairs =
+        Meter.CreateCounter<long>("unifyempi.matching.assurance.pairs", "{pair}");
 
     public static void RecordMatch(
         long startedTimestamp,
@@ -97,4 +99,16 @@ internal static class RegistryTelemetry
                 { "maintenance.phase", job.Phase.ToString().ToLowerInvariant() }
             });
     }
+
+    public static void RecordMatchingAssurance(
+        TenantId tenantId,
+        string operation,
+        int pairCount) =>
+        MatchingAssurancePairs.Add(
+            pairCount,
+            new TagList
+            {
+                { "tenant.id", tenantId.Value },
+                { "assurance.operation", operation }
+            });
 }

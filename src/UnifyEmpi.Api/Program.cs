@@ -166,6 +166,7 @@ builder.Services.AddSingleton<IReadOnlyDictionary<UnifyEmpi.Domain.TenantId, Uni
     tenantConfigurations);
 builder.Services.AddSingleton<ITenantConfigurationProvider, StoredTenantConfigurationProvider>();
 builder.Services.AddSingleton<RegistryService>();
+builder.Services.AddSingleton<MatchingAssuranceService>();
 builder.Services.AddSingleton<IExternalPatientSourceRegistry, FhirPatientSourceRegistry>();
 builder.Services.AddSingleton<RegistryMaintenanceService>();
 builder.Services.AddHostedService<RegistryStartupValidationService>();

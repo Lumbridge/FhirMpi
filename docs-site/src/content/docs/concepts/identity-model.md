@@ -206,7 +206,8 @@ The duplicate workbench operates on enterprise identities:
    HMAC secrets.
 4. Search the union of those tags on canonical Patients in the same tenant.
 5. Remove the selected identity, inactive identities and duplicate results.
-6. Apply the full weighted matcher to at most 500 candidates.
+6. Apply the active weighted or calibrated Fellegi–Sunter matcher to at most 500
+   candidates.
 7. Return ordered scores, grades and field-level evidence.
 
 The selected Patient's keys initiate the search; the tags stored on every other

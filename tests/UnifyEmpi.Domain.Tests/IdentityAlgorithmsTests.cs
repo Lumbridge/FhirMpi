@@ -203,6 +203,167 @@ public sealed class IdentityAlgorithmsTests
     }
 
     [Fact]
+    public void ComparatorLibrarySupportsDamerauLevenshteinAndDice()
+    {
+        Assert.Equal(
+            6.0 / 7.0,
+            StringSimilarity.NormalisedDamerauLevenshtein("RICHARD", "RICHADR"),
+            6);
+        Assert.Equal(6.0 / 7.0, StringSimilarity.DiceCoefficient("NIGHT", "NIGH"), 6);
+    }
+
+    [Fact]
+    public void VersionedNicknameDictionaryAddsExplainableGivenNameEvidence()
+    {
+        var options = new MatchingRuleOptions
+        {
+            Comparators = new ComparatorProfileOptions
+            {
+                Version = "names-v2",
+                GivenNames =
+                [
+                    nameof(StringComparatorKind.JaroWinkler),
+                    nameof(StringComparatorKind.Nickname)
+                ],
+                NicknameDictionaries =
+                [
+                    new NicknameDictionaryOptions
+                    {
+                        Version = "en-gb-reviewed-2026",
+                        Culture = "en-GB",
+                        Entries = new Dictionary<string, List<string>>
+                        {
+                            ["Robert"] = ["Bob", "Rob"]
+                        }
+                    }
+                ]
+            }
+        };
+        var profile = MatchingProfileFactory.Create("nickname-profile", 0.6, 0.85, options);
+        var left = Profile(family: "Smith") with
+        {
+            Names = [new PersonName("Smith", ["Robert"])]
+        };
+        var right = Profile(family: "Jones") with
+        {
+            Names = [new PersonName("Jones", ["Bob"])]
+        };
+
+        var result = WeightedIdentityMatcher.Match(
+            IdentityNormaliser.Normalise(left),
+            Candidate(right),
+            profile);
+        var given = result.Evidence.Single(static item => item.Field == "given");
+
+        Assert.Equal(0.92, given.Similarity);
+        Assert.Equal("nickname", given.Comparator);
+        Assert.Equal("en-GB/en-gb-reviewed-2026", given.Detail);
+    }
+
+    [Fact]
+    public void FellegiSunterScorerProducesProbabilityAndFieldLogLikelihoods()
+    {
+        var model = new FellegiSunterModel(
+            "fs-v1",
+            0.01,
+            [
+                new FellegiSunterFieldModel(
+                    "family",
+                    [
+                        new(FellegiSunterComparisonLevel.Exact, 0.8, 0.05),
+                        new(FellegiSunterComparisonLevel.Strong, 0.1, 0.05),
+                        new(FellegiSunterComparisonLevel.Partial, 0.05, 0.1),
+                        new(FellegiSunterComparisonLevel.Different, 0.05, 0.8)
+                    ])
+            ]);
+        var evidence = new[]
+        {
+            new FieldEvidence(
+                "family",
+                1,
+                0.25,
+                "exact",
+                IsMissing: false,
+                ComparisonLevel: nameof(FellegiSunterComparisonLevel.Exact))
+        };
+
+        var score = FellegiSunterScorer.Score(evidence, model);
+
+        Assert.True(score.Probability > model.PriorMatchProbability);
+        Assert.True(score.FieldLogLikelihoodRatios["family"] > 0);
+    }
+
+    [Fact]
+    public void MatchingProfileFactoryActivatesValidatedFellegiSunterModel()
+    {
+        var options = new MatchingRuleOptions
+        {
+            FellegiSunter = new FellegiSunterModelOptions
+            {
+                Version = "fs-reviewed-v1",
+                PriorMatchProbability = 0.01,
+                TrainingDatasetDigest = new string('a', 64),
+                Fields =
+                [
+                    Field("family"),
+                    Field("given"),
+                    Field("birthDate"),
+                    Field("address"),
+                    Field("telecom"),
+                    Field("gender")
+                ]
+            }
+        };
+        var profile = MatchingProfileFactory.Create("probability-v1", 0.6, 0.9, options);
+        var identity = Profile(
+            family: "Smith",
+            birthDate: new DateOnly(1980, 1, 2));
+
+        var result = WeightedIdentityMatcher.Match(
+            IdentityNormaliser.Normalise(identity),
+            Candidate(identity),
+            profile);
+
+        Assert.NotNull(profile.ProbabilityModel);
+        Assert.Equal("fellegi-sunter", result.ScoreMethod);
+        Assert.Contains(
+            result.Evidence,
+            static evidence =>
+                evidence.Field == "family" &&
+                evidence.LogLikelihoodRatio > 0);
+    }
+
+    [Fact]
+    public void MatchingProfileFactoryRejectsAmbiguousNicknameGroups()
+    {
+        var options = new MatchingRuleOptions
+        {
+            Comparators = new ComparatorProfileOptions
+            {
+                GivenNames = [nameof(StringComparatorKind.Nickname)],
+                NicknameDictionaries =
+                [
+                    new NicknameDictionaryOptions
+                    {
+                        Version = "ambiguous-v1",
+                        Culture = "en-GB",
+                        Entries = new Dictionary<string, List<string>>
+                        {
+                            ["William"] = ["Bill"],
+                            ["Wilhelmina"] = ["Bill"]
+                        }
+                    }
+                ]
+            }
+        };
+
+        var exception = Assert.Throws<InvalidOperationException>(
+            () => MatchingProfileFactory.Create("invalid-nicknames", 0.6, 0.8, options));
+
+        Assert.Contains("multiple groups", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void StableResourceIdsAreTenantBoundAndDeterministic()
     {
         var secret = "01234567890123456789012345678901"u8.ToArray();
@@ -304,6 +465,39 @@ public sealed class IdentityAlgorithmsTests
             DateTimeOffset.UnixEpoch,
             DateTimeOffset.UnixEpoch,
             1);
+
+    private static FellegiSunterFieldOptions Field(string name) =>
+        new()
+        {
+            Field = name,
+            Levels =
+            [
+                new FellegiSunterLevelOptions
+                {
+                    Level = FellegiSunterComparisonLevel.Exact,
+                    MProbability = 0.7,
+                    UProbability = 0.05
+                },
+                new FellegiSunterLevelOptions
+                {
+                    Level = FellegiSunterComparisonLevel.Strong,
+                    MProbability = 0.15,
+                    UProbability = 0.05
+                },
+                new FellegiSunterLevelOptions
+                {
+                    Level = FellegiSunterComparisonLevel.Partial,
+                    MProbability = 0.1,
+                    UProbability = 0.1
+                },
+                new FellegiSunterLevelOptions
+                {
+                    Level = FellegiSunterComparisonLevel.Different,
+                    MProbability = 0.05,
+                    UProbability = 0.8
+                }
+            ]
+        };
 
     private static IdentityProfile Profile(
         string? nhsNumber = null,

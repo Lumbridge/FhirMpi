@@ -18,6 +18,8 @@ public static class FhirR4Constants
         "http://hl7.org/fhir/StructureDefinition/match-grade";
     public const string MatchEvidenceExtension =
         "https://unifyempi.dev/StructureDefinition/match-evidence";
+    public const string MatchScoreMethodExtension =
+        "https://unifyempi.dev/StructureDefinition/match-score-method";
     public const string EnterpriseIdentifierSystem =
         "https://unifyempi.dev/Id/enterprise-id";
 }

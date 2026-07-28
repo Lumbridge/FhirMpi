@@ -28,7 +28,10 @@ public sealed record FieldEvidence(
     double Similarity,
     double Weight,
     string Comparator,
-    string? Detail = null)
+    string? Detail = null,
+    bool IsMissing = false,
+    string? ComparisonLevel = null,
+    double? LogLikelihoodRatio = null)
 {
     public double Contribution => Similarity * Weight;
 }
@@ -38,7 +41,8 @@ public sealed record MatchResult(
     double Score,
     MatchGrade Grade,
     IReadOnlyList<FieldEvidence> Evidence,
-    bool HasHardConflict = false);
+    bool HasHardConflict = false,
+    string ScoreMethod = "weighted-similarity");
 
 public sealed record MatchResponse(
     IReadOnlyList<MatchResult> Matches,
@@ -74,6 +78,10 @@ public sealed record MatchingProfile(
     IReadOnlySet<BlockingRuleKind> BlockingRules,
     IReadOnlySet<string> AuthoritativeIdentifierSystems)
 {
+    public ComparatorProfile Comparators { get; init; } = ComparatorProfile.Default;
+
+    public FellegiSunterModel? ProbabilityModel { get; init; }
+
     public static MatchingProfile UkDefault { get; } = new(
         "uk-default-v1",
         MatchingWeights.UkDefault,

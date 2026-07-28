@@ -13,6 +13,7 @@ namespace UnifyEmpi.Api.Tests;
 
 public sealed class FhirApiIntegrationTests : IClassFixture<FhirApiFactory>
 {
+    private static readonly double[] EvaluationThresholds = [0.82];
     private readonly HttpClient _client;
 
     public FhirApiIntegrationTests(FhirApiFactory factory) =>
@@ -49,6 +50,12 @@ public sealed class FhirApiIntegrationTests : IClassFixture<FhirApiFactory>
         Assert.True(document.RootElement
             .GetProperty("paths")
             .TryGetProperty("/api/v1/operations/summary", out _));
+        Assert.True(document.RootElement
+            .GetProperty("paths")
+            .TryGetProperty("/api/v1/matching/evaluation", out _));
+        Assert.True(document.RootElement
+            .GetProperty("paths")
+            .TryGetProperty("/api/v1/matching/calibration/fellegi-sunter", out _));
     }
 
     [Fact]
@@ -218,6 +225,73 @@ public sealed class FhirApiIntegrationTests : IClassFixture<FhirApiFactory>
         Assert.Equal((int)RegistryMaintenanceJobKind.Reindex, statusBody.RootElement
             .GetProperty("kind")
             .GetInt32());
+    }
+
+    [Fact]
+    public async Task GroundTruthEvaluationUsesTenantBoundSourceReferences()
+    {
+        var suffix = Guid.NewGuid().ToString("N");
+        var matchLeft = $"gt-ml-{suffix}";
+        var matchRight = $"gt-mr-{suffix}";
+        var nonMatchLeft = $"gt-nl-{suffix}";
+        var nonMatchRight = $"gt-nr-{suffix}";
+        await CreateGroundTruthPatientAsync(matchLeft, "Smith", "Alex", "1980-01-02");
+        await CreateGroundTruthPatientAsync(matchRight, "Smith", "Alex", "1980-01-02");
+        await CreateGroundTruthPatientAsync(nonMatchLeft, "Jones", "Morgan", "1970-03-04");
+        await CreateGroundTruthPatientAsync(nonMatchRight, "Williams", "Taylor", "1990-05-06");
+
+        var response = await _client.PostAsJsonAsync(
+            "/api/v1/matching/evaluation",
+            new
+            {
+                datasetId = $"api-labels-{suffix}",
+                pairs = new object[]
+                {
+                    new
+                    {
+                        left = new { sourceSystem = "demo-source", localId = matchLeft },
+                        right = new { sourceSystem = "demo-source", localId = matchRight },
+                        isMatch = true
+                    },
+                    new
+                    {
+                        left = new { sourceSystem = "demo-source", localId = nonMatchLeft },
+                        right = new { sourceSystem = "demo-source", localId = nonMatchRight },
+                        isMatch = false
+                    }
+                },
+                thresholds = EvaluationThresholds,
+                maximumErrorExamples = 5
+            },
+            CancellationToken.None);
+        var report = JsonDocument.Parse(
+            await response.Content.ReadAsStringAsync(CancellationToken.None));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(2, report.RootElement.GetProperty("labelCount").GetInt32());
+        Assert.Equal(1, report.RootElement.GetProperty("blockingRecall").GetDouble());
+        Assert.Equal(64, report.RootElement.GetProperty("datasetDigest").GetString()!.Length);
+    }
+
+    private async Task CreateGroundTruthPatientAsync(
+        string id,
+        string family,
+        string given,
+        string birthDate)
+    {
+        var patient = $$"""
+            {
+              "resourceType": "Patient",
+              "id": "{{id}}",
+              "name": [{ "family": "{{family}}", "given": ["{{given}}"] }],
+              "birthDate": "{{birthDate}}"
+            }
+            """;
+        var response = await _client.PostAsync(
+            "/fhir/R4/Patient",
+            FhirContent(patient),
+            CancellationToken.None);
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
     }
 
     private static StringContent FhirContent(string json) =>

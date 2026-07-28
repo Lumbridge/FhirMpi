@@ -31,6 +31,8 @@ public sealed record RegistryOperationalSummary(
 public sealed record ResolutionConfigurationView(
     string MatchingProfileVersion,
     MatchingWeights Weights,
+    ComparatorProfile Comparators,
+    FellegiSunterModel? ProbabilityModel,
     double PossibleThreshold,
     double ProbableThreshold,
     int MaximumCandidates,

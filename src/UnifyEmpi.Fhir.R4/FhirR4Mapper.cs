@@ -204,11 +204,17 @@ public static class FhirR4Mapper
                 FhirR4Constants.MatchGradeExtension,
                 new Code(match.Grade.ToString().ToLowerInvariant())));
             patient.Extension.Add(new Extension(
+                FhirR4Constants.MatchScoreMethodExtension,
+                new Code(match.ScoreMethod)));
+            patient.Extension.Add(new Extension(
                 FhirR4Constants.MatchEvidenceExtension,
                 new FhirString(string.Join(
                     "; ",
                     match.Evidence.Select(static item =>
-                        $"{item.Field}:{item.Similarity.ToString("0.###", CultureInfo.InvariantCulture)}")))));
+                        $"{item.Field}:{item.Similarity.ToString("0.###", CultureInfo.InvariantCulture)}:{item.Comparator}:{item.ComparisonLevel}" +
+                        (item.LogLikelihoodRatio.HasValue
+                            ? $":llr={item.LogLikelihoodRatio.Value.ToString("0.###", CultureInfo.InvariantCulture)}"
+                            : string.Empty))))));
             bundle.Entry.Add(new Bundle.EntryComponent
             {
                 FullUrl = $"Patient/{patient.Id}",

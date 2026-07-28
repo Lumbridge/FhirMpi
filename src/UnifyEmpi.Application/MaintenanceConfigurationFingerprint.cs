@@ -34,6 +34,49 @@ internal static class MaintenanceConfigurationFingerprint
             builder.Append("identifier:").Append(system).Append('\n');
         }
 
+        builder.Append("comparators:")
+            .Append(profile.Comparators.Version).Append('|')
+            .Append(profile.Comparators.PhoneticMatchFloor.ToString("R", CultureInfo.InvariantCulture)).Append('|')
+            .Append(profile.Comparators.NicknameMatchFloor.ToString("R", CultureInfo.InvariantCulture)).Append('\n')
+            .Append("family-comparators:")
+            .AppendJoin(',', profile.Comparators.FamilyNameComparators)
+            .Append('\n')
+            .Append("given-comparators:")
+            .AppendJoin(',', profile.Comparators.GivenNameComparators)
+            .Append('\n');
+        foreach (var dictionary in profile.Comparators.NicknameDictionaries
+                     .OrderBy(static value => value.Version, StringComparer.Ordinal))
+        {
+            builder.Append("nickname-dictionary:")
+                .Append(dictionary.Version).Append('|')
+                .Append(dictionary.Culture).Append('\n');
+            foreach (var entry in dictionary.EquivalenceKeys
+                         .OrderBy(static value => value.Key, StringComparer.Ordinal))
+            {
+                builder.Append(entry.Key).Append('=').Append(entry.Value).Append('\n');
+            }
+        }
+
+        if (profile.ProbabilityModel is { } model)
+        {
+            builder.Append("fellegi-sunter:")
+                .Append(model.Version).Append('|')
+                .Append(model.PriorMatchProbability.ToString("R", CultureInfo.InvariantCulture))
+                .Append('|')
+                .Append(model.TrainingDatasetDigest)
+                .Append('\n');
+            foreach (var field in model.Fields.OrderBy(static value => value.Field, StringComparer.Ordinal))
+            {
+                foreach (var level in field.Levels.OrderBy(static value => value.Level))
+                {
+                    builder.Append(field.Field).Append('|')
+                        .Append(level.Level).Append('|')
+                        .Append(level.MProbability.ToString("R", CultureInfo.InvariantCulture)).Append('|')
+                        .Append(level.UProbability.ToString("R", CultureInfo.InvariantCulture)).Append('\n');
+                }
+            }
+        }
+
         foreach (var secret in configuration.BlockingKeySecrets
                      .OrderBy(static secret => secret.Version, StringComparer.Ordinal))
         {

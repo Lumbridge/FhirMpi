@@ -51,7 +51,12 @@ candidate per enterprise identity rather than returning every linked source reco
 
 ## Match safety
 
-The evidence engine weights family name 0.25, given names 0.20, birth date 0.30, address/postcode 0.15, telecom 0.07, and gender 0.03. Missing fields produce no evidence. `possible` starts at 0.62 and `probable` at 0.82. `certain` requires a verified authoritative exact identifier with no authoritative identifier or birth-date conflict.
+The default evidence engine weights family name 0.25, given names 0.20, birth date
+0.30, address/postcode 0.15, telecom 0.07, and gender 0.03. A tenant can instead
+activate a versioned Fellegi–Sunter model calibrated from governed labels. `possible`
+starts at 0.62 and `probable` at 0.82 unless the approved profile changes them.
+`certain` still requires a verified authoritative exact identifier with no
+authoritative identifier or birth-date conflict.
 
 Only certain matches auto-link. Probable matches create review cases. A conflicting valid NHS number is a hard stop.
 

@@ -56,6 +56,14 @@ for the security and access implications.
         "AuthoritativeIdentifierSystems": [
           "https://fhir.nhs.uk/Id/nhs-number"
         ],
+        "Comparators": {
+          "Version": "comparators-v1",
+          "FamilyName": ["JaroWinkler", "Phonetic"],
+          "GivenNames": ["JaroWinkler"],
+          "PhoneticMatchFloor": 0.85,
+          "NicknameMatchFloor": 0.92,
+          "NicknameDictionaries": []
+        },
         "MaximumCandidates": 500,
         "DefaultResultCount": 10,
         "MaximumResultCount": 50
@@ -109,6 +117,20 @@ the re-index requirement when blocking inputs change. Deploy the same tenant rul
 profile to the API, portal and MLLP hosts. The
 [maintenance guide](/UnifyEMPI/guides/maintenance/) documents job APIs, schedules and
 external FHIR R4 Patient-source configuration.
+
+`MatchingRules:Comparators` can select `Exact`, `JaroWinkler`,
+`NormalisedDamerauLevenshtein`, `DiceCoefficient`, `Phonetic`, and `Nickname` for
+family and given names. `Nickname` requires at least one culture-labelled, versioned
+dictionary. No aliases are supplied by default.
+
+An optional `MatchingRules:FellegiSunter` object activates calibrated probability
+scoring. Use the complete `model` returned by the administrative calibration endpoint;
+do not hand-edit individual m/u probabilities. The validator requires the `Exact`,
+`Strong`, `Partial`, and `Different` levels for `family`, `given`, `birthDate`,
+`address`, `telecom`, and `gender`, with each field's m and u distributions summing to
+one. See [matching assurance and calibration](/UnifyEMPI/guides/matching-assurance/)
+for the labelled-pair API, prior-probability requirement, activation and rollback
+process.
 
 ## Operations portal
 

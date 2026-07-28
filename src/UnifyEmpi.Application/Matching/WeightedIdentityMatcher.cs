@@ -30,46 +30,66 @@ public sealed class WeightedIdentityMatcher
         var hardConflict = identifierAssessment.HasAuthoritativeConflict ||
                            (identifierAssessment.HasCertainIdentifier && birthDateConflict);
 
-        evidence.Add(new FieldEvidence(
+        evidence.Add(ToEvidence(
             "family",
-            CompareFamilyNames(query.Names, normalisedCandidate.Names),
             profile.Weights.FamilyName,
-            "jaro-winkler/phonetic"));
-        evidence.Add(new FieldEvidence(
+            CompareFamilyNames(query.Names, normalisedCandidate.Names, profile.Comparators)));
+        evidence.Add(ToEvidence(
             "given",
-            CompareGivenNames(query.Names, normalisedCandidate.Names),
             profile.Weights.GivenNames,
-            "jaro-winkler"));
-        evidence.Add(new FieldEvidence(
+            CompareGivenNames(query.Names, normalisedCandidate.Names, profile.Comparators)));
+        evidence.Add(ToEvidence(
             "birthDate",
-            CompareBirthDates(query.BirthDate, normalisedCandidate.BirthDate),
             profile.Weights.BirthDate,
-            "exact/day-month-transposition"));
-        evidence.Add(new FieldEvidence(
+            CompareBirthDates(query.BirthDate, normalisedCandidate.BirthDate)));
+        evidence.Add(ToEvidence(
             "address",
-            CompareAddresses(query.Addresses, normalisedCandidate.Addresses),
             profile.Weights.Address,
-            "postcode/token-jaccard"));
-        evidence.Add(new FieldEvidence(
+            CompareAddresses(query.Addresses, normalisedCandidate.Addresses)));
+        evidence.Add(ToEvidence(
             "telecom",
-            CompareTelecoms(query.Telecoms, normalisedCandidate.Telecoms),
             profile.Weights.Telecom,
-            "normalised-exact"));
-        evidence.Add(new FieldEvidence(
+            CompareTelecoms(query.Telecoms, normalisedCandidate.Telecoms)));
+        evidence.Add(ToEvidence(
             "gender",
-            CompareGender(query.Gender, normalisedCandidate.Gender),
             profile.Weights.Gender,
-            "exact"));
+            CompareGender(query.Gender, normalisedCandidate.Gender)));
 
-        var weightedScore = evidence.Sum(static item => item.Contribution) / profile.Weights.Total;
-        var score = Math.Clamp(weightedScore, 0, 1);
+        var scoreMethod = profile.ProbabilityModel is null
+            ? "weighted-similarity"
+            : "fellegi-sunter";
+        double score;
+        if (profile.ProbabilityModel is null)
+        {
+            var weightedScore = evidence.Sum(static item => item.Contribution) / profile.Weights.Total;
+            score = Math.Clamp(weightedScore, 0, 1);
+        }
+        else
+        {
+            var probability = FellegiSunterScorer.Score(evidence, profile.ProbabilityModel);
+            score = probability.Probability;
+            evidence = evidence
+                .Select(item => item with
+                {
+                    LogLikelihoodRatio =
+                        probability.FieldLogLikelihoodRatios.GetValueOrDefault(item.Field)
+                })
+                .ToList();
+        }
+
         var grade = hardConflict
             ? GradeFromScore(score, profile)
             : identifierAssessment.HasCertainIdentifier
                 ? MatchGrade.Certain
                 : GradeFromScore(score, profile);
 
-        return new MatchResult(candidate.Patient, score, grade, evidence, hardConflict);
+        return new MatchResult(
+            candidate.Patient,
+            score,
+            grade,
+            evidence,
+            hardConflict,
+            scoreMethod);
     }
 
     private static MatchGrade GradeFromScore(double score, MatchingProfile profile) =>
@@ -128,11 +148,26 @@ public sealed class WeightedIdentityMatcher
         !string.Equals(identifier.System, NhsNumberValidator.IdentifierSystem, StringComparison.Ordinal) ||
         NhsNumberValidator.IsValid(identifier.Value);
 
-    private static double CompareFamilyNames(
+    private static FieldEvidence ToEvidence(
+        string field,
+        double weight,
+        FieldComparison comparison) =>
+        new(
+            field,
+            comparison.Similarity,
+            weight,
+            comparison.Comparator,
+            comparison.Detail,
+            comparison.IsMissing,
+            FellegiSunterScorer.Classify(comparison.Similarity, comparison.IsMissing).ToString());
+
+    private static FieldComparison CompareFamilyNames(
         IReadOnlyList<NormalisedName> query,
-        IReadOnlyList<NormalisedName> candidate)
+        IReadOnlyList<NormalisedName> candidate,
+        ComparatorProfile profile)
     {
-        var best = 0.0;
+        var best = new StringComparisonResult(0, "none", null);
+        var observed = false;
         foreach (var left in query)
         {
             if (left.Family.Length == 0)
@@ -147,62 +182,97 @@ public sealed class WeightedIdentityMatcher
                     continue;
                 }
 
-                var similarity = StringSimilarity.JaroWinkler(left.Family, right.Family);
-                if (left.FamilyPhonetic.Length > 0 &&
-                    string.Equals(left.FamilyPhonetic, right.FamilyPhonetic, StringComparison.Ordinal))
+                observed = true;
+                var comparison = StringComparatorLibrary.Compare(
+                    left.Family,
+                    right.Family,
+                    profile.FamilyNameComparators,
+                    profile);
+                if (comparison.Similarity > best.Similarity)
                 {
-                    similarity = Math.Max(similarity, 0.85);
+                    best = comparison;
                 }
-
-                best = Math.Max(best, similarity);
             }
         }
 
-        return best;
+        return new FieldComparison(
+            best.Similarity,
+            best.Comparator,
+            best.Detail,
+            !observed);
     }
 
-    private static double CompareGivenNames(
+    private static FieldComparison CompareGivenNames(
         IReadOnlyList<NormalisedName> query,
-        IReadOnlyList<NormalisedName> candidate)
+        IReadOnlyList<NormalisedName> candidate,
+        ComparatorProfile profile)
     {
-        var queryNames = query.SelectMany(static name => name.Given).Distinct(StringComparer.Ordinal);
-        var candidateNames = candidate.SelectMany(static name => name.Given).Distinct(StringComparer.Ordinal).ToArray();
-        var best = 0.0;
+        var queryNames = query
+            .SelectMany(static name => name.Given)
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+        var candidateNames = candidate
+            .SelectMany(static name => name.Given)
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+        if (queryNames.Length == 0 || candidateNames.Length == 0)
+        {
+            return FieldComparison.Missing("configured-string-library");
+        }
+
+        var best = new StringComparisonResult(0, "none", null);
         foreach (var left in queryNames)
         {
             foreach (var right in candidateNames)
             {
-                best = Math.Max(best, StringSimilarity.JaroWinkler(left, right));
+                var comparison = StringComparatorLibrary.Compare(
+                    left,
+                    right,
+                    profile.GivenNameComparators,
+                    profile);
+                if (comparison.Similarity > best.Similarity)
+                {
+                    best = comparison;
+                }
             }
         }
 
-        return best;
+        return new FieldComparison(best.Similarity, best.Comparator, best.Detail, false);
     }
 
-    private static double CompareBirthDates(DateOnly? query, DateOnly? candidate)
+    private static FieldComparison CompareBirthDates(DateOnly? query, DateOnly? candidate)
     {
         if (!query.HasValue || !candidate.HasValue)
         {
-            return 0;
+            return FieldComparison.Missing("exact/day-month-transposition");
         }
 
         if (query.Value == candidate.Value)
         {
-            return 1;
+            return new FieldComparison(1, "exact", null, false);
         }
 
-        return query.Value.Year == candidate.Value.Year &&
-               query.Value.Day == candidate.Value.Month &&
-               query.Value.Month == candidate.Value.Day
-            ? 0.5
-            : 0;
+        var transposed = query.Value.Year == candidate.Value.Year &&
+                         query.Value.Day == candidate.Value.Month &&
+                         query.Value.Month == candidate.Value.Day;
+        return new FieldComparison(
+            transposed ? 0.5 : 0,
+            transposed ? "day-month-transposition" : "exact",
+            null,
+            false);
     }
 
-    private static double CompareAddresses(
+    private static FieldComparison CompareAddresses(
         IReadOnlyList<NormalisedAddress> query,
         IReadOnlyList<NormalisedAddress> candidate)
     {
+        if (query.Count == 0 || candidate.Count == 0)
+        {
+            return FieldComparison.Missing("postcode/token-jaccard");
+        }
+
         var best = 0.0;
+        var comparator = "token-jaccard";
         foreach (var left in query)
         {
             foreach (var right in candidate)
@@ -216,32 +286,55 @@ public sealed class WeightedIdentityMatcher
                             ? 0.6
                             : 0;
                 var addressScore = StringSimilarity.TokenJaccard(left.AddressTokens, right.AddressTokens);
-                best = Math.Max(best, Math.Max(postcodeScore, addressScore));
+                var pairBest = Math.Max(postcodeScore, addressScore);
+                if (pairBest > best)
+                {
+                    best = pairBest;
+                    comparator = postcodeScore >= addressScore
+                        ? postcodeScore == 1 ? "postcode-exact" : "postcode-sector"
+                        : "token-jaccard";
+                }
             }
         }
 
-        return best;
+        return new FieldComparison(best, comparator, null, false);
     }
 
-    private static double CompareTelecoms(
+    private static FieldComparison CompareTelecoms(
         IReadOnlyList<NormalisedTelecom> query,
-        IReadOnlyList<NormalisedTelecom> candidate) =>
-        query.Any(left => candidate.Any(right =>
-            left.System == right.System &&
-            string.Equals(left.Value, right.Value, StringComparison.Ordinal)))
-            ? 1
-            : 0;
+        IReadOnlyList<NormalisedTelecom> candidate)
+    {
+        if (query.Count == 0 || candidate.Count == 0)
+        {
+            return FieldComparison.Missing("normalised-exact");
+        }
 
-    private static double CompareGender(AdministrativeGender query, AdministrativeGender candidate) =>
-        query != AdministrativeGender.Unknown &&
-        candidate != AdministrativeGender.Unknown &&
-        query == candidate
-            ? 1
-            : 0;
+        var matches = query.Any(left => candidate.Any(right =>
+            left.System == right.System &&
+            string.Equals(left.Value, right.Value, StringComparison.Ordinal)));
+        return new FieldComparison(matches ? 1 : 0, "normalised-exact", null, false);
+    }
+
+    private static FieldComparison CompareGender(
+        AdministrativeGender query,
+        AdministrativeGender candidate) =>
+        query == AdministrativeGender.Unknown || candidate == AdministrativeGender.Unknown
+            ? FieldComparison.Missing("exact")
+            : new FieldComparison(query == candidate ? 1 : 0, "exact", null, false);
 
     private readonly record struct IdentifierAssessment(
         bool HasCertainIdentifier,
         bool HasAuthoritativeConflict);
+
+    private readonly record struct FieldComparison(
+        double Similarity,
+        string Comparator,
+        string? Detail,
+        bool IsMissing)
+    {
+        public static FieldComparison Missing(string comparator) =>
+            new(0, comparator, null, true);
+    }
 }
 
 public sealed record PreparedIdentityCandidate(

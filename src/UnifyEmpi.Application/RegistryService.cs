@@ -922,6 +922,8 @@ public sealed class RegistryService(
         return new ResolutionConfigurationView(
             profile.Version,
             profile.Weights,
+            profile.Comparators,
+            profile.ProbabilityModel,
             profile.PossibleThreshold,
             profile.ProbableThreshold,
             profile.MaximumCandidates,

@@ -91,7 +91,10 @@ export default defineConfig({
 				},
 				{
 					label: 'Matching',
-					items: [{ label: 'Matching and blocking rules', slug: 'matching/rules' }],
+					items: [
+						{ label: 'Matching and blocking rules', slug: 'matching/rules' },
+						{ label: 'Assurance and calibration', slug: 'guides/matching-assurance' },
+					],
 				},
 				{
 					label: 'Architecture',
