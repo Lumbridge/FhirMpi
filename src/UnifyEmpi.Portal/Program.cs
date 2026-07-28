@@ -204,6 +204,13 @@ builder.Services.AddAuthorizationBuilder()
         policy.RequireClaim("tenant_id");
         policy.RequireAssertion(context =>
             PortalPermissions.HasAny(context.User, PortalPermissions.ConfigurationWrite));
+    })
+    .AddPolicy("AdminAccess", policy =>
+    {
+        policy.RequireAuthenticatedUser();
+        policy.RequireClaim("tenant_id");
+        policy.RequireAssertion(context =>
+            PortalPermissions.HasAny(context.User, PortalPermissions.Admin));
     });
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents(options =>
@@ -262,6 +269,7 @@ builder.Services.AddSingleton<IReadOnlyDictionary<TenantId, TenantMatchingConfig
     tenantConfigurations);
 builder.Services.AddSingleton<ITenantConfigurationProvider, StoredTenantConfigurationProvider>();
 builder.Services.AddSingleton<RegistryService>();
+builder.Services.AddSingleton<MatchingAssuranceService>();
 builder.Services.AddHostedService<PortalRegistryStartupService>();
 builder.Services.AddHostedService<DevelopmentDataSeeder>();
 builder.Services.AddHealthChecks()

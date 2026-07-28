@@ -33,11 +33,15 @@ HMAC blocking tags and review errors, start with
 - **Native HL7v2 ingestion:** MLLP support for ADT A01, A04, A08, A28, A31, A40, and A47 messages from HL7 versions 2.3.1, 2.4, and 2.5.1.
 - **Safe, explainable matching:** configurable blocking rounds, field weights and
   thresholds; NHS-number validation; HMAC-protected candidate indexes; field-level
-  evidence; and no population-wide scans.
+  evidence; and no population scan or unbounded fallback in online match paths.
+- **Matching assurance:** governed ground-truth recall and precision reporting,
+  versioned comparator and nickname profiles, and held-out Fellegi–Sunter calibration
+  that never activates a model automatically.
 - **Enterprise operations portal:** tenant dashboard, optional governed create/update
   for a separately configured UI-managed source, patient registry search, explainable
   duplicate workbench, governed merge and source-level unlink/split workflows, review
-  queue, source trust, audited policy configuration, and audit search.
+  queue, source trust, audited policy configuration, audit search, and an admin-only
+  matching-assurance workbench.
 - **Review workflow:** probable matches create review cases that authorised reviewers can inspect, link, reject, correct, or close as superseded when an identity is replaced or its evidence changes. Tenant-configurable dual approval defaults to two distinct reviewers, with no self-approval.
 - **Multi-tenant isolation:** every identity, query, decision, receipt, and audit event is bound to a trusted tenant and source-system context.
 - **Replaceable storage:** an ephemeral in-memory provider for development and a durable GCP Healthcare API provider are included behind the same storage contract.
@@ -108,7 +112,9 @@ Out of the box, authorised staff can:
 - approve or reject work with a required rationale and optimistic concurrency protection;
 - recognise outdated reviews automatically, explain redirects or version changes, and close superseded work with immutable audit evidence;
 - inspect source authority and trust, audit events, operational health, and review workload; and
-- update non-secret tenant matching policy with an immutable audit event.
+- update non-secret tenant matching policy with an immutable audit event; and
+- evaluate approved tab-separated match/non-match labels and produce a held-out
+  calibration report when the identity carries `mpi.admin`.
 
 Run it directly with:
 
@@ -186,7 +192,7 @@ See [the benchmark guide](https://lumbridge.github.io/UnifyEMPI/development/perf
   ground-truth blocking recall and precision reports, comparator and nickname
   configuration, and governed Fellegi–Sunter calibration.
 - [Core paths and processing model](https://lumbridge.github.io/UnifyEMPI/architecture/core-paths/): annotated diagrams for
-  ingestion, matching, merge, split, survivorship and tenant isolation.
+  online ingest and matching, maintenance, assurance, governance and tenant isolation.
 - [Architecture](https://lumbridge.github.io/UnifyEMPI/architecture/overview/): dependency boundaries, materialisation and the
   replaceable provider contract.
 - [Configuration](https://lumbridge.github.io/UnifyEMPI/reference/configuration/): API, portal, OIDC, tenant, HMAC and MLLP
@@ -199,8 +205,9 @@ See [the benchmark guide](https://lumbridge.github.io/UnifyEMPI/development/perf
   write and reviewer-operation examples.
 - [Contributing](CONTRIBUTING.md) and [security policy](SECURITY.md): development
   expectations and private vulnerability reporting.
-- [Storage-provider ADR](https://lumbridge.github.io/UnifyEMPI/architecture/decisions/0001-modular-monolith-and-provider-contract/): why
-  the modular monolith and provider contract were selected.
+- [Architecture decisions](https://lumbridge.github.io/UnifyEMPI/architecture/decisions/0001-modular-monolith-and-provider-contract/):
+  the modular monolith and provider contract, durable maintenance jobs and external
+  FHIR boundary, and governed matching assurance and calibration.
 
 ## Moving to production
 

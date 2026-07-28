@@ -108,6 +108,14 @@ export default defineConfig({
 									label: 'ADR 0001: Modular monolith',
 									slug: 'architecture/decisions/0001-modular-monolith-and-provider-contract',
 								},
+								{
+									label: 'ADR 0002: Maintenance jobs',
+									slug: 'architecture/decisions/0002-durable-maintenance-jobs-and-fhir-source-boundary',
+								},
+								{
+									label: 'ADR 0003: Matching assurance',
+									slug: 'architecture/decisions/0003-governed-matching-assurance-and-calibration',
+								},
 							],
 						},
 					],

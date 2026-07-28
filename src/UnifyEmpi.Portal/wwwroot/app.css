@@ -2458,6 +2458,240 @@ progress {
     border-color: var(--blue-700);
 }
 
+.assurance-profile-strip {
+    display: grid;
+    margin-bottom: 1rem;
+    background: var(--navy-900);
+    border-radius: 0.85rem;
+    box-shadow: var(--shadow-sm);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.assurance-profile-strip div {
+    padding: 0.9rem 1rem;
+    border-right: 1px solid rgb(255 255 255 / 14%);
+}
+
+.assurance-profile-strip div:last-child {
+    border-right: 0;
+}
+
+.assurance-profile-strip span,
+.assurance-profile-strip strong {
+    display: block;
+}
+
+.assurance-profile-strip span {
+    color: #bbd7ea;
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.assurance-profile-strip strong {
+    margin-top: 0.15rem;
+    color: #fff;
+    font-size: 0.93rem;
+}
+
+.assurance-layout {
+    display: grid;
+    margin-top: 1rem;
+    align-items: start;
+    gap: 1rem;
+    grid-template-columns: minmax(0, 1.25fr) minmax(19rem, 0.75fr);
+}
+
+.assurance-input,
+.assurance-action-card,
+.assurance-model-output {
+    min-width: 0;
+    padding: 1.25rem;
+}
+
+.assurance-actions-column {
+    display: grid;
+    gap: 1rem;
+}
+
+.assurance-action-card p:not(.eyebrow) {
+    color: var(--muted);
+    font-size: 0.88rem;
+}
+
+.assurance-action-card .button {
+    width: 100%;
+    margin-top: 0.5rem;
+    justify-content: center;
+}
+
+.assurance-labels,
+.assurance-model-json {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    font-family: "Cascadia Mono", Consolas, monospace;
+    font-size: 0.78rem;
+    line-height: 1.55;
+    white-space: pre;
+}
+
+.assurance-sample {
+    display: grid;
+    padding: 0.75rem;
+    overflow-x: auto;
+    color: var(--navy-900);
+    background: var(--surface-blue);
+    border: 1px solid #c8e2f1;
+    border-radius: 0.5rem;
+    gap: 0.25rem;
+}
+
+.assurance-sample code {
+    min-width: max-content;
+    font-size: 0.72rem;
+}
+
+.assurance-results {
+    margin-top: 1.5rem;
+}
+
+.assurance-metrics-grid {
+    display: grid;
+    margin: 1rem 0;
+    gap: 0.75rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.assurance-metrics-grid div {
+    padding: 0.85rem 1rem;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 0.65rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.assurance-metrics-grid strong,
+.assurance-metrics-grid span {
+    display: block;
+}
+
+.assurance-metrics-grid strong {
+    color: var(--navy-950);
+    font-size: 1.35rem;
+}
+
+.assurance-metrics-grid span {
+    color: var(--muted);
+    font-size: 0.72rem;
+}
+
+.assurance-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.assurance-table {
+    width: 100%;
+    min-width: 48rem;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.assurance-table caption {
+    padding: 0.75rem 1rem;
+    color: var(--navy-900);
+    font-weight: 800;
+    text-align: left;
+}
+
+.assurance-table th,
+.assurance-table td {
+    padding: 0.65rem 0.8rem;
+    border-top: 1px solid var(--line);
+    text-align: left;
+    white-space: nowrap;
+}
+
+.assurance-table th {
+    color: var(--muted);
+    background: var(--surface-muted);
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.assurance-table tbody tr:hover {
+    background: var(--surface-blue);
+}
+
+.assurance-field-grid {
+    display: grid;
+    margin-top: 1rem;
+    gap: 0.75rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.assurance-field-card {
+    padding: 1rem;
+}
+
+.assurance-field-card dl {
+    display: grid;
+    margin: 0;
+    gap: 0.4rem;
+}
+
+.assurance-field-card dl div {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.assurance-field-card dt {
+    color: var(--muted);
+}
+
+.assurance-field-card dd {
+    margin: 0;
+    color: var(--navy-950);
+    font-weight: 800;
+}
+
+.assurance-errors {
+    margin-top: 1rem;
+    padding: 0;
+    overflow: hidden;
+}
+
+.assurance-errors summary {
+    padding: 1rem 1.25rem;
+    color: var(--navy-900);
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.assurance-errors .assurance-table-wrap {
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.assurance-model-output {
+    display: grid;
+    margin-top: 1rem;
+    align-items: start;
+    gap: 1rem;
+    grid-template-columns: minmax(14rem, 0.6fr) minmax(0, 1.4fr);
+}
+
 @media (max-width: 1200px) {
     .blocking-rule-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2474,6 +2708,10 @@ progress {
 
     .metric-grid {
         grid-template-columns: repeat(2, 1fr);
+    }
+
+    .assurance-layout {
+        grid-template-columns: 1fr;
     }
 
     .search-fields {
@@ -2543,6 +2781,23 @@ progress {
     .detail-layout,
     .decision-layout,
     .settings-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .assurance-profile-strip,
+    .assurance-metrics-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .assurance-profile-strip div:nth-child(2) {
+        border-right: 0;
+    }
+
+    .assurance-profile-strip div:nth-child(-n + 2) {
+        border-bottom: 1px solid rgb(255 255 255 / 14%);
+    }
+
+    .assurance-model-output {
         grid-template-columns: 1fr;
     }
 
@@ -2623,6 +2878,10 @@ progress {
     .source-overview,
     .source-cards {
         grid-template-columns: 1fr;
+    }
+
+    .assurance-field-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .search-fields,
@@ -2738,6 +2997,22 @@ progress {
 
     .two-column-fields {
         grid-template-columns: 1fr;
+    }
+
+    .assurance-profile-strip,
+    .assurance-metrics-grid,
+    .assurance-field-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .assurance-profile-strip div,
+    .assurance-profile-strip div:nth-child(2) {
+        border-right: 0;
+        border-bottom: 1px solid rgb(255 255 255 / 14%);
+    }
+
+    .assurance-profile-strip div:last-child {
+        border-bottom: 0;
     }
 
     .form-grid {

@@ -18,7 +18,7 @@ for broader production operation.
 | Review | Explainable probable-match cases, merge, reject, unlink/split, stale-case detection and dual approval |
 | Tenancy | Trusted tenant and source context on every identity, query, receipt, decision and audit event |
 | Storage | Development in-memory provider and durable GCP Healthcare API R4 provider behind one contract |
-| Operations | Blazor portal, source trust, policy editing, audit search, health checks and OpenTelemetry |
+| Operations | Blazor portal with duplicate, review, split, audit, configuration and admin-only matching-assurance workbenches; health checks and OpenTelemetry |
 | Maintenance | Durable online re-index jobs, scheduled population reconciliation and incremental external FHIR Patient ingestion |
 | Deployment | Containers, Compose, Helm, Terraform foundations and a reproducible GCP demo |
 

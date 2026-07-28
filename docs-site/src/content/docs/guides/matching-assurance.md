@@ -8,6 +8,29 @@ labels and can derive an optional Fellegi–Sunter probability model. These oper
 are administrative assurance tools. They do not merge patients, change source records,
 or silently activate a trained model.
 
+## Operations portal workbench
+
+An authorised administrator can run the same operations from **08 Match assurance** in
+the Blazor operations portal. Paste tab-separated labels using these five columns:
+
+```text
+leftSource	leftLocalId	rightSource	rightLocalId	isMatch
+health-board-a	record-100	wds	record-900	match
+health-board-a	record-101	wds	record-901	non-match
+```
+
+The header is optional; accepted outcomes are `match`/`non-match`, `true`/`false` or
+`1`/`0`. The workbench shows the active matching, comparator and score-method versions
+before execution. Evaluation displays threshold metrics, field diagnostics and bounded
+error references. Calibration displays held-out quality, candidate thresholds and the
+complete model JSON for governed configuration change. It never provides an activation
+button.
+
+The signed-in identity must carry `mpi.admin`, and the portal OIDC client must request
+and be allowed that scope. Do not add `mpi.admin` merely to expose the page to ordinary
+reviewers; use the API from a separately controlled assurance process when local
+separation of duties requires it.
+
 ## Ground-truth contract
 
 Labels refer to source records already present in the tenant registry. The request does

@@ -1,0 +1,513 @@
+@page "/assurance"
+@attribute [Authorize(Policy = "AdminAccess")]
+@inject MatchingAssuranceService MatchingAssurance
+@inject RegistryService Registry
+@inject PortalActorContextFactory Actors
+
+<PageTitle>Match assurance · UnifyEMPI</PageTitle>
+
+<PageHeader
+    Eyebrow="Clinical safety evidence"
+    Title="Matching assurance workbench"
+    Description="Measure the active tenant profile against governed clerical labels and produce a held-out Fellegi–Sunter calibration model." />
+
+@if (Configuration is not null)
+{
+    <section class="assurance-profile-strip" aria-label="Active matching profile">
+        <div>
+            <span>Active profile</span>
+            <strong>@Configuration.MatchingProfileVersion</strong>
+        </div>
+        <div>
+            <span>Score method</span>
+            <strong>@(Configuration.ProbabilityModel is null ? "Weighted similarity" : "Fellegi–Sunter")</strong>
+        </div>
+        <div>
+            <span>Comparator profile</span>
+            <strong>@Configuration.Comparators.Version</strong>
+        </div>
+        <div>
+            <span>Decision bands</span>
+            <strong>
+                @Configuration.PossibleThreshold.ToString("P0", CultureInfo.InvariantCulture)
+                /
+                @Configuration.ProbableThreshold.ToString("P0", CultureInfo.InvariantCulture)
+            </strong>
+        </div>
+    </section>
+}
+
+<AlertMessage
+    Tone="warning"
+    Title="Governance boundary"
+    Message="Use approved clerical labels containing references to records already in this tenant. Calibration reports a model for review; it never activates or changes patient links." />
+
+<div class="assurance-layout">
+    <section class="panel assurance-input">
+        <p class="eyebrow">Labelled evidence</p>
+        <h2>Ground-truth pairs</h2>
+        <div class="field">
+            <label for="dataset-id">Dataset ID</label>
+            <input id="dataset-id"
+                   class="input"
+                   maxlength="128"
+                   @bind="DatasetId"
+                   @bind:event="oninput" />
+            <small>Use a governed version such as clerical-review-2026-q3.</small>
+        </div>
+        <div class="field">
+            <label for="ground-truth-pairs">Tab-separated labels</label>
+            <textarea id="ground-truth-pairs"
+                      class="input textarea assurance-labels"
+                      rows="13"
+                      spellcheck="false"
+                      @bind="Labels"
+                      @bind:event="oninput"></textarea>
+            <small>
+                Columns: leftSource, leftLocalId, rightSource, rightLocalId, isMatch.
+                A header row is optional. Include both matches and non-matches.
+            </small>
+        </div>
+        <div class="assurance-sample" aria-label="Tab-separated example">
+            <code>leftSource&#9;leftLocalId&#9;rightSource&#9;rightLocalId&#9;isMatch</code>
+            <code>source-a&#9;record-100&#9;source-b&#9;record-900&#9;match</code>
+        </div>
+    </section>
+
+    <div class="assurance-actions-column">
+        <section class="panel assurance-action-card">
+            <p class="eyebrow">Report</p>
+            <h2>Evaluate active profile</h2>
+            <p>
+                Calculate blocking recall, confusion matrices, confidence intervals,
+                field discrimination and bounded error examples.
+            </p>
+            <div class="two-column-fields">
+                <div class="field">
+                    <label for="thresholds">Thresholds</label>
+                    <input id="thresholds"
+                           class="input"
+                           @bind="Thresholds"
+                           @bind:event="oninput" />
+                    <small>Comma-separated values from 0 to 1.</small>
+                </div>
+                <div class="field">
+                    <label for="error-examples">Error examples</label>
+                    <input id="error-examples"
+                           class="input"
+                           type="number"
+                           min="0"
+                           max="100"
+                           @bind="MaximumErrorExamples" />
+                </div>
+            </div>
+            <button class="button button-primary"
+                    type="button"
+                    disabled="@IsBusy"
+                    @onclick="EvaluateAsync">
+                @(IsBusy ? "Working…" : "Run evaluation")
+            </button>
+        </section>
+
+        <section class="panel assurance-action-card">
+            <p class="eyebrow">Calibration</p>
+            <h2>Fit probability model</h2>
+            <div class="field">
+                <label for="model-version">Model version</label>
+                <input id="model-version"
+                       class="input"
+                       maxlength="64"
+                       @bind="ModelVersion"
+                       @bind:event="oninput" />
+            </div>
+            <div class="two-column-fields">
+                <div class="field">
+                    <label for="prior">Production prior</label>
+                    <input id="prior"
+                           class="input"
+                           type="number"
+                           min="0.000001"
+                           max="0.999999"
+                           step="0.0001"
+                           @bind="PriorMatchProbability" />
+                </div>
+                <div class="field">
+                    <label for="target-precision">Target precision</label>
+                    <input id="target-precision"
+                           class="input"
+                           type="number"
+                           min="0.01"
+                           max="1"
+                           step="0.01"
+                           @bind="TargetPrecision" />
+                </div>
+                <div class="field">
+                    <label for="validation-fraction">Validation fraction</label>
+                    <input id="validation-fraction"
+                           class="input"
+                           type="number"
+                           min="0.1"
+                           max="0.5"
+                           step="0.05"
+                           @bind="ValidationFraction" />
+                </div>
+                <div class="field">
+                    <label for="smoothing">Additive smoothing</label>
+                    <input id="smoothing"
+                           class="input"
+                           type="number"
+                           min="0.01"
+                           max="100"
+                           step="0.1"
+                           @bind="Smoothing" />
+                </div>
+            </div>
+            <button class="button button-secondary"
+                    type="button"
+                    disabled="@IsBusy"
+                    @onclick="CalibrateAsync">
+                @(IsBusy ? "Working…" : "Run held-out calibration")
+            </button>
+        </section>
+    </div>
+</div>
+
+@if (OperationError is not null)
+{
+    <AlertMessage Tone="danger" Title="Assurance operation failed" Message="@OperationError" />
+}
+
+@if (Evaluation is not null)
+{
+    <section class="assurance-results" aria-labelledby="evaluation-heading">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Evaluation complete</p>
+                <h2 id="evaluation-heading">@Evaluation.DatasetId</h2>
+                <p class="muted">
+                    @Evaluation.LabelCount labels · digest
+                    <code>@Evaluation.DatasetDigest[..12]</code> ·
+                    @Evaluation.ScoreMethod
+                </p>
+            </div>
+            <div class="resolution-stat">
+                <strong>@FormatMetric(Evaluation.BlockingRecall)</strong>
+                <span>blocking recall</span>
+            </div>
+        </div>
+
+        <div class="assurance-metrics-grid">
+            <div><strong>@Evaluation.MatchCount</strong><span>labelled matches</span></div>
+            <div><strong>@Evaluation.NonMatchCount</strong><span>labelled non-matches</span></div>
+            <div><strong>@Evaluation.BlockingRetrievedMatchCount</strong><span>matches retrieved by blocking</span></div>
+            <div><strong>@Evaluation.MisclassifiedPairs.Count</strong><span>reported errors</span></div>
+        </div>
+
+        <div class="assurance-table-wrap">
+            <table class="assurance-table">
+                <caption>Classification quality by threshold</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Threshold</th>
+                        <th scope="col">TP</th>
+                        <th scope="col">FP</th>
+                        <th scope="col">TN</th>
+                        <th scope="col">FN</th>
+                        <th scope="col">Precision</th>
+                        <th scope="col">Recall</th>
+                        <th scope="col">F1</th>
+                        <th scope="col">MCC</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var metric in Evaluation.Thresholds)
+                    {
+                        <tr>
+                            <td>@metric.Threshold.ToString("P1", CultureInfo.InvariantCulture)</td>
+                            <td>@metric.TruePositives</td>
+                            <td>@metric.FalsePositives</td>
+                            <td>@metric.TrueNegatives</td>
+                            <td>@metric.FalseNegatives</td>
+                            <td>@FormatMetric(metric.Precision)</td>
+                            <td>@FormatMetric(metric.Recall)</td>
+                            <td>@FormatMetric(metric.F1Score)</td>
+                            <td>@FormatDecimal(metric.MatthewsCorrelationCoefficient)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="assurance-field-grid">
+            @foreach (var field in Evaluation.Fields)
+            {
+                <article class="panel assurance-field-card">
+                    <p class="eyebrow">@FieldLabel(field.Field)</p>
+                    <dl>
+                        <div>
+                            <dt>Match mean</dt>
+                            <dd>@FormatMetric(field.MeanMatchSimilarity)</dd>
+                        </div>
+                        <div>
+                            <dt>Non-match mean</dt>
+                            <dd>@FormatMetric(field.MeanNonMatchSimilarity)</dd>
+                        </div>
+                        <div>
+                            <dt>Observed</dt>
+                            <dd>@field.MatchObserved / @field.NonMatchObserved</dd>
+                        </div>
+                    </dl>
+                </article>
+            }
+        </div>
+
+        @if (Evaluation.MisclassifiedPairs.Count > 0)
+        {
+            <details class="panel assurance-errors">
+                <summary>Inspect bounded misclassified-pair references</summary>
+                <div class="assurance-table-wrap">
+                    <table class="assurance-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Left</th>
+                                <th scope="col">Right</th>
+                                <th scope="col">Expected</th>
+                                <th scope="col">Score</th>
+                                <th scope="col">Blocked</th>
+                                <th scope="col">Conflict</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var error in Evaluation.MisclassifiedPairs)
+                            {
+                                <tr>
+                                    <td><code>@error.Left</code></td>
+                                    <td><code>@error.Right</code></td>
+                                    <td>@(error.ExpectedMatch ? "Match" : "Non-match")</td>
+                                    <td>@error.Score.ToString("P1", CultureInfo.InvariantCulture)</td>
+                                    <td>@(error.SharedBlockingKey ? "Yes" : "No")</td>
+                                    <td>@(error.HasHardConflict ? "Yes" : "No")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </details>
+        }
+    </section>
+}
+
+@if (Calibration is not null)
+{
+    <section class="assurance-results" aria-labelledby="calibration-heading">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Calibration complete · not activated</p>
+                <h2 id="calibration-heading">@Calibration.Model.Version</h2>
+                <p class="muted">
+                    Training @Calibration.TrainingMatchCount / @Calibration.TrainingNonMatchCount ·
+                    validation @Calibration.ValidationMatchCount / @Calibration.ValidationNonMatchCount
+                </p>
+            </div>
+            <StatusBadge Tone="warning" Label="Governance review required" />
+        </div>
+
+        <div class="assurance-metrics-grid">
+            <div>
+                <strong>@Calibration.ValidationBrierScore.ToString("0.0000", CultureInfo.InvariantCulture)</strong>
+                <span>Brier score</span>
+            </div>
+            <div>
+                <strong>@Calibration.ValidationLogLoss.ToString("0.0000", CultureInfo.InvariantCulture)</strong>
+                <span>log loss</span>
+            </div>
+            <div>
+                <strong>@FormatMetric(Calibration.RecommendedPossibleThreshold)</strong>
+                <span>possible threshold</span>
+            </div>
+            <div>
+                <strong>@FormatMetric(Calibration.RecommendedProbableThreshold)</strong>
+                <span>probable threshold</span>
+            </div>
+        </div>
+
+        <section class="panel assurance-model-output">
+            <div>
+                <p class="eyebrow">Deployment artefact</p>
+                <h3>Reviewed configuration model</h3>
+                <p>
+                    Copy this object to <code>MatchingRules:FellegiSunter</code> only
+                    after approval. Assign a new matching-profile version and deploy it
+                    consistently to every host.
+                </p>
+            </div>
+            <textarea class="input textarea assurance-model-json"
+                      rows="18"
+                      readonly>@CalibrationModelJson</textarea>
+        </section>
+    </section>
+}
+
+@code {
+    private const string SampleLabels =
+        "leftSource\tleftLocalId\trightSource\trightLocalId\tisMatch\n";
+    private static readonly System.Text.Json.JsonSerializerOptions ModelJsonOptions =
+        new()
+        {
+            WriteIndented = true,
+            Converters =
+            {
+                new System.Text.Json.Serialization.JsonStringEnumConverter()
+            }
+        };
+
+    private ResolutionConfigurationView? Configuration { get; set; }
+
+    private string DatasetId { get; set; } = "clerical-review-version";
+
+    private string Labels { get; set; } = SampleLabels;
+
+    private string Thresholds { get; set; } = "0.62, 0.82";
+
+    private int MaximumErrorExamples { get; set; } = 25;
+
+    private string ModelVersion { get; set; } = "fs-reviewed-version";
+
+    private double PriorMatchProbability { get; set; } = 0.001;
+
+    private double TargetPrecision { get; set; } = 0.99;
+
+    private double ValidationFraction { get; set; } = 0.2;
+
+    private double Smoothing { get; set; } = 1;
+
+    private bool IsBusy { get; set; }
+
+    private string? OperationError { get; set; }
+
+    private GroundTruthEvaluationReport? Evaluation { get; set; }
+
+    private FellegiSunterCalibrationReport? Calibration { get; set; }
+
+    private string CalibrationModelJson =>
+        Calibration is null
+            ? string.Empty
+            : System.Text.Json.JsonSerializer.Serialize(
+                Calibration.Model,
+                ModelJsonOptions);
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Configuration = await Registry.GetResolutionConfigurationAsync(
+                await Actors.CreateAsync(),
+                CancellationToken.None);
+        }
+        catch (RegistryException exception)
+        {
+            OperationError = exception.Message;
+        }
+    }
+
+    private async Task EvaluateAsync()
+    {
+        await RunAsync(async (actor, pairs) =>
+        {
+            Evaluation = await MatchingAssurance.EvaluateAsync(
+                actor,
+                new EvaluateGroundTruthCommand(
+                    DatasetId,
+                    pairs,
+                    ParseThresholds(),
+                    MaximumErrorExamples),
+                CancellationToken.None);
+            Calibration = null;
+        });
+    }
+
+    private async Task CalibrateAsync()
+    {
+        await RunAsync(async (actor, pairs) =>
+        {
+            Calibration = await MatchingAssurance.CalibrateAsync(
+                actor,
+                new CalibrateFellegiSunterCommand(
+                    DatasetId,
+                    ModelVersion,
+                    pairs,
+                    PriorMatchProbability,
+                    Smoothing,
+                    ValidationFraction,
+                    TargetPrecision),
+                CancellationToken.None);
+            Evaluation = null;
+        });
+    }
+
+    private async Task RunAsync(
+        Func<ActorContext, IReadOnlyList<GroundTruthPair>, Task> operation)
+    {
+        IsBusy = true;
+        OperationError = null;
+        try
+        {
+            var pairs = GroundTruthTsvParser.Parse(Labels);
+            await operation(await Actors.CreateAsync(), pairs);
+        }
+        catch (Exception exception) when (
+            exception is RegistryException or
+            FormatException or
+            ArgumentException or
+            HttpRequestException)
+        {
+            OperationError = exception.Message;
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private IReadOnlyList<double> ParseThresholds()
+    {
+        var values = Thresholds.Split(
+                ',',
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(value =>
+                double.TryParse(
+                    value,
+                    NumberStyles.Float,
+                    CultureInfo.InvariantCulture,
+                    out var threshold)
+                    ? threshold
+                    : throw new FormatException(
+                        $"Threshold '{value}' is not a decimal value."))
+            .ToArray();
+        return values.Length == 0
+            ? throw new FormatException("Enter at least one evaluation threshold.")
+            : values;
+    }
+
+    private static string FormatMetric(double? value) =>
+        value.HasValue
+            ? value.Value.ToString("P1", CultureInfo.InvariantCulture)
+            : "—";
+
+    private static string FormatDecimal(double? value) =>
+        value.HasValue
+            ? value.Value.ToString("0.000", CultureInfo.InvariantCulture)
+            : "—";
+
+    private static string FieldLabel(string field) =>
+        field switch
+        {
+            "family" => "Family name",
+            "given" => "Given names",
+            "birthDate" => "Date of birth",
+            "address" => "Address",
+            "telecom" => "Telecom",
+            "gender" => "Gender",
+            _ => field
+        };
+}

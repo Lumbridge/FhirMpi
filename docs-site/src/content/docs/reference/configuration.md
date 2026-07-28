@@ -169,6 +169,12 @@ The portal uses a generic OpenID Connect authorisation-code flow with PKCE and a
 
 Supply the same `RegistryProvider`, `GcpHealthcare` and `Tenants` sections used by the API. HMAC material and the OIDC client secret must come from a secret store. `DataProtectionKeyPath` is mandatory outside development when OIDC is enabled and must point to encrypted, durable storage shared by all portal replicas.
 
+The example intentionally omits `mpi.admin`. To expose **08 Match assurance**, add
+`mpi.admin` to `PortalAuthentication:Scopes`, register it for the OIDC client and grant
+it only to assurance administrators. The route and navigation item both require the
+portal's admin policy. Evaluation and calibration remain available through the
+admin-scoped API when separation of duties calls for a non-interactive workflow.
+
 `OverviewLoadTimeoutSeconds` bounds the dashboard's provider calls between 5 and 120 seconds. A timeout preserves the interactive circuit, shows a retry action beside the failure, and prevents a transient provider delay from leaving the dashboard in a permanent loading state.
 
 `PrerenderInteractiveComponents=false` keeps the interactive portal from reconciling
@@ -198,7 +204,7 @@ Portal permissions are deliberately separate:
 - `mpi.operations`: operational summary;
 - `mpi.config.read`: view tenant source and matching policy;
 - `mpi.config.write`: make audited non-secret policy changes; and
-- `mpi.admin`: administrative superset.
+- `mpi.admin`: administrative superset and access to the matching-assurance workbench.
 
 The interactive session never accepts tenant or source overrides from a route, form or header. The portal derives its managed source from deployment configuration and gives it to the application layer only after checking `mpi.patient.write`. Source-system credentials for external systems belong to the API and MLLP hosts, not to portal users.
 
