@@ -268,7 +268,9 @@ if (tenantConfigurations.Count == 0)
 builder.Services.AddSingleton<IReadOnlyDictionary<TenantId, TenantMatchingConfiguration>>(
     tenantConfigurations);
 builder.Services.AddSingleton<ITenantConfigurationProvider, StoredTenantConfigurationProvider>();
+builder.Services.AddSingleton<IExternalPatientSourceRegistry, EmptyExternalPatientSourceRegistry>();
 builder.Services.AddSingleton<RegistryService>();
+builder.Services.AddSingleton<RegistryMaintenanceService>();
 builder.Services.AddSingleton<MatchingAssuranceService>();
 builder.Services.AddHostedService<PortalRegistryStartupService>();
 builder.Services.AddHostedService<DevelopmentDataSeeder>();

@@ -12,7 +12,7 @@ UnifyEMPI is a high-performance, multi-tenant master patient index (MPI) foundat
 
 - `UnifyEmpi.Api`: FHIR R4, SMART discovery, and reviewer APIs.
 - `UnifyEmpi.Hl7v2.Host`: native MLLP ingestion for ADT identity events.
-- `UnifyEmpi.Portal`: an enterprise operations portal using Blazor Interactive Server and generic OIDC.
+- `UnifyEmpi.Portal`: an enterprise operations portal with generic OIDC.
 
 The registry is hybrid. Source systems remain authoritative for their Patient snapshots; UnifyEMPI owns enterprise UUIDv7 identities, Person links, candidate indexes, canonical Patient views, review cases, receipts, and audit evidence.
 

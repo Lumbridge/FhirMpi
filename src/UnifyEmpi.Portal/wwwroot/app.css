@@ -1248,6 +1248,16 @@ dd {
     background: var(--blue-700);
 }
 
+.status-danger {
+    color: var(--danger);
+    background: var(--danger-bg);
+    border-color: #efb7b2;
+}
+
+.status-danger .status-indicator {
+    background: var(--danger);
+}
+
 .alert {
     margin-bottom: 1.25rem;
     padding: 1rem 1.15rem;
@@ -2705,6 +2715,288 @@ progress {
     grid-template-columns: minmax(14rem, 0.6fr) minmax(0, 1.4fr);
 }
 
+.maintenance-explainer {
+    display: grid;
+    margin: 1.5rem 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.maintenance-operation {
+    border-top: 4px solid var(--blue-700);
+}
+
+.maintenance-operation:last-child {
+    border-top-color: var(--cyan-500);
+}
+
+.maintenance-operation-heading {
+    display: flex;
+    margin-bottom: 1rem;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+.maintenance-operation-heading h2,
+.maintenance-operation-heading p {
+    margin-bottom: 0;
+}
+
+.maintenance-operation-number {
+    display: grid;
+    width: 2.6rem;
+    height: 2.6rem;
+    flex: 0 0 auto;
+    color: #fff;
+    background: var(--navy-900);
+    border-radius: 50%;
+    font-size: 0.78rem;
+    font-weight: 850;
+    place-items: center;
+}
+
+.maintenance-mini-flow {
+    display: grid;
+    margin: 1.25rem 0 0;
+    padding: 0;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.45rem;
+    list-style: none;
+}
+
+.maintenance-mini-flow li {
+    position: relative;
+    padding: 0.65rem 0.75rem;
+    color: var(--navy-900);
+    background: var(--surface-blue);
+    border: 1px solid #c7e2f1;
+    font-size: 0.78rem;
+    font-weight: 750;
+    text-align: center;
+}
+
+.maintenance-launcher {
+    margin-bottom: 2rem;
+}
+
+.maintenance-launch-grid {
+    display: grid;
+    align-items: end;
+    grid-template-columns: minmax(16rem, 1fr) minmax(7rem, 0.2fr) auto;
+    gap: 1rem;
+}
+
+.maintenance-launch-grid .field {
+    margin-bottom: 0;
+}
+
+.maintenance-launch-actions {
+    display: flex;
+    gap: 0.65rem;
+}
+
+.maintenance-jobs {
+    margin-top: 2rem;
+}
+
+.maintenance-job-list {
+    display: grid;
+    gap: 1rem;
+}
+
+.maintenance-job {
+    padding: 0;
+    overflow: hidden;
+}
+
+.maintenance-job-header {
+    display: flex;
+    padding: 1.35rem 1.5rem 1rem;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.maintenance-job-header h3,
+.maintenance-job-header p {
+    margin-bottom: 0;
+}
+
+.maintenance-job-status {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.maintenance-job-reason {
+    margin: 0;
+    padding: 0 1.5rem 1.1rem;
+    color: var(--muted);
+}
+
+.maintenance-activity {
+    height: 0.3rem;
+    overflow: hidden;
+    background: var(--blue-100);
+}
+
+.maintenance-activity span {
+    display: block;
+    width: 35%;
+    height: 100%;
+    background: linear-gradient(90deg, var(--blue-700), var(--cyan-500));
+    animation: maintenance-sweep 1.8s ease-in-out infinite;
+}
+
+@keyframes maintenance-sweep {
+    from {
+        transform: translateX(-110%);
+    }
+
+    to {
+        transform: translateX(320%);
+    }
+}
+
+.maintenance-phase-flow {
+    display: grid;
+    margin: 0;
+    padding: 1.4rem 1.5rem;
+    background: var(--surface-muted);
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    list-style: none;
+}
+
+.maintenance-phase {
+    position: relative;
+    min-width: 0;
+    padding-right: 1rem;
+}
+
+.maintenance-phase::after {
+    position: absolute;
+    top: 0.48rem;
+    right: 0;
+    left: 1.55rem;
+    height: 2px;
+    background: var(--line-strong);
+    content: "";
+}
+
+.maintenance-phase:last-child::after {
+    display: none;
+}
+
+.maintenance-phase-marker {
+    position: relative;
+    z-index: 1;
+    display: block;
+    width: 1rem;
+    height: 1rem;
+    margin-bottom: 0.55rem;
+    background: var(--surface);
+    border: 3px solid var(--line-strong);
+    border-radius: 50%;
+}
+
+.maintenance-phase strong,
+.maintenance-phase small {
+    display: block;
+    padding-right: 0.75rem;
+}
+
+.maintenance-phase strong {
+    color: var(--muted);
+    font-size: 0.86rem;
+}
+
+.maintenance-phase small {
+    margin-top: 0.15rem;
+    color: var(--muted);
+    font-size: 0.72rem;
+    line-height: 1.35;
+}
+
+.maintenance-phase.phase-complete::after {
+    background: var(--success);
+}
+
+.maintenance-phase.phase-complete .maintenance-phase-marker {
+    background: var(--success);
+    border-color: var(--success);
+    box-shadow: inset 0 0 0 2px #fff;
+}
+
+.maintenance-phase.phase-active .maintenance-phase-marker {
+    background: var(--blue-700);
+    border-color: var(--blue-700);
+    box-shadow: 0 0 0 4px var(--blue-100);
+}
+
+.maintenance-phase.phase-error .maintenance-phase-marker {
+    background: var(--danger);
+    border-color: var(--danger);
+    box-shadow: 0 0 0 4px var(--danger-bg);
+}
+
+.maintenance-phase.phase-complete strong,
+.maintenance-phase.phase-active strong {
+    color: var(--navy-900);
+}
+
+.maintenance-phase.phase-error strong {
+    color: var(--danger);
+}
+
+.maintenance-counter-grid {
+    display: grid;
+    padding: 1.25rem 1.5rem;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.maintenance-counter-grid div {
+    min-width: 0;
+    padding-left: 0.75rem;
+    border-left: 2px solid var(--line);
+}
+
+.maintenance-counter-grid strong,
+.maintenance-counter-grid span {
+    display: block;
+}
+
+.maintenance-counter-grid strong {
+    color: var(--navy-900);
+    font-size: 1.25rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.maintenance-counter-grid span {
+    color: var(--muted);
+    font-size: 0.72rem;
+}
+
+.maintenance-job-footer {
+    display: flex;
+    padding: 0.8rem 1.5rem;
+    color: var(--muted);
+    background: var(--surface-muted);
+    border-top: 1px solid var(--line);
+    flex-wrap: wrap;
+    gap: 0.6rem 1.25rem;
+    font-size: 0.76rem;
+}
+
+.maintenance-job-error {
+    margin: 0;
+    padding: 0.8rem 1.5rem;
+    color: var(--danger);
+    background: var(--danger-bg);
+    border-top: 1px solid #efb7b2;
+    font-weight: 700;
+}
+
 @media (max-width: 1200px) {
     .blocking-rule-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2725,6 +3017,10 @@ progress {
 
     .assurance-layout {
         grid-template-columns: 1fr;
+    }
+
+    .maintenance-counter-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 
     .search-fields {
@@ -2751,6 +3047,14 @@ progress {
 @media (max-width: 960px) {
     .portal-shell {
         grid-template-columns: minmax(0, 1fr);
+    }
+
+    .maintenance-launch-grid {
+        grid-template-columns: minmax(0, 1fr) 8rem;
+    }
+
+    .maintenance-launch-actions {
+        grid-column: 1 / -1;
     }
 
     .sidebar {
@@ -2894,6 +3198,51 @@ progress {
     }
 
     .assurance-field-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .maintenance-explainer,
+    .maintenance-launch-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .maintenance-launch-actions {
+        align-items: stretch;
+        flex-direction: column;
+        grid-column: auto;
+    }
+
+    .maintenance-job-header,
+    .maintenance-job-status {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .maintenance-phase-flow {
+        grid-template-columns: 1fr;
+    }
+
+    .maintenance-phase {
+        min-height: 4rem;
+        padding: 0 0 1.2rem 2rem;
+    }
+
+    .maintenance-phase::after {
+        top: 1rem;
+        right: auto;
+        bottom: 0;
+        left: 0.48rem;
+        width: 2px;
+        height: auto;
+    }
+
+    .maintenance-phase-marker {
+        position: absolute;
+        top: 0.15rem;
+        left: 0;
+    }
+
+    .maintenance-counter-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 

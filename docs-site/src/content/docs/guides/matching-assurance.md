@@ -11,7 +11,7 @@ or silently activate a trained model.
 ## Operations portal workbench
 
 An authorised administrator can run the same operations from **08 Match assurance** in
-the Blazor operations portal. Paste tab-separated labels using these five columns:
+the operations portal. Paste tab-separated labels using these five columns:
 
 ```text
 leftSource	leftLocalId	rightSource	rightLocalId	isMatch

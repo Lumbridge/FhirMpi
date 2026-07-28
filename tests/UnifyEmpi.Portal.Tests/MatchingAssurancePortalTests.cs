@@ -24,6 +24,23 @@ public sealed class MatchingAssurancePortalTests : IClassFixture<FailingOverview
     }
 
     [Fact]
+    public async Task AdminMaintenanceWorkbenchExplainsRealJobPhases()
+    {
+        var response = await _client.GetAsync("/maintenance", CancellationToken.None);
+        var html = await response.Content.ReadAsStringAsync(CancellationToken.None);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("Maintenance operations", html, StringComparison.Ordinal);
+        Assert.Contains("Start re-index", html, StringComparison.Ordinal);
+        Assert.Contains("Start reconciliation", html, StringComparison.Ordinal);
+        Assert.Contains("Run either operation to see its phases", html, StringComparison.Ordinal);
+        Assert.Contains(
+            "The visualisation uses persisted job state rather than simulated progress.",
+            html,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void GroundTruthParserAcceptsHeaderAndBothLabelClasses()
     {
         const string labels = """

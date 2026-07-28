@@ -13,6 +13,18 @@ trust or blocking secrets change while it is running. Completion, cancellation a
 failure are audited, and progress is emitted through the
 `unifyempi.maintenance.jobs` and `unifyempi.maintenance.items` metrics.
 
+## Operations portal workbench
+
+Administrators can use **09 Maintenance** to run and inspect the same tenant-scoped
+operations without constructing API requests. The page visualises each persisted job
+as a phase pipeline and shows its validated, scanned, imported, updated, unchanged,
+review-created, warning and failure counters.
+
+Active jobs refresh automatically, can be cancelled at a safe batch boundary and
+remain in the history after completion. The progress display intentionally does not
+invent a percentage when the provider cannot supply a reliable population total. In
+the public demo the controls operate only on synthetic records.
+
 ## Safe online re-index
 
 Blocking rule and HMAC-key changes must be staged:

@@ -1,0 +1,523 @@
+@page "/maintenance"
+@attribute [Authorize(Policy = "AdminAccess")]
+@implements IAsyncDisposable
+@inject RegistryMaintenanceService MaintenanceService
+@inject PortalActorContextFactory Actors
+@inject Microsoft.Extensions.Options.IOptions<PortalOptions> PortalConfiguration
+
+<PageTitle>Maintenance operations · UnifyEMPI</PageTitle>
+
+<PageHeader
+    Eyebrow="Population integrity"
+    Title="Maintenance operations"
+    Description="Visualise durable re-index and population-reconciliation jobs as they validate, rebuild and re-match the active tenant." />
+
+<AlertMessage
+    Tone="info"
+    Title="Online and resumable"
+    Message="Jobs run in bounded batches and retain their state across worker restarts. Reconciliation can create governed review cases, but it never merges identities automatically." />
+
+<section class="maintenance-explainer" aria-label="Maintenance operation comparison">
+    <article class="panel maintenance-operation">
+        <div class="maintenance-operation-heading">
+            <span class="maintenance-operation-number" aria-hidden="true">01</span>
+            <div>
+                <p class="eyebrow">Blocking indexes</p>
+                <h2>Re-index</h2>
+            </div>
+        </div>
+        <p>
+            Validates that old and target blocking keys overlap, then rebuilds stored
+            blocking tags in safe batches.
+        </p>
+        <ol class="maintenance-mini-flow" aria-label="Re-index phases">
+            <li>Validate overlap</li>
+            <li>Rebuild indexes</li>
+            <li>Complete</li>
+        </ol>
+    </article>
+
+    <article class="panel maintenance-operation">
+        <div class="maintenance-operation-heading">
+            <span class="maintenance-operation-number" aria-hidden="true">02</span>
+            <div>
+                <p class="eyebrow">Population assurance</p>
+                <h2>Reconciliation</h2>
+            </div>
+        </div>
+        <p>
+            Rebuilds canonical identities from source records, re-runs matching and
+            sends probable duplicates into governed review.
+        </p>
+        <ol class="maintenance-mini-flow" aria-label="Reconciliation phases">
+            <li>Rebuild identities</li>
+            <li>Match population</li>
+            <li>Create reviews</li>
+        </ol>
+    </article>
+</section>
+
+<section class="panel maintenance-launcher" aria-labelledby="maintenance-launcher-heading">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">Controlled demonstration</p>
+            <h2 id="maintenance-launcher-heading">Run a tenant maintenance job</h2>
+            <p class="muted">
+                @(PortalConfiguration.Value.PublicDemo
+                    ? "These controls operate only on the public demo's synthetic records."
+                    : "Starting a job requires administrative approval and creates an audit event.")
+            </p>
+        </div>
+        <StatusBadge Label="Admin only" Tone="warning" />
+    </div>
+
+    <div class="maintenance-launch-grid">
+        <div class="field maintenance-reason">
+            <label for="maintenance-reason">Reason</label>
+            <input id="maintenance-reason"
+                   class="input"
+                   maxlength="512"
+                   @bind="Reason"
+                   @bind:event="oninput" />
+            <small>Recorded with the durable job and audit evidence.</small>
+        </div>
+        <div class="field">
+            <label for="maintenance-batch-size">Batch size</label>
+            <input id="maintenance-batch-size"
+                   class="input"
+                   type="number"
+                   min="1"
+                   max="25"
+                   @bind="BatchSize" />
+            <small>Between 1 and 25 records.</small>
+        </div>
+        <div class="maintenance-launch-actions">
+            <button class="button button-primary"
+                    type="button"
+                    disabled="@IsSubmitting"
+                    @onclick="StartReindexAsync">
+                @(IsSubmitting ? "Starting…" : "Start re-index")
+            </button>
+            <button class="button button-secondary"
+                    type="button"
+                    disabled="@IsSubmitting"
+                    @onclick="StartReconciliationAsync">
+                @(IsSubmitting ? "Starting…" : "Start reconciliation")
+            </button>
+        </div>
+    </div>
+</section>
+
+@if (OperationError is not null)
+{
+    <AlertMessage Tone="danger" Title="Maintenance operation failed" Message="@OperationError" />
+}
+
+<section class="maintenance-jobs" aria-labelledby="maintenance-jobs-heading">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">Durable job history</p>
+            <h2 id="maintenance-jobs-heading">@JobCountLabel</h2>
+            <p class="muted">Active jobs refresh automatically every two seconds.</p>
+        </div>
+        <button class="button button-secondary button-small"
+                type="button"
+                disabled="@IsLoading"
+                @onclick="LoadAsync">
+            @(IsLoading ? "Refreshing…" : "Refresh")
+        </button>
+    </div>
+
+    @if (IsLoading && Jobs.Count == 0)
+    {
+        <div class="loading-panel" role="status">
+            <span class="loading-spinner" aria-hidden="true"></span>
+            <span>Loading maintenance jobs…</span>
+        </div>
+    }
+    else if (Jobs.Count == 0)
+    {
+        <section class="empty-state compact">
+            <p class="eyebrow">No job history</p>
+            <h3>Run either operation to see its phases and counters</h3>
+            <p>The visualisation uses persisted job state rather than simulated progress.</p>
+        </section>
+    }
+    else
+    {
+        <div class="maintenance-job-list">
+            @foreach (var job in Jobs)
+            {
+                <article class="panel maintenance-job">
+                    <div class="maintenance-job-header">
+                        <div>
+                            <p class="eyebrow">@KindLabel(job.Kind)</p>
+                            <h3>@JobTitle(job)</h3>
+                            <p class="muted">
+                                Requested @PortalDisplay.Instant(job.RequestedAt) ·
+                                profile <code>@job.MatchingProfileVersion</code> ·
+                                batch @job.BatchSize
+                            </p>
+                        </div>
+                        <div class="maintenance-job-status">
+                            <StatusBadge Label="@StatusLabel(job.Status)" Tone="@StatusTone(job.Status)" />
+                            @if (IsActive(job))
+                            {
+                                <button class="button button-danger-outline button-small"
+                                        type="button"
+                                        disabled="@IsSubmitting"
+                                        @onclick="() => CancelAsync(job.Id)">
+                                    Cancel
+                                </button>
+                            }
+                        </div>
+                    </div>
+
+                    <p class="maintenance-job-reason">@job.Reason</p>
+
+                    @if (IsActive(job))
+                    {
+                        <div class="maintenance-activity" role="progressbar"
+                             aria-label="@($"{KindLabel(job.Kind)} is {PhaseLabel(job.Phase).ToLowerInvariant()}")">
+                            <span></span>
+                        </div>
+                    }
+
+                    <ol class="maintenance-phase-flow" aria-label="@($"{KindLabel(job.Kind)} progress")">
+                        @foreach (var phase in PhasesFor(job))
+                        {
+                            <li class="@PhaseClass(job, phase)">
+                                <span class="maintenance-phase-marker" aria-hidden="true"></span>
+                                <strong>@PhaseLabel(phase)</strong>
+                                <small>@PhaseDescription(job.Kind, phase)</small>
+                            </li>
+                        }
+                    </ol>
+
+                    <div class="maintenance-counter-grid">
+                        @if (job.Kind == RegistryMaintenanceJobKind.Reindex)
+                        {
+                            <div><strong>@job.Validated</strong><span>validated</span></div>
+                        }
+                        @if (job.ExternalSourceSystem is not null || job.Imported > 0)
+                        {
+                            <div><strong>@job.Imported</strong><span>imported</span></div>
+                        }
+                        <div><strong>@job.Scanned</strong><span>scanned</span></div>
+                        <div><strong>@job.Updated</strong><span>updated</span></div>
+                        <div><strong>@job.Unchanged</strong><span>unchanged</span></div>
+                        @if (job.Kind == RegistryMaintenanceJobKind.PopulationReconciliation)
+                        {
+                            <div><strong>@job.ReviewCasesCreated</strong><span>reviews created</span></div>
+                        }
+                        <div><strong>@job.Warnings</strong><span>warnings</span></div>
+                        <div><strong>@job.FailedItems</strong><span>failed items</span></div>
+                    </div>
+
+                    <div class="maintenance-job-footer">
+                        <span>Trigger: @TriggerLabel(job.Trigger)</span>
+                        <span>Attempts: @job.Attempts</span>
+                        <span>Configuration: <code>@ShortFingerprint(job.ConfigurationFingerprint)</code></span>
+                        @if (job.CompletedAt is not null)
+                        {
+                            <span>Duration: @Duration(job)</span>
+                        }
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(job.LastError))
+                    {
+                        <p class="maintenance-job-error">@job.LastError</p>
+                    }
+                </article>
+            }
+        </div>
+    }
+</section>
+
+@code {
+    private static readonly RegistryMaintenanceJobPhase[] ReindexPhases =
+    [
+        RegistryMaintenanceJobPhase.Validating,
+        RegistryMaintenanceJobPhase.Rebuilding,
+        RegistryMaintenanceJobPhase.Completed
+    ];
+
+    private static readonly RegistryMaintenanceJobPhase[] ReconciliationPhases =
+    [
+        RegistryMaintenanceJobPhase.Rebuilding,
+        RegistryMaintenanceJobPhase.Matching,
+        RegistryMaintenanceJobPhase.Completed
+    ];
+
+    private static readonly RegistryMaintenanceJobPhase[] ExternalReconciliationPhases =
+    [
+        RegistryMaintenanceJobPhase.Importing,
+        RegistryMaintenanceJobPhase.Rebuilding,
+        RegistryMaintenanceJobPhase.Matching,
+        RegistryMaintenanceJobPhase.Completed
+    ];
+
+    private readonly CancellationTokenSource _refreshCancellation = new();
+    private readonly List<RegistryMaintenanceJob> Jobs = [];
+    private Task? _refreshTask;
+    private string Reason { get; set; } = "Demonstrate tenant maintenance workflow.";
+    private int BatchSize { get; set; } = 5;
+    private bool IsLoading { get; set; }
+    private bool IsSubmitting { get; set; }
+    private string? OperationError { get; set; }
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _refreshTask = RefreshActiveJobsAsync(_refreshCancellation.Token);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private async Task LoadAsync()
+    {
+        if (IsLoading)
+        {
+            return;
+        }
+
+        IsLoading = true;
+        OperationError = null;
+        try
+        {
+            var page = await MaintenanceService.SearchJobsAsync(
+                await Actors.CreateAsync(),
+                new MaintenanceJobSearch(Count: 50),
+                CancellationToken.None);
+            Jobs.Clear();
+            Jobs.AddRange(page.Items.OrderByDescending(static job => job.RequestedAt));
+        }
+        catch (Exception exception) when (
+            exception is RegistryException or HttpRequestException)
+        {
+            OperationError = exception.Message;
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private Task StartReindexAsync() =>
+        StartAsync((actor, cancellationToken) =>
+            MaintenanceService.StartReindexAsync(
+                actor,
+                new StartReindexCommand(Reason, BatchSize),
+                cancellationToken));
+
+    private Task StartReconciliationAsync() =>
+        StartAsync((actor, cancellationToken) =>
+            MaintenanceService.StartPopulationReconciliationAsync(
+                actor,
+                new StartPopulationReconciliationCommand(Reason, BatchSize),
+                cancellationToken));
+
+    private async Task StartAsync(
+        Func<ActorContext, CancellationToken, ValueTask<RegistryMaintenanceJob>> start)
+    {
+        IsSubmitting = true;
+        OperationError = null;
+        try
+        {
+            await start(await Actors.CreateAsync(), CancellationToken.None);
+            await LoadAsync();
+        }
+        catch (Exception exception) when (
+            exception is RegistryException or
+            ArgumentException or
+            InvalidOperationException or
+            HttpRequestException)
+        {
+            OperationError = exception.Message;
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
+    }
+
+    private async Task CancelAsync(Guid jobId)
+    {
+        IsSubmitting = true;
+        OperationError = null;
+        try
+        {
+            await MaintenanceService.CancelJobAsync(
+                await Actors.CreateAsync(),
+                jobId,
+                CancellationToken.None);
+            await LoadAsync();
+        }
+        catch (Exception exception) when (
+            exception is RegistryException or
+            InvalidOperationException or
+            HttpRequestException)
+        {
+            OperationError = exception.Message;
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
+    }
+
+    private async Task RefreshActiveJobsAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var timer = new PeriodicTimer(TimeSpan.FromSeconds(2));
+            while (await timer.WaitForNextTickAsync(cancellationToken))
+            {
+                if (Jobs.Any(IsActive) && !IsLoading && !IsSubmitting)
+                {
+                    await InvokeAsync(async () =>
+                    {
+                        await LoadAsync();
+                        StateHasChanged();
+                    });
+                }
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await _refreshCancellation.CancelAsync();
+        if (_refreshTask is not null)
+        {
+            try
+            {
+                await _refreshTask;
+            }
+            catch (OperationCanceledException)
+            {
+            }
+        }
+
+        _refreshCancellation.Dispose();
+    }
+
+    private string JobCountLabel =>
+        Jobs.Count == 1 ? "1 maintenance job" : $"{Jobs.Count} maintenance jobs";
+
+    private static bool IsActive(RegistryMaintenanceJob job) =>
+        job.Status is RegistryMaintenanceJobStatus.Queued or RegistryMaintenanceJobStatus.Running;
+
+    private static RegistryMaintenanceJobPhase[] PhasesFor(
+        RegistryMaintenanceJob job) =>
+        job.Kind == RegistryMaintenanceJobKind.Reindex
+            ? ReindexPhases
+            : job.ExternalSourceSystem is null
+                ? ReconciliationPhases
+                : ExternalReconciliationPhases;
+
+    private static string PhaseClass(
+        RegistryMaintenanceJob job,
+        RegistryMaintenanceJobPhase phase)
+    {
+        var phases = PhasesFor(job);
+        var phaseIndex = Array.IndexOf(phases, phase);
+        var currentIndex = Array.IndexOf(phases, job.Phase);
+        if (job.Status == RegistryMaintenanceJobStatus.Completed)
+        {
+            return "maintenance-phase phase-complete";
+        }
+
+        if (phaseIndex < currentIndex)
+        {
+            return "maintenance-phase phase-complete";
+        }
+
+        if (phase == job.Phase)
+        {
+            return job.Status is RegistryMaintenanceJobStatus.Failed or
+                RegistryMaintenanceJobStatus.Cancelled
+                ? "maintenance-phase phase-error"
+                : "maintenance-phase phase-active";
+        }
+
+        return "maintenance-phase";
+    }
+
+    private static string KindLabel(RegistryMaintenanceJobKind kind) =>
+        kind == RegistryMaintenanceJobKind.Reindex
+            ? "Re-index"
+            : "Population reconciliation";
+
+    private static string JobTitle(RegistryMaintenanceJob job) =>
+        $"{KindLabel(job.Kind)} · {PhaseLabel(job.Phase)}";
+
+    private static string StatusLabel(RegistryMaintenanceJobStatus status) =>
+        status switch
+        {
+            RegistryMaintenanceJobStatus.Queued => "Queued",
+            RegistryMaintenanceJobStatus.Running => "Running",
+            RegistryMaintenanceJobStatus.Completed => "Completed",
+            RegistryMaintenanceJobStatus.Failed => "Failed",
+            RegistryMaintenanceJobStatus.Cancelled => "Cancelled",
+            _ => status.ToString()
+        };
+
+    private static string StatusTone(RegistryMaintenanceJobStatus status) =>
+        status switch
+        {
+            RegistryMaintenanceJobStatus.Completed => "success",
+            RegistryMaintenanceJobStatus.Queued or RegistryMaintenanceJobStatus.Running => "info",
+            RegistryMaintenanceJobStatus.Failed => "danger",
+            _ => "neutral"
+        };
+
+    private static string PhaseLabel(RegistryMaintenanceJobPhase phase) =>
+        phase switch
+        {
+            RegistryMaintenanceJobPhase.Queued => "Queued",
+            RegistryMaintenanceJobPhase.Validating => "Validating",
+            RegistryMaintenanceJobPhase.Importing => "Importing",
+            RegistryMaintenanceJobPhase.Rebuilding => "Rebuilding",
+            RegistryMaintenanceJobPhase.Matching => "Matching",
+            RegistryMaintenanceJobPhase.Completed => "Completed",
+            _ => phase.ToString()
+        };
+
+    private static string PhaseDescription(
+        RegistryMaintenanceJobKind kind,
+        RegistryMaintenanceJobPhase phase) =>
+        phase switch
+        {
+            RegistryMaintenanceJobPhase.Validating => "Prove blocking-key overlap",
+            RegistryMaintenanceJobPhase.Importing => "Read changed external records",
+            RegistryMaintenanceJobPhase.Rebuilding when
+                kind == RegistryMaintenanceJobKind.Reindex => "Write target blocking tags",
+            RegistryMaintenanceJobPhase.Rebuilding => "Rebuild canonical identities",
+            RegistryMaintenanceJobPhase.Matching => "Discover duplicate candidates",
+            RegistryMaintenanceJobPhase.Completed => "Persist outcome and audit",
+            _ => "Waiting for a worker"
+        };
+
+    private static string TriggerLabel(RegistryMaintenanceTrigger trigger) =>
+        trigger == RegistryMaintenanceTrigger.Scheduled ? "Scheduled" : "Manual";
+
+    private static string ShortFingerprint(string fingerprint) =>
+        fingerprint.Length <= 12 ? fingerprint : fingerprint[..12];
+
+    private static string Duration(RegistryMaintenanceJob job)
+    {
+        var start = job.StartedAt ?? job.RequestedAt;
+        var elapsed = job.CompletedAt!.Value - start;
+        return elapsed.TotalMinutes >= 1
+            ? $"{(int)elapsed.TotalMinutes}m {elapsed.Seconds}s"
+            : $"{Math.Max(0, (int)elapsed.TotalSeconds)}s";
+    }
+}
