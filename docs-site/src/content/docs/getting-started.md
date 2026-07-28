@@ -72,6 +72,7 @@ docker compose down
 ## Next steps
 
 - Learn the [identity model and terminology](/UnifyEMPI/concepts/identity-model/).
+- Plan an [existing FHIR integration](/UnifyEMPI/integration/existing-fhir/overview/).
 - Run the prepared [Postman matching tour](/UnifyEMPI/guides/postman/).
 - Review [configuration](/UnifyEMPI/reference/configuration/) before changing tenants or sources.
 - Explore the [public demo](/UnifyEMPI/deployment/public-demo/).

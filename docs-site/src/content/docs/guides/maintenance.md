@@ -191,6 +191,10 @@ resource is absent from a page. Deletion or replacement must arrive through an e
 governed source event or a deployment-specific adapter that can consume the source
 server's history or Bulk Data deletion feed.
 
+For end-to-end design, including a separate test store, source assessment,
+multi-million-record bootstrap, incremental windows and cut-over evidence, use the
+[existing FHIR integration guides](/UnifyEMPI/integration/existing-fhir/overview/).
+
 ## Scheduling and recovery
 
 Schedules are per tenant and optionally per external source. A deterministic job ID is

@@ -65,6 +65,7 @@ Treat the following as exit criteria rather than optional polish:
 
 Use the [configuration reference](/UnifyEMPI/reference/configuration/), the normative
 [matching rules](/UnifyEMPI/matching/rules/), the
+[existing FHIR integration guides](/UnifyEMPI/integration/existing-fhir/overview/), the
 [maintenance runbook](/UnifyEMPI/guides/maintenance/), the
 [matching assurance guide](/UnifyEMPI/guides/matching-assurance/) and the
 [security policy](/UnifyEMPI/governance/security/) alongside

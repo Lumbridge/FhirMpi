@@ -237,6 +237,9 @@ See [the benchmark guide](https://lumbridge.github.io/UnifyEMPI/development/perf
   settings.
 - [Re-indexing and population reconciliation](https://lumbridge.github.io/UnifyEMPI/guides/maintenance/):
   guarded online index migration, job APIs, scheduling and existing FHIR server integration.
+- [Existing FHIR integration](https://lumbridge.github.io/UnifyEMPI/integration/existing-fhir/overview/):
+  side-by-side store design, source readiness, large-population bootstrap, incremental
+  synchronisation, validation and cut-over.
 - [GCP demo deployment](https://lumbridge.github.io/UnifyEMPI/deployment/public-demo/): deployable topology, demo scenarios,
   cost controls and safe teardown.
 - [Postman collection](https://lumbridge.github.io/UnifyEMPI/guides/postman/): importable discovery, matching, source

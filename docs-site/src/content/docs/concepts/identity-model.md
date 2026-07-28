@@ -306,7 +306,7 @@ blocking tags are recalculated, and immutable audit evidence records the decisio
 Splitting is similarly non-destructive: selected source links move to a new enterprise
 identity and both canonical views are rebuilt.
 
-## Using an existing GCP FHIR store
+## Using an existing FHIR server or store
 
 ### Can UnifyEMPI use a store that already contains millions of Patients?
 
@@ -316,9 +316,11 @@ source/canonical role tags, enterprise links, logical versions, blocking tags, r
 resources or idempotency receipts. The GCP adapter deliberately ignores unrecognised
 Patients during canonical candidate lookup.
 
-The current milestone does not include a purpose-built bulk importer or live federation
-with an arbitrary existing store. Treat onboarding as a controlled integration
-programme.
+The product includes bounded, resumable external-FHIR reconciliation for incremental
+Patient ingestion. It does not include a high-throughput bulk importer or general live
+federation with an arbitrary store. Treat multi-million-record onboarding as a
+controlled integration programme using the
+[existing FHIR integration guides](/UnifyEMPI/integration/existing-fhir/overview/).
 
 ### Recommended onboarding pattern
 
@@ -346,6 +348,12 @@ resource IDs, mandatory tenant labels, write ownership, UnifyEMPI's private reso
 types, transaction boundaries and rollback. Do not relabel or convert production
 Patient resources in place without a separately tested migration and clinical-safety
 assessment.
+
+The dedicated guide covers
+[source readiness](/UnifyEMPI/integration/existing-fhir/readiness/),
+[large-population bootstrap](/UnifyEMPI/integration/existing-fhir/bootstrap/),
+[ongoing synchronisation](/UnifyEMPI/integration/existing-fhir/synchronisation/) and
+[validation and cut-over](/UnifyEMPI/integration/existing-fhir/validation-and-cutover/).
 
 ### What value does the MPI add beside the existing store?
 

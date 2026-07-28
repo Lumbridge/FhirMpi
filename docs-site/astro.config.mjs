@@ -123,6 +123,31 @@ export default defineConfig({
 				{
 					label: 'Operate and integrate',
 					items: [
+						{
+							label: 'Existing FHIR integration',
+							items: [
+								{
+									label: 'Integration overview',
+									slug: 'integration/existing-fhir/overview',
+								},
+								{
+									label: 'Source readiness',
+									slug: 'integration/existing-fhir/readiness',
+								},
+								{
+									label: 'Large-population bootstrap',
+									slug: 'integration/existing-fhir/bootstrap',
+								},
+								{
+									label: 'Ongoing synchronisation',
+									slug: 'integration/existing-fhir/synchronisation',
+								},
+								{
+									label: 'Validation and cut-over',
+									slug: 'integration/existing-fhir/validation-and-cutover',
+								},
+							],
+						},
 						{ label: 'Configuration reference', slug: 'reference/configuration' },
 						{ label: 'Re-index and reconciliation', slug: 'guides/maintenance' },
 						{ label: 'Public GCP demo', slug: 'deployment/public-demo' },

@@ -116,7 +116,9 @@ definitions, score formula, configuration constraints, workflow outcomes, exampl
 the re-index requirement when blocking inputs change. Deploy the same tenant rule
 profile to the API, portal and MLLP hosts. The
 [maintenance guide](/UnifyEMPI/guides/maintenance/) documents job APIs, schedules and
-external FHIR R4 Patient-source configuration.
+external FHIR R4 Patient-source configuration. Use the
+[existing FHIR integration guides](/UnifyEMPI/integration/existing-fhir/overview/) to
+plan source assessment, bulk bootstrap, incremental synchronisation and cut-over.
 
 `MatchingRules:Comparators` can select `Exact`, `JaroWinkler`,
 `NormalisedDamerauLevenshtein`, `DiceCoefficient`, `Phonetic`, and `Nickname` for
