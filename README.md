@@ -32,8 +32,9 @@ HMAC blocking tags and review errors, start with
 - **FHIR R4 API:** Patient create, update, read, search, and `$match`; Person lookup; JSON and XML; ETags; structured `OperationOutcome` errors; and bounded UK Core validation.
 - **Native HL7v2 ingestion:** MLLP support for ADT A01, A04, A08, A28, A31, A40, and A47 messages from HL7 versions 2.3.1, 2.4, and 2.5.1.
 - **Safe, explainable matching:** configurable blocking rounds, field weights and
-  thresholds; NHS-number validation; HMAC-protected candidate indexes; field-level
-  evidence; and no population scan or unbounded fallback in online match paths.
+  thresholds; guarded NHS-number authority; HMAC-protected candidate indexes;
+  field-level evidence; and no population scan or unbounded fallback in online match
+  paths.
 - **Matching assurance:** governed ground-truth recall and precision reporting,
   versioned comparator and nickname profiles, and held-out Fellegi–Sunter calibration
   that never activates a model automatically.
@@ -73,7 +74,7 @@ cost controls, reproducible deployment and safe teardown.
 
 ## Quick start
 
-The quickest way to run both services is with Docker and Docker Compose:
+The quickest way to run the full local stack is with Docker and Docker Compose:
 
 ```powershell
 docker compose up --build
@@ -92,9 +93,45 @@ Start-Process http://localhost:8081
 - Operations portal: `http://localhost:8081`
 - HL7v2 MLLP listener: `localhost:2575`
 - Development tenant: `demo`
-- Development source system: `demo-source`
 
 The local stack deliberately disables authentication and uses an isolated ephemeral in-memory provider in each host. The portal seeds synthetic patients so its workflows can be explored immediately. Data is discarded when a host stops, and records ingested through the API or MLLP host are not shared with the portal in this development mode. This is not suitable for production.
+
+## Authoritative NHS numbers
+
+An NHS number is never trusted solely because it uses the NHS identifier system or
+because an inbound resource asserts an authority extension. For an NHS number to
+become verified and authoritative:
+
+- its system must be `https://fhir.nhs.uk/Id/nhs-number`;
+- that system must be enabled in the tenant's authoritative identifier systems;
+- its value must pass the 10-digit Modulus 11 check;
+- the Patient must carry both `traced` and `gold` codes in `Patient.meta.tag`; and
+- for source ingestion, the source system must be listed in the tenant's
+  `AuthoritativeSources`.
+
+For example:
+
+```json
+{
+  "resourceType": "Patient",
+  "meta": {
+    "tag": [
+      { "code": "traced" },
+      { "code": "gold" }
+    ]
+  },
+  "identifier": [
+    {
+      "system": "https://fhir.nhs.uk/Id/nhs-number",
+      "value": "9434765919"
+    }
+  ]
+}
+```
+
+Both tags are also required on an NHS-number query supplied to `$match` before that
+identifier can produce a `Certain` result. The tags do not make an unconfigured or
+non-authoritative source authoritative.
 
 ## Operations portal
 
@@ -111,7 +148,7 @@ Out of the box, authorised staff can:
 - unlink selected source records into a new identity through the corrective split workflow;
 - approve or reject work with a required rationale and optimistic concurrency protection;
 - recognise outdated reviews automatically, explain redirects or version changes, and close superseded work with immutable audit evidence;
-- inspect source authority and trust, audit events, operational health, and review workload; and
+- inspect source authority and trust, audit events, operational health, and review workload;
 - update non-secret tenant matching policy with an immutable audit event; and
 - evaluate approved tab-separated match/non-match labels and produce a held-out
   calibration report when the identity carries `mpi.admin`.
@@ -128,6 +165,7 @@ To build and test the source locally, install the .NET 10 SDK and run:
 
 ```powershell
 dotnet restore UnifyEMPI.slnx --locked-mode
+dotnet format UnifyEMPI.slnx --no-restore --verify-no-changes
 dotnet build UnifyEMPI.slnx -c Release --no-restore
 dotnet test UnifyEMPI.slnx -c Release --no-build
 ```
@@ -269,6 +307,7 @@ Reviewer API:
 
 - `GET /api/v1/review-cases`
 - `GET /api/v1/review-cases/{id}`
+- `GET /api/v1/review-cases/{id}/detail`
 - `POST /api/v1/review-cases/{id}/decisions`
 - `POST /api/v1/review-cases/manual-duplicate`
 - `POST /api/v1/review-cases/split`
@@ -277,6 +316,19 @@ Reviewer API:
 - `GET /api/v1/operations/summary`
 - `GET /api/v1/audit-events`
 - `GET` and `PUT /api/v1/tenant/settings`
+
+Matching assurance API:
+
+- `POST /api/v1/matching/evaluation`
+- `POST /api/v1/matching/calibration/fellegi-sunter`
+
+Maintenance API:
+
+- `POST /api/v1/maintenance/reindex`
+- `POST /api/v1/maintenance/reconciliation`
+- `GET /api/v1/maintenance/jobs`
+- `GET /api/v1/maintenance/jobs/{id}`
+- `POST /api/v1/maintenance/jobs/{id}/cancel`
 
 HL7v2:
 
