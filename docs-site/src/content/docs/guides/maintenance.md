@@ -25,6 +25,44 @@ remain in the history after completion. The progress display intentionally does 
 invent a percentage when the provider cannot supply a reliable population total. In
 the public demo the controls operate only on synthetic records.
 
+## Re-index compared with reconciliation
+
+The operations solve different maintenance problems:
+
+| Operation | What it refreshes | Use it when |
+| --- | --- | --- |
+| Re-index | Blocking keys stored on canonical Patients | Blocking rules, blocking normalisation or HMAC-key versions change |
+| Population reconciliation | Canonical identity state, matching results and historical review candidates | Matching, comparator, threshold, source-authority or survivorship behaviour changes |
+
+Re-indexing validates that the old and target blocking indexes overlap before writing
+new blocking tags in bounded batches. It does not merge identities or reconsider every
+historical match. Its purpose is to keep candidate discovery complete while blocking
+configuration changes.
+
+Reconciliation optionally imports changed Patients from a configured external FHIR
+source, rebuilds canonical identities from their source records and then re-runs
+bounded matching across the population. Probable duplicates become governed review
+cases; the job never links two existing enterprise identities automatically.
+
+Job counters describe work completed across phases rather than a distinct-patient
+total. For example, a registry-only reconciliation of 46 identities can report 92
+scanned items after visiting all 46 during both rebuilding and matching.
+
+## Choosing the right operation
+
+- **Matching weights, probability model, comparators or thresholds changed:** run
+  reconciliation.
+- **Blocking rules, blocking inputs or HMAC secrets changed:** stage the old/new union,
+  run re-indexing and then run reconciliation.
+- **Source trust, survivorship or authoritative-identifier handling changed:** run
+  reconciliation; also re-index if the change affects a blocking input.
+- **A source-system integration needs a controlled catch-up:** run reconciliation with
+  the configured external source and an appropriate changed-since window.
+- **Routine ingestion of one source Patient:** neither job is normally required; the
+  ordinary ingestion path processes that record.
+- **Periodic population assurance:** run scheduled reconciliation at the locally
+  approved cadence.
+
 ## Safe online re-index
 
 Blocking rule and HMAC-key changes must be staged:

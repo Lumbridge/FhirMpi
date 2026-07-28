@@ -224,7 +224,7 @@ identity.
 | Existing source-local record update | Rebuild its current cluster; no cross-cluster recheck in this release |
 | FHIR `$match` | Real-time, read-only candidate lookup and scoring |
 | Portal duplicate workbench | User-initiated, read-only until a review is opened |
-| Overnight population scan | Not included |
+| Manual or scheduled population reconciliation | Durable canonical rebuild and bounded population rematch; probable duplicates become governed reviews |
 
 A new source record auto-links only on a `certain` result. A probable result creates a
 review while preserving separate identities. A possible result can be returned but is
@@ -239,8 +239,25 @@ variations, but records with no shared identifier, date/name block, postcode/dat
 or contact value require a separate reconciliation strategy.
 
 More than 500 candidates is also rejected safely; the caller must supply stronger
-identifying data. A future scheduled reconciliation service can revisit records, but it
-must still use bounded partitions rather than a population-wide nested comparison.
+identifying data. Manual or scheduled population reconciliation can revisit historical
+records, but it still uses bounded candidate discovery rather than a population-wide
+nested comparison.
+
+### When should I run re-indexing or reconciliation?
+
+Run **re-indexing** when blocking rules, blocking inputs or HMAC-key versions change.
+It safely rebuilds the stored candidate-discovery keys.
+
+Run **population reconciliation** when matching weights, probability models,
+comparators, thresholds, source authority, survivorship or authoritative-identifier
+behaviour changes. It rebuilds canonical identity state and re-runs matching across the
+population, creating review cases rather than automatically merging identities.
+
+Blocking changes normally require both operations: stage the union of old and new
+blocking inputs, complete re-indexing, then reconcile the population. Routine ingestion
+of an individual Patient requires neither operation. See the
+[re-index and reconciliation runbook](/UnifyEMPI/guides/maintenance/) for the decision
+guide, safe sequence and job controls.
 
 ### What is the difference between `$match` and a merge?
 
