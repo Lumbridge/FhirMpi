@@ -322,6 +322,62 @@ public sealed class GcpIdentityRegistryStore(IGcpFhirClient client) : IIdentityR
         return GcpDomainResourceMapper.ToTenantSettings(resource, context.TenantId);
     }
 
+    public async ValueTask<RegistryMaintenanceJob?> GetMaintenanceJobAsync(
+        ActorContext context,
+        Guid jobId,
+        CancellationToken cancellationToken)
+    {
+        var resource = await client.ReadAsync(
+            "Task",
+            jobId.ToString("D"),
+            cancellationToken);
+        if (resource is null)
+        {
+            return null;
+        }
+
+        GcpDomainResourceMapper.AssertTenant(resource, context.TenantId);
+        return GcpDomainResourceMapper.ToMaintenanceJob(resource, context.TenantId);
+    }
+
+    public async ValueTask<Page<RegistryMaintenanceJob>> SearchMaintenanceJobsAsync(
+        ActorContext context,
+        MaintenanceJobSearch search,
+        CancellationToken cancellationToken)
+    {
+        var parameters = NewSearch(context, search.Count, search.Cursor);
+        parameters["_tag"] = $"{GcpDomainResourceMapper.InternalSystem}|maintenance-job";
+        if (search.Status.HasValue)
+        {
+            parameters["status"] = search.Status.Value switch
+            {
+                RegistryMaintenanceJobStatus.Queued => "requested",
+                RegistryMaintenanceJobStatus.Running => "in-progress",
+                RegistryMaintenanceJobStatus.Completed => "completed",
+                RegistryMaintenanceJobStatus.Failed => "failed",
+                RegistryMaintenanceJobStatus.Cancelled => "cancelled",
+                _ => throw new ArgumentOutOfRangeException(nameof(search))
+            };
+        }
+
+        var bundle = await SearchAsync(context, "Task", parameters, cancellationToken);
+        var items = bundle.Entry
+            .Select(static entry => entry.Resource)
+            .OfType<Hl7.Fhir.Model.Task>()
+            .Select(resource => GcpDomainResourceMapper.ToMaintenanceJob(
+                resource,
+                context.TenantId))
+            .Where(job => !search.Kind.HasValue || job.Kind == search.Kind.Value)
+            .Where(job =>
+                !search.ExternalSourceSystem.HasValue ||
+                job.ExternalSourceSystem == search.ExternalSourceSystem.Value)
+            .Where(job =>
+                string.IsNullOrWhiteSpace(search.ScheduleKey) ||
+                string.Equals(job.ScheduleKey, search.ScheduleKey, StringComparison.Ordinal))
+            .ToArray();
+        return new Page<RegistryMaintenanceJob>(items, GetNextCursor(bundle));
+    }
+
     public async ValueTask<IngestionReceipt?> GetReceiptAsync(
         ActorContext context,
         string idempotencyKey,
@@ -517,6 +573,22 @@ public sealed class GcpIdentityRegistryStore(IGcpFhirClient client) : IIdentityR
                     RegistryEntityKind.ReviewCase,
                     review.Id.ToString()),
                 review.Version,
+                cancellationToken);
+        }
+
+        foreach (var job in mutation.EffectiveMaintenanceJobs)
+        {
+            await AddEntryAsync(
+                bundle,
+                context,
+                GcpDomainResourceMapper.ToMaintenanceTask(job, context.TenantId),
+                "Task",
+                job.Id.ToString("D"),
+                ExpectedVersionFor(
+                    mutation,
+                    RegistryEntityKind.MaintenanceJob,
+                    job.Id.ToString("D")),
+                job.Version,
                 cancellationToken);
         }
 

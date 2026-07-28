@@ -41,6 +41,9 @@ HMAC blocking tags and review errors, start with
 - **Review workflow:** probable matches create review cases that authorised reviewers can inspect, link, reject, correct, or close as superseded when an identity is replaced or its evidence changes. Tenant-configurable dual approval defaults to two distinct reviewers, with no self-approval.
 - **Multi-tenant isolation:** every identity, query, decision, receipt, and audit event is bound to a trusted tenant and source-system context.
 - **Replaceable storage:** an ephemeral in-memory provider for development and a durable GCP Healthcare API provider are included behind the same storage contract.
+- **Online maintenance:** durable, resumable and tenant-leased re-index jobs; scheduled
+  population reconciliation; governed duplicate-case creation; and incremental Patient
+  ingestion from an existing FHIR R4 server.
 - **Production foundations:** external OIDC and SMART scopes, mutual-TLS MLLP, health checks, OpenTelemetry, JSON logging, containers, Compose, and a Helm chart.
 
 ## Demo
@@ -185,6 +188,8 @@ See [the benchmark guide](https://lumbridge.github.io/UnifyEMPI/development/perf
   replaceable provider contract.
 - [Configuration](https://lumbridge.github.io/UnifyEMPI/reference/configuration/): API, portal, OIDC, tenant, HMAC and MLLP
   settings.
+- [Re-indexing and population reconciliation](https://lumbridge.github.io/UnifyEMPI/guides/maintenance/):
+  guarded online index migration, job APIs, scheduling and existing FHIR server integration.
 - [GCP demo deployment](https://lumbridge.github.io/UnifyEMPI/deployment/public-demo/): deployable topology, demo scenarios,
   cost controls and safe teardown.
 - [Postman collection](https://lumbridge.github.io/UnifyEMPI/guides/postman/): importable discovery, matching, source

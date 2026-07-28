@@ -79,3 +79,68 @@ public sealed class FhirValidationOptions
 
     public int PoolSize { get; init; } = 4;
 }
+
+public sealed class RegistryMaintenanceOptions
+{
+    public const string SectionName = "Maintenance";
+
+    public bool WorkerEnabled { get; init; } = true;
+
+    public int PollIntervalSeconds { get; init; } = 5;
+
+    public int LeaseSeconds { get; init; } = 60;
+
+    public List<ReconciliationScheduleDefinition> ReconciliationSchedules { get; init; } = [];
+
+    public List<ExternalFhirSourceDefinition> FhirSources { get; init; } = [];
+}
+
+public sealed class ReconciliationScheduleDefinition
+{
+    public string Key { get; init; } = string.Empty;
+
+    public string TenantId { get; init; } = string.Empty;
+
+    public string? SourceSystem { get; init; }
+
+    public int IntervalMinutes { get; init; } = 1440;
+
+    public int BatchSize { get; init; } = 25;
+
+    public bool RunOnStartup { get; init; } = true;
+}
+
+public sealed class ExternalFhirSourceDefinition
+{
+    public string TenantId { get; init; } = string.Empty;
+
+    public string SourceSystem { get; init; } = string.Empty;
+
+    public string BaseUrl { get; init; } = string.Empty;
+
+    public int RequestTimeoutSeconds { get; init; } = 60;
+
+    public bool AllowInsecureHttp { get; init; }
+
+    public string? LocalIdentifierSystem { get; init; }
+
+    public Dictionary<string, string> PatientSearchParameters { get; init; } =
+        new(StringComparer.Ordinal);
+
+    public FhirSourceAuthenticationDefinition Authentication { get; init; } = new();
+}
+
+public sealed class FhirSourceAuthenticationDefinition
+{
+    public string Type { get; init; } = "None";
+
+    public string? BearerToken { get; init; }
+
+    public string? TokenEndpoint { get; init; }
+
+    public string? ClientId { get; init; }
+
+    public string? ClientSecret { get; init; }
+
+    public string? Scope { get; init; }
+}

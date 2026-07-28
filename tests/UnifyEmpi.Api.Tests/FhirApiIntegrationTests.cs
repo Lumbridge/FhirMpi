@@ -191,6 +191,35 @@ public sealed class FhirApiIntegrationTests : IClassFixture<FhirApiFactory>
         Assert.Equal(HttpStatusCode.PreconditionFailed, update.StatusCode);
     }
 
+    [Fact]
+    public async Task MaintenanceReindexIsAcceptedAndExposesDurableStatus()
+    {
+        var response = await _client.PostAsJsonAsync(
+            "/api/v1/maintenance/reindex",
+            new { reason = "Verify the asynchronous re-index API.", batchSize = 5 },
+            CancellationToken.None);
+        var created = JsonDocument.Parse(
+            await response.Content.ReadAsStringAsync(CancellationToken.None));
+        var id = created.RootElement.GetProperty("id").GetGuid();
+
+        Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
+        Assert.Equal(
+            $"/api/v1/maintenance/jobs/{id:D}",
+            response.Headers.Location?.OriginalString);
+
+        var status = await _client.GetAsync(
+            $"/api/v1/maintenance/jobs/{id:D}",
+            CancellationToken.None);
+        var statusBody = JsonDocument.Parse(
+            await status.Content.ReadAsStringAsync(CancellationToken.None));
+
+        Assert.Equal(HttpStatusCode.OK, status.StatusCode);
+        Assert.Equal(id, statusBody.RootElement.GetProperty("id").GetGuid());
+        Assert.Equal((int)RegistryMaintenanceJobKind.Reindex, statusBody.RootElement
+            .GetProperty("kind")
+            .GetInt32());
+    }
+
     private static StringContent FhirContent(string json) =>
         new(json, Encoding.UTF8, "application/fhir+json");
 }

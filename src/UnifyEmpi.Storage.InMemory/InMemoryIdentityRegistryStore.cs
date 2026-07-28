@@ -263,6 +263,61 @@ public sealed class InMemoryIdentityRegistryStore : IIdentityRegistryStore
         }
     }
 
+    public ValueTask<RegistryMaintenanceJob?> GetMaintenanceJobAsync(
+        ActorContext context,
+        Guid jobId,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var tenant = GetTenant(context);
+        lock (tenant.Sync)
+        {
+            return ValueTask.FromResult(
+                tenant.MaintenanceJobs.TryGetValue(jobId, out var job) ? job : null);
+        }
+    }
+
+    public ValueTask<Page<RegistryMaintenanceJob>> SearchMaintenanceJobsAsync(
+        ActorContext context,
+        MaintenanceJobSearch search,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var tenant = GetTenant(context);
+        lock (tenant.Sync)
+        {
+            IEnumerable<RegistryMaintenanceJob> query = tenant.MaintenanceJobs.Values;
+            if (search.Kind.HasValue)
+            {
+                query = query.Where(job => job.Kind == search.Kind.Value);
+            }
+
+            if (search.Status.HasValue)
+            {
+                query = query.Where(job => job.Status == search.Status.Value);
+            }
+
+            if (search.ExternalSourceSystem.HasValue)
+            {
+                query = query.Where(job =>
+                    job.ExternalSourceSystem == search.ExternalSourceSystem.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(search.ScheduleKey))
+            {
+                query = query.Where(job =>
+                    string.Equals(job.ScheduleKey, search.ScheduleKey, StringComparison.Ordinal));
+            }
+
+            return ValueTask.FromResult(CreatePage(
+                query.OrderByDescending(static job => job.RequestedAt)
+                    .ThenBy(static job => job.Id)
+                    .ToArray(),
+                search.Count,
+                search.Cursor));
+        }
+    }
+
     public ValueTask<IngestionReceipt?> GetReceiptAsync(
         ActorContext context,
         string idempotencyKey,
@@ -328,6 +383,11 @@ public sealed class InMemoryIdentityRegistryStore : IIdentityRegistryStore
                 tenant.ReviewCases[review.Id] = review;
             }
 
+            foreach (var job in mutation.EffectiveMaintenanceJobs)
+            {
+                tenant.MaintenanceJobs[job.Id] = job;
+            }
+
             tenant.AuditRecords.AddRange(mutation.AuditRecords);
             if (mutation.TenantSettings is not null)
             {
@@ -373,6 +433,8 @@ public sealed class InMemoryIdentityRegistryStore : IIdentityRegistryStore
                 RegistryEntityKind.ReviewCase => tenant.ReviewCases.Values
                     .FirstOrDefault(item => item.Id.ToString() == expected.Id)?.Version,
                 RegistryEntityKind.TenantSettings => tenant.Settings?.Version,
+                RegistryEntityKind.MaintenanceJob => tenant.MaintenanceJobs.Values
+                    .FirstOrDefault(item => item.Id.ToString("D") == expected.Id)?.Version,
                 _ => null
             };
 
@@ -407,6 +469,15 @@ public sealed class InMemoryIdentityRegistryStore : IIdentityRegistryStore
             if (tenant.Persons.ContainsKey(person.EnterpriseId))
             {
                 throw new RegistryConcurrencyException($"Person '{person.EnterpriseId}' already exists.");
+            }
+        }
+
+        foreach (var job in mutation.EffectiveMaintenanceJobs.Where(static item => item.Version == 1))
+        {
+            if (tenant.MaintenanceJobs.ContainsKey(job.Id))
+            {
+                throw new RegistryConcurrencyException(
+                    $"Maintenance job '{job.Id:D}' already exists.");
             }
         }
 
@@ -496,6 +567,8 @@ public sealed class InMemoryIdentityRegistryStore : IIdentityRegistryStore
         public Dictionary<BlockingKey, HashSet<EnterpriseId>> CandidateIndex { get; } = [];
 
         public Dictionary<Guid, ReviewCase> ReviewCases { get; } = [];
+
+        public Dictionary<Guid, RegistryMaintenanceJob> MaintenanceJobs { get; } = [];
 
         public Dictionary<string, IngestionReceipt> Receipts { get; } =
             new(StringComparer.Ordinal);

@@ -63,6 +63,11 @@ public static class FhirEndpoints
         operations.MapGet("/audit-events", SearchAuditEvents);
         operations.MapGet("/tenant/settings", GetTenantSettings);
         operations.MapPut("/tenant/settings", UpdateTenantSettings);
+        operations.MapPost("/maintenance/reindex", StartReindex);
+        operations.MapPost("/maintenance/reconciliation", StartPopulationReconciliation);
+        operations.MapGet("/maintenance/jobs", SearchMaintenanceJobs);
+        operations.MapGet("/maintenance/jobs/{id:guid}", GetMaintenanceJob);
+        operations.MapPost("/maintenance/jobs/{id:guid}/cancel", CancelMaintenanceJob);
         return endpoints;
     }
 
@@ -622,6 +627,103 @@ public static class FhirEndpoints
         return Results.Ok(settings);
     }
 
+    private static async Task<IResult> StartReindex(
+        StartReindexRequest request,
+        RegistryMaintenanceService maintenance,
+        ActorContextFactory actors,
+        CancellationToken cancellationToken)
+    {
+        var actor = actors.Create();
+        Require(actor.HasScope(MpiScopes.Admin));
+        var job = await maintenance.StartReindexAsync(
+            actor,
+            new StartReindexCommand(request.Reason, request.BatchSize),
+            cancellationToken);
+        return Results.Accepted($"/api/v1/maintenance/jobs/{job.Id:D}", job);
+    }
+
+    private static async Task<IResult> StartPopulationReconciliation(
+        StartPopulationReconciliationRequest request,
+        RegistryMaintenanceService maintenance,
+        ActorContextFactory actors,
+        CancellationToken cancellationToken)
+    {
+        var actor = actors.Create();
+        Require(actor.HasScope(MpiScopes.Admin));
+        SourceSystemId? source = string.IsNullOrWhiteSpace(request.ExternalSourceSystem)
+            ? null
+            : new SourceSystemId(request.ExternalSourceSystem);
+        var job = await maintenance.StartPopulationReconciliationAsync(
+            actor,
+            new StartPopulationReconciliationCommand(
+                request.Reason,
+                request.BatchSize,
+                source,
+                request.ChangedSince),
+            cancellationToken);
+        return Results.Accepted($"/api/v1/maintenance/jobs/{job.Id:D}", job);
+    }
+
+    private static async Task<IResult> SearchMaintenanceJobs(
+        HttpContext http,
+        RegistryMaintenanceService maintenance,
+        ActorContextFactory actors,
+        CancellationToken cancellationToken)
+    {
+        var actor = actors.Create();
+        Require(MpiScopes.CanOperate(actor));
+        var kindText = http.Request.Query["kind"].FirstOrDefault();
+        var statusText = http.Request.Query["status"].FirstOrDefault();
+        RegistryMaintenanceJobKind? kind = string.IsNullOrWhiteSpace(kindText)
+            ? null
+            : Enum.TryParse<RegistryMaintenanceJobKind>(kindText, true, out var parsedKind)
+                ? parsedKind
+                : throw new FormatException("Unknown maintenance job kind.");
+        RegistryMaintenanceJobStatus? status = string.IsNullOrWhiteSpace(statusText)
+            ? null
+            : Enum.TryParse<RegistryMaintenanceJobStatus>(statusText, true, out var parsedStatus)
+                ? parsedStatus
+                : throw new FormatException("Unknown maintenance job status.");
+        var sourceText = http.Request.Query["sourceSystem"].FirstOrDefault();
+        var page = await maintenance.SearchJobsAsync(
+            actor,
+            new MaintenanceJobSearch(
+                kind,
+                status,
+                string.IsNullOrWhiteSpace(sourceText)
+                    ? null
+                    : new SourceSystemId(sourceText),
+                http.Request.Query["scheduleKey"].FirstOrDefault(),
+                ParseCount(http.Request.Query["count"].FirstOrDefault(), 50, 100),
+                http.Request.Query["cursor"].FirstOrDefault()),
+            cancellationToken);
+        return Results.Ok(new { items = page.Items, nextCursor = page.NextCursor });
+    }
+
+    private static async Task<IResult> GetMaintenanceJob(
+        Guid id,
+        RegistryMaintenanceService maintenance,
+        ActorContextFactory actors,
+        CancellationToken cancellationToken)
+    {
+        var actor = actors.Create();
+        Require(MpiScopes.CanOperate(actor));
+        var job = await maintenance.GetJobAsync(actor, id, cancellationToken) ??
+                  throw new RegistryNotFoundException("MaintenanceJob", id.ToString("D"));
+        return Results.Ok(job);
+    }
+
+    private static async Task<IResult> CancelMaintenanceJob(
+        Guid id,
+        RegistryMaintenanceService maintenance,
+        ActorContextFactory actors,
+        CancellationToken cancellationToken)
+    {
+        var actor = actors.Create();
+        Require(actor.HasScope(MpiScopes.Admin));
+        return Results.Ok(await maintenance.CancelJobAsync(actor, id, cancellationToken));
+    }
+
     private static CapabilityStatement.ResourceComponent ResourceCapability(
         ResourceType resourceType,
         IReadOnlyList<CapabilityStatement.TypeRestfulInteraction> interactions,
@@ -805,3 +907,13 @@ public sealed record TenantSettingsRequest(
     IReadOnlyList<SourceSettingsRequest> Sources,
     string Reason,
     long ExpectedVersion);
+
+public sealed record StartReindexRequest(
+    string Reason,
+    int BatchSize = 25);
+
+public sealed record StartPopulationReconciliationRequest(
+    string Reason,
+    int BatchSize = 25,
+    string? ExternalSourceSystem = null,
+    DateTimeOffset? ChangedSince = null);

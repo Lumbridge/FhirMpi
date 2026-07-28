@@ -113,6 +113,7 @@ export default defineConfig({
 					label: 'Operate and integrate',
 					items: [
 						{ label: 'Configuration reference', slug: 'reference/configuration' },
+						{ label: 'Re-index and reconciliation', slug: 'guides/maintenance' },
 						{ label: 'Public GCP demo', slug: 'deployment/public-demo' },
 						{ label: 'Postman collection', slug: 'guides/postman' },
 					],

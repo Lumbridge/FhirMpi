@@ -82,6 +82,13 @@ for the security and access implications.
         "Active": false
       }]
     }]
+  },
+  "Maintenance": {
+    "WorkerEnabled": true,
+    "PollIntervalSeconds": 5,
+    "LeaseSeconds": 60,
+    "FhirSources": [],
+    "ReconciliationSchedules": []
   }
 }
 ```
@@ -91,12 +98,17 @@ approved national sources using their interface-catalogue identifiers. The trust
 and `AuthoritativeSources` entry above are illustrative: approve them through local data
 governance rather than copying them unchanged.
 
-During key rotation, retain the previous key until all canonical records have been re-indexed. Candidate lookup queries all configured versions; only one version may be active for new stable IDs and tags.
+During key rotation, retain the previous key until the durable re-index job completes.
+Candidate lookup queries all configured versions; only one version may be active for
+new stable IDs and tags. For blocking-rule changes, temporarily deploy the union of the
+old and new rules so validation can prove online candidate-discovery continuity.
 
 See [matching and blocking rules](/UnifyEMPI/matching/rules/) for the normative rule
 definitions, score formula, configuration constraints, workflow outcomes, examples and
 the re-index requirement when blocking inputs change. Deploy the same tenant rule
-profile to the API, portal and MLLP hosts.
+profile to the API, portal and MLLP hosts. The
+[maintenance guide](/UnifyEMPI/guides/maintenance/) documents job APIs, schedules and
+external FHIR R4 Patient-source configuration.
 
 ## Operations portal
 

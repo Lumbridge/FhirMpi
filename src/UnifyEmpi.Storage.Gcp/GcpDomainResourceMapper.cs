@@ -23,6 +23,7 @@ internal static class GcpDomainResourceMapper
     private const string AuditEnvelopeExtension = "https://unifyempi.dev/StructureDefinition/audit-envelope";
     private const string ReceiptEnvelopeExtension = "https://unifyempi.dev/StructureDefinition/receipt-envelope";
     private const string SettingsEnvelopeExtension = "https://unifyempi.dev/StructureDefinition/tenant-settings-envelope";
+    private const string MaintenanceEnvelopeExtension = "https://unifyempi.dev/StructureDefinition/maintenance-job-envelope";
 
     private static readonly JsonSerializerOptions JsonOptions = CreateJsonOptions();
 
@@ -253,6 +254,65 @@ internal static class GcpDomainResourceMapper
             Version = ParseVersion(task),
             UpdatedAt = task.Meta!.LastUpdated ?? review.UpdatedAt
         };
+    }
+
+    public static Task ToMaintenanceTask(RegistryMaintenanceJob job, TenantId tenant)
+    {
+        if (job.TenantId != tenant)
+        {
+            throw new InvalidOperationException("Maintenance jobs cannot cross a tenant boundary.");
+        }
+
+        var updatedAt = job.CompletedAt ?? job.StartedAt ?? job.RequestedAt;
+        var task = new Task
+        {
+            Id = job.Id.ToString("D"),
+            Meta = FhirR4Mapper.CreateMeta(tenant, job.Version, updatedAt),
+            Status = job.Status switch
+            {
+                RegistryMaintenanceJobStatus.Queued => Task.TaskStatus.Requested,
+                RegistryMaintenanceJobStatus.Running => Task.TaskStatus.InProgress,
+                RegistryMaintenanceJobStatus.Completed => Task.TaskStatus.Completed,
+                RegistryMaintenanceJobStatus.Failed => Task.TaskStatus.Failed,
+                RegistryMaintenanceJobStatus.Cancelled => Task.TaskStatus.Cancelled,
+                _ => Task.TaskStatus.Requested
+            },
+            Intent = Task.TaskIntent.Order,
+            Code = new CodeableConcept(
+                InternalSystem,
+                job.Kind == RegistryMaintenanceJobKind.Reindex
+                    ? "blocking-index-rebuild"
+                    : "population-reconciliation"),
+            AuthoredOn = job.RequestedAt.ToString("O", CultureInfo.InvariantCulture),
+            LastModified = updatedAt.ToString("O", CultureInfo.InvariantCulture),
+            BusinessStatus = new CodeableConcept(
+                InternalSystem,
+                job.Phase.ToString().ToLowerInvariant())
+        };
+        task.Meta!.Tag.Add(new Coding(InternalSystem, "maintenance-job"));
+        task.Extension.Add(new Extension(
+            MaintenanceEnvelopeExtension,
+            new FhirString(JsonSerializer.Serialize(job, JsonOptions))));
+        AddLogicalVersion(task, job.Version);
+        return task;
+    }
+
+    public static RegistryMaintenanceJob ToMaintenanceJob(Resource resource, TenantId tenant)
+    {
+        var task = resource as Task ??
+                   throw new InvalidOperationException("Expected a Task resource.");
+        FhirR4Mapper.AssertTenant(task, tenant);
+        RequireTag(task, "maintenance-job");
+        var job = JsonSerializer.Deserialize<RegistryMaintenanceJob>(
+                      GetStringExtension(task, MaintenanceEnvelopeExtension),
+                      JsonOptions) ??
+                  throw new InvalidOperationException("The maintenance-job envelope is invalid.");
+        if (job.TenantId != tenant)
+        {
+            throw new InvalidOperationException("The stored maintenance job belongs to another tenant.");
+        }
+
+        return job with { Version = ParseVersion(task) };
     }
 
     public static AuditEvent ToAuditEvent(AuditRecord audit, TenantId tenant)

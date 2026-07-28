@@ -45,3 +45,16 @@ public sealed record UpdateTenantSettingsCommand(
     IReadOnlyList<SourceSystemSettings> Sources,
     string Reason,
     long ExpectedVersion);
+
+public sealed record StartReindexCommand(
+    string Reason,
+    int BatchSize = 50);
+
+public sealed record StartPopulationReconciliationCommand(
+    string Reason,
+    int BatchSize = 50,
+    SourceSystemId? ExternalSourceSystem = null,
+    DateTimeOffset? ChangedSince = null,
+    RegistryMaintenanceTrigger Trigger = RegistryMaintenanceTrigger.Manual,
+    string? ScheduleKey = null,
+    Guid? JobId = null);

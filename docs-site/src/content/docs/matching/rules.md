@@ -337,7 +337,7 @@ governance and review capacity.
 | Deterministic trusted-identifier match and conflict overrides | Implemented. |
 | Human review with merge/reject, two-person conflict policy and audit trail | Implemented. |
 | Canonical/golden patient survivorship | Implemented with source trust, verification, recency and deterministic tie-breaking. |
-| Batch re-index and scheduled population reconciliation | Not implemented. This is the next prerequisite for safe online blocking-rule changes. |
+| Batch re-index and scheduled population reconciliation | Implemented as durable, leased, resumable jobs with staged-overlap validation, governed duplicate reviews and optional incremental FHIR R4 Patient ingestion. |
 | Ground-truth blocking and matching evaluation reports | Not implemented; benchmark plumbing exists, but recall/precision tooling is still needed. |
 | Nickname/synonym dictionaries and additional phonetic/comparator algorithms | Not implemented. |
 | Fellegi–Sunter probability calibration or null-value probability models | Not implemented. |

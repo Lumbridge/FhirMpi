@@ -153,6 +153,18 @@ public sealed class FailingOverviewStore : IIdentityRegistryStore
         CancellationToken cancellationToken) =>
         _inner.GetTenantSettingsAsync(context, cancellationToken);
 
+    public ValueTask<RegistryMaintenanceJob?> GetMaintenanceJobAsync(
+        ActorContext context,
+        Guid jobId,
+        CancellationToken cancellationToken) =>
+        _inner.GetMaintenanceJobAsync(context, jobId, cancellationToken);
+
+    public ValueTask<Page<RegistryMaintenanceJob>> SearchMaintenanceJobsAsync(
+        ActorContext context,
+        MaintenanceJobSearch search,
+        CancellationToken cancellationToken) =>
+        _inner.SearchMaintenanceJobsAsync(context, search, cancellationToken);
+
     public ValueTask<IngestionReceipt?> GetReceiptAsync(
         ActorContext context,
         string idempotencyKey,

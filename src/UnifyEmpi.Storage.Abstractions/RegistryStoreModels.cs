@@ -39,13 +39,22 @@ public sealed record AuditRecordSearch(
     int Count = 50,
     string? Cursor = null);
 
+public sealed record MaintenanceJobSearch(
+    RegistryMaintenanceJobKind? Kind = null,
+    RegistryMaintenanceJobStatus? Status = null,
+    SourceSystemId? ExternalSourceSystem = null,
+    string? ScheduleKey = null,
+    int Count = 50,
+    string? Cursor = null);
+
 public enum RegistryEntityKind
 {
     SourcePatient,
     CanonicalPatient,
     Person,
     ReviewCase,
-    TenantSettings
+    TenantSettings,
+    MaintenanceJob
 }
 
 public sealed record ExpectedVersion(
@@ -61,9 +70,13 @@ public sealed record RegistryMutation(
     IReadOnlyList<AuditRecord> AuditRecords,
     IReadOnlyList<ExpectedVersion> ExpectedVersions,
     IngestionReceipt? Receipt = null,
-    TenantSettings? TenantSettings = null)
+    TenantSettings? TenantSettings = null,
+    IReadOnlyList<RegistryMaintenanceJob>? MaintenanceJobs = null)
 {
     public static RegistryMutation Empty { get; } = new([], [], [], [], [], []);
+
+    public IReadOnlyList<RegistryMaintenanceJob> EffectiveMaintenanceJobs =>
+        MaintenanceJobs ?? [];
 }
 
 public sealed record RegistryCommitResult(

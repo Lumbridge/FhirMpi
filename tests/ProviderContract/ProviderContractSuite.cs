@@ -297,6 +297,82 @@ public abstract class ProviderContractSuite
                 CancellationToken.None).AsTask().GetAwaiter().GetResult());
     }
 
+    [Fact]
+    public void MaintenanceJobsAreDurableTenantScopedAndVersionChecked()
+    {
+        var store = CreateStore();
+        var actor = Actor("tenant-a");
+        var job = new RegistryMaintenanceJob(
+            Guid.Parse("0198f7c7-6280-7b83-946c-8cc6f47c83ee"),
+            actor.TenantId,
+            RegistryMaintenanceJobKind.Reindex,
+            RegistryMaintenanceJobStatus.Queued,
+            RegistryMaintenanceJobPhase.Validating,
+            RegistryMaintenanceTrigger.Manual,
+            "administrator",
+            "Approved blocking index rebuild.",
+            DateTimeOffset.Parse(
+                "2026-07-28T12:00:00Z",
+                System.Globalization.CultureInfo.InvariantCulture),
+            new string('a', 64),
+            "uk-default-v2",
+            25,
+            1);
+        store.CommitAsync(
+            actor,
+            RegistryMutation.Empty with { MaintenanceJobs = [job] },
+            CancellationToken.None).AsTask().GetAwaiter().GetResult();
+
+        var stored = store.GetMaintenanceJobAsync(
+            actor,
+            job.Id,
+            CancellationToken.None).AsTask().GetAwaiter().GetResult();
+        var page = store.SearchMaintenanceJobsAsync(
+            actor,
+            new MaintenanceJobSearch(
+                RegistryMaintenanceJobKind.Reindex,
+                RegistryMaintenanceJobStatus.Queued),
+            CancellationToken.None).AsTask().GetAwaiter().GetResult();
+        Assert.NotNull(stored);
+        Assert.Equal(job, stored);
+        Assert.Contains(page.Items, item => item.Id == job.Id);
+        try
+        {
+            var otherTenant = store.GetMaintenanceJobAsync(
+                Actor("tenant-b"),
+                job.Id,
+                CancellationToken.None).AsTask().GetAwaiter().GetResult();
+            Assert.Null(otherTenant);
+        }
+        catch (InvalidOperationException)
+        {
+            // A provider may reject a direct cross-tenant ID guess after its label check.
+        }
+
+        Assert.Throws<RegistryConcurrencyException>(() =>
+            store.CommitAsync(
+                actor,
+                RegistryMutation.Empty with
+                {
+                    MaintenanceJobs =
+                    [
+                        job with
+                        {
+                            Status = RegistryMaintenanceJobStatus.Running,
+                            Version = 2
+                        }
+                    ],
+                    ExpectedVersions =
+                    [
+                        new ExpectedVersion(
+                            RegistryEntityKind.MaintenanceJob,
+                            job.Id.ToString("D"),
+                            99)
+                    ]
+                },
+                CancellationToken.None).AsTask().GetAwaiter().GetResult());
+    }
+
     protected static ActorContext Actor(string tenant) =>
         new(
             new TenantId(tenant),

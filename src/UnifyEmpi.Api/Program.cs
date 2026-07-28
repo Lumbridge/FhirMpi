@@ -27,6 +27,8 @@ builder.Services.Configure<TenantRegistryOptions>(
     builder.Configuration.GetSection(TenantRegistryOptions.SectionName));
 builder.Services.Configure<FhirValidationOptions>(
     builder.Configuration.GetSection(FhirValidationOptions.SectionName));
+builder.Services.Configure<RegistryMaintenanceOptions>(
+    builder.Configuration.GetSection(RegistryMaintenanceOptions.SectionName));
 
 var authentication = builder.Configuration
     .GetSection(AppAuthenticationOptions.SectionName)
@@ -62,6 +64,14 @@ builder.Services.AddAuthorization();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton<ActorContextFactory>();
 builder.Services.AddSingleton<FhirResourceCodec>();
+builder.Services.AddHttpClient("external-fhir", client =>
+    {
+        client.MaxResponseContentBufferSize = 16 * 1024 * 1024;
+    })
+    .ConfigurePrimaryHttpMessageHandler(static () => new HttpClientHandler
+    {
+        AllowAutoRedirect = false
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -147,11 +157,19 @@ if (tenantConfigurations.Count == 0)
     tenantConfigurations.Add(development.TenantId, development);
 }
 
+var maintenanceOptions = builder.Configuration
+    .GetSection(RegistryMaintenanceOptions.SectionName)
+    .Get<RegistryMaintenanceOptions>() ?? new RegistryMaintenanceOptions();
+ValidateMaintenanceConfiguration(maintenanceOptions, tenantConfigurations);
+
 builder.Services.AddSingleton<IReadOnlyDictionary<UnifyEmpi.Domain.TenantId, UnifyEmpi.Domain.TenantMatchingConfiguration>>(
     tenantConfigurations);
 builder.Services.AddSingleton<ITenantConfigurationProvider, StoredTenantConfigurationProvider>();
 builder.Services.AddSingleton<RegistryService>();
+builder.Services.AddSingleton<IExternalPatientSourceRegistry, FhirPatientSourceRegistry>();
+builder.Services.AddSingleton<RegistryMaintenanceService>();
 builder.Services.AddHostedService<RegistryStartupValidationService>();
+builder.Services.AddHostedService<RegistryMaintenanceWorker>();
 
 builder.Services.AddRateLimiter(options =>
 {
@@ -282,6 +300,47 @@ static Dictionary<UnifyEmpi.Domain.TenantId, UnifyEmpi.Domain.TenantMatchingConf
     }
 
     return result;
+}
+
+static void ValidateMaintenanceConfiguration(
+    RegistryMaintenanceOptions options,
+    IReadOnlyDictionary<
+        UnifyEmpi.Domain.TenantId,
+        UnifyEmpi.Domain.TenantMatchingConfiguration> tenants)
+{
+    var sources = new HashSet<(UnifyEmpi.Domain.TenantId, UnifyEmpi.Domain.SourceSystemId)>();
+    foreach (var definition in options.FhirSources)
+    {
+        var tenant = new UnifyEmpi.Domain.TenantId(definition.TenantId);
+        var source = new UnifyEmpi.Domain.SourceSystemId(definition.SourceSystem);
+        if (!tenants.TryGetValue(tenant, out var configuration) ||
+            !configuration.SourceTrust.ContainsKey(source) ||
+            !sources.Add((tenant, source)))
+        {
+            throw new InvalidOperationException(
+                $"External FHIR source '{tenant}/{source}' must be unique and present in tenant SourceTrust.");
+        }
+    }
+
+    var scheduleKeys = new HashSet<(UnifyEmpi.Domain.TenantId, string)>();
+    foreach (var schedule in options.ReconciliationSchedules)
+    {
+        var tenant = new UnifyEmpi.Domain.TenantId(schedule.TenantId);
+        UnifyEmpi.Domain.SourceSystemId? source =
+            string.IsNullOrWhiteSpace(schedule.SourceSystem)
+                ? null
+                : new UnifyEmpi.Domain.SourceSystemId(schedule.SourceSystem);
+        if (string.IsNullOrWhiteSpace(schedule.Key) ||
+            !tenants.ContainsKey(tenant) ||
+            !scheduleKeys.Add((tenant, schedule.Key)) ||
+            schedule.IntervalMinutes is < 1 or > 525600 ||
+            schedule.BatchSize is < 1 or > 25 ||
+            source.HasValue && !sources.Contains((tenant, source.Value)))
+        {
+            throw new InvalidOperationException(
+                $"Maintenance schedule '{schedule.Key}' is invalid or references an unconfigured tenant/FHIR source.");
+        }
+    }
 }
 
 public partial class Program;

@@ -59,6 +59,16 @@ public interface IIdentityRegistryStore
         ActorContext context,
         CancellationToken cancellationToken);
 
+    ValueTask<RegistryMaintenanceJob?> GetMaintenanceJobAsync(
+        ActorContext context,
+        Guid jobId,
+        CancellationToken cancellationToken);
+
+    ValueTask<Page<RegistryMaintenanceJob>> SearchMaintenanceJobsAsync(
+        ActorContext context,
+        MaintenanceJobSearch search,
+        CancellationToken cancellationToken);
+
     ValueTask<IngestionReceipt?> GetReceiptAsync(
         ActorContext context,
         string idempotencyKey,

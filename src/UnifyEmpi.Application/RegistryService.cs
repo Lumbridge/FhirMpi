@@ -1671,7 +1671,7 @@ public sealed class RegistryService(
         }
     }
 
-    private static IdentityProfile ApplyIdentifierAuthority(
+    internal static IdentityProfile ApplyIdentifierAuthority(
         IdentityProfile profile,
         MatchingProfile matchingProfile,
         bool isAuthoritative)

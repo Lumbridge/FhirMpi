@@ -18,14 +18,13 @@ for broader production operation.
 | Tenancy | Trusted tenant and source context on every identity, query, receipt, decision and audit event |
 | Storage | Development in-memory provider and durable GCP Healthcare API R4 provider behind one contract |
 | Operations | Blazor portal, source trust, policy editing, audit search, health checks and OpenTelemetry |
+| Maintenance | Durable online re-index jobs, scheduled population reconciliation and incremental external FHIR Patient ingestion |
 | Deployment | Containers, Compose, Helm, Terraform foundations and a reproducible GCP demo |
 
 ## Deliberate gaps
 
 | Capability | Status |
 | --- | --- |
-| Online batch re-index after blocking-rule or key changes | Not implemented |
-| Scheduled population reconciliation | Not implemented |
 | Ground-truth recall and precision reporting | Not implemented |
 | Nickname dictionaries and additional comparator libraries | Not implemented |
 | Fellegi–Sunter probability calibration | Not implemented |
@@ -34,9 +33,10 @@ for broader production operation.
 | Broad webhook and integration catalogue | Not implemented |
 | Certified clinical product status | Not claimed |
 
-The next safety-critical platform capability is controlled batch re-indexing. Until it
-exists, changing blocking inputs or authoritative identifier systems for a populated
-registry requires an offline migration plan.
+Blocking changes now use a guarded online migration: retain old keys and rules, stage
+the union configuration, complete the durable re-index, and only then remove obsolete
+inputs. See [re-indexing and reconciliation](/UnifyEMPI/guides/maintenance/) for the
+operating sequence and external FHIR source configuration.
 
 Read the [matching rules](/UnifyEMPI/matching/rules/) for exact behaviour and
 [production readiness](/UnifyEMPI/governance/production-readiness/) for the controls that remain

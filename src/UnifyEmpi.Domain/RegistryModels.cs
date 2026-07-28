@@ -14,7 +14,8 @@ public enum ReviewCaseKind
 {
     PotentialDuplicate,
     ManualDuplicate,
-    Split
+    Split,
+    PopulationReconciliation
 }
 
 public enum ReviewDecision

@@ -21,6 +21,10 @@ internal static class RegistryTelemetry
         Meter.CreateCounter<long>("unifyempi.review.created", "{case}");
     private static readonly Counter<long> ReviewDecisions =
         Meter.CreateCounter<long>("unifyempi.review.decisions", "{decision}");
+    private static readonly Counter<long> MaintenanceJobs =
+        Meter.CreateCounter<long>("unifyempi.maintenance.jobs", "{job}");
+    private static readonly Counter<long> MaintenanceItems =
+        Meter.CreateCounter<long>("unifyempi.maintenance.items", "{item}");
 
     public static void RecordMatch(
         long startedTimestamp,
@@ -66,4 +70,31 @@ internal static class RegistryTelemetry
                 { "tenant.id", tenantId.Value },
                 { "review.decision", decision.ToString().ToLowerInvariant() }
             });
+
+    public static void RecordMaintenanceStarted(RegistryMaintenanceJob job) =>
+        MaintenanceJobs.Add(
+            1,
+            new TagList
+            {
+                { "tenant.id", job.TenantId.Value },
+                { "maintenance.kind", job.Kind.ToString().ToLowerInvariant() },
+                { "maintenance.trigger", job.Trigger.ToString().ToLowerInvariant() }
+            });
+
+    public static void RecordMaintenanceBatch(RegistryMaintenanceJob job, int count)
+    {
+        if (count <= 0)
+        {
+            return;
+        }
+
+        MaintenanceItems.Add(
+            count,
+            new TagList
+            {
+                { "tenant.id", job.TenantId.Value },
+                { "maintenance.kind", job.Kind.ToString().ToLowerInvariant() },
+                { "maintenance.phase", job.Phase.ToString().ToLowerInvariant() }
+            });
+    }
 }
