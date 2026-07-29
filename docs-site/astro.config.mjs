@@ -158,6 +158,7 @@ export default defineConfig({
 					label: 'Governance',
 					items: [
 						{ label: 'Production readiness', slug: 'governance/production-readiness' },
+						{ label: 'Security architecture', slug: 'governance/security-architecture' },
 						{ label: 'Security policy', slug: 'governance/security' },
 					],
 				},

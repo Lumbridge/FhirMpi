@@ -3,6 +3,9 @@ title: Security policy
 description: Supported versions, private vulnerability reporting and production security responsibilities.
 ---
 
+For implemented controls, trust boundaries, permissions and deployment responsibilities,
+see the [security architecture](/UnifyEMPI/governance/security-architecture/).
+
 ## Supported version
 
 Security fixes target the latest commit on the default branch. The project does not yet

@@ -67,6 +67,7 @@ Use the [configuration reference](/UnifyEMPI/reference/configuration/), the norm
 [matching rules](/UnifyEMPI/matching/rules/), the
 [existing FHIR integration guides](/UnifyEMPI/integration/existing-fhir/overview/), the
 [maintenance runbook](/UnifyEMPI/guides/maintenance/), the
-[matching assurance guide](/UnifyEMPI/guides/matching-assurance/) and the
+[matching assurance guide](/UnifyEMPI/guides/matching-assurance/), the
+[security architecture](/UnifyEMPI/governance/security-architecture/) and the
 [security policy](/UnifyEMPI/governance/security/) alongside
 your organisation's own standards.

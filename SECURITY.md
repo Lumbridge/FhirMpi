@@ -2,6 +2,8 @@
 
 Read the maintained
 [UnifyEMPI security policy](https://lumbridge.github.io/UnifyEMPI/governance/security/).
+Implemented controls and deployment responsibilities are described in the
+[security architecture](https://lumbridge.github.io/UnifyEMPI/governance/security-architecture/).
 
 Report suspected vulnerabilities through GitHub private vulnerability reporting. Do
 not open a public issue and never include patient data, credentials or cryptographic

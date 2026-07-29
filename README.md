@@ -221,6 +221,9 @@ See [the benchmark guide](https://lumbridge.github.io/UnifyEMPI/development/perf
 - [Developer guide](https://lumbridge.github.io/UnifyEMPI/development/developer-guide/):
   codebase map, feature navigation, local run and debug workflows, test suites,
   configuration, documentation development and troubleshooting.
+- [Security architecture](https://lumbridge.github.io/UnifyEMPI/governance/security-architecture/):
+  trust boundaries, API and portal permissions, MLLP and external-FHIR controls,
+  tenant isolation, secrets, audit, deployment hardening and verification.
 - [Identity model and frequently asked questions](https://lumbridge.github.io/UnifyEMPI/concepts/identity-model/): tenants,
   national deployment, source/canonical records, blocking, reviews, existing-store
   onboarding and troubleshooting.

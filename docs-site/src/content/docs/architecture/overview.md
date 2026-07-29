@@ -7,6 +7,9 @@ For the implemented request, message and governance sequences, see
 [core paths and processing model](/UnifyEMPI/architecture/core-paths/).
 For operational terminology, national tenancy choices and common questions, see
 [identity model and frequently asked questions](/UnifyEMPI/concepts/identity-model/).
+For authentication, authorisation, trust boundaries, storage isolation and deployment
+hardening, see the
+[security architecture](/UnifyEMPI/governance/security-architecture/).
 
 ```mermaid
 flowchart LR
