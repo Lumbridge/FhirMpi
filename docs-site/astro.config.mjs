@@ -164,6 +164,7 @@ export default defineConfig({
 				{
 					label: 'Development',
 					items: [
+						{ label: 'Developer guide', slug: 'development/developer-guide' },
 						{ label: 'Contributing', slug: 'development/contributing' },
 						{ label: 'Performance gates', slug: 'development/performance' },
 						{ label: 'Live GCP tests', slug: 'development/live-gcp-tests' },

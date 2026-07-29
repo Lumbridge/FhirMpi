@@ -21,3 +21,7 @@ pnpm build
 
 GitHub Actions publishes the static output to
 <https://lumbridge.github.io/UnifyEMPI/>.
+
+For the complete repository map, application development, debugging, testing and
+benchmark workflow, see the
+[developer guide](src/content/docs/development/developer-guide.md).
