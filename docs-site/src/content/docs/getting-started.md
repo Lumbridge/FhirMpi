@@ -71,6 +71,8 @@ docker compose down
 
 ## Next steps
 
+- Use the [developer guide](/UnifyEMPI/development/developer-guide/) to navigate, run,
+  debug and test the codebase.
 - Learn the [identity model and terminology](/UnifyEMPI/concepts/identity-model/).
 - Plan an [existing FHIR integration](/UnifyEMPI/integration/existing-fhir/overview/).
 - Run the prepared [Postman matching tour](/UnifyEMPI/guides/postman/).

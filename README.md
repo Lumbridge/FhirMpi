@@ -218,6 +218,9 @@ See [the benchmark guide](https://lumbridge.github.io/UnifyEMPI/development/perf
 
 ## Documentation map
 
+- [Developer guide](https://lumbridge.github.io/UnifyEMPI/development/developer-guide/):
+  codebase map, feature navigation, local run and debug workflows, test suites,
+  configuration, documentation development and troubleshooting.
 - [Identity model and frequently asked questions](https://lumbridge.github.io/UnifyEMPI/concepts/identity-model/): tenants,
   national deployment, source/canonical records, blocking, reviews, existing-store
   onboarding and troubleshooting.

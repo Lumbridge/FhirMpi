@@ -22,7 +22,10 @@ supported by evidence and explicit about their operational consequences.
 ## Local development
 
 Install the .NET 10 SDK selected by `global.json`. Docker is optional for the basic
-build, but required for the Compose and container workflows.
+build, but required for the Compose and container workflows. The
+[developer guide](/UnifyEMPI/development/developer-guide/) contains the repository map,
+per-host run and debug instructions, test-suite catalogue, dependency-update workflow
+and common troubleshooting steps.
 
 ```powershell
 dotnet restore UnifyEMPI.slnx --locked-mode
@@ -38,8 +41,8 @@ docker compose up --build
 ```
 
 Local services use synthetic data and ephemeral in-memory providers. See the
-[repository README](https://github.com/Lumbridge/UnifyEMPI#quick-start) for endpoints
-and limitations.
+[developer guide](/UnifyEMPI/development/developer-guide/#run-locally) for endpoints
+and the important cross-host data-isolation limitation.
 
 ## Change expectations
 
